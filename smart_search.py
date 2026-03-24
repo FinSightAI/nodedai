@@ -12,6 +12,8 @@ import re
 from datetime import datetime, timedelta
 import anthropic
 
+_lang = "he"
+
 IL_AIRPORTS = [
     ("TLV", "נתב\"ג - תל אביב"),
     ("SDV", "שדה דב - תל אביב"),
@@ -74,7 +76,7 @@ def surprise_me(
             max_tokens=3000,
             thinking={"type": "adaptive"},
             tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            system="אתה מומחה לטיולים חכמים ותקציביים. תמיד חפש הזדמנויות שאחרים מפספסים.",
+            system="You are an expert in smart and budget travel. Always search for opportunities others miss." + (" Respond in English." if _lang == "en" else ""),
             messages=[{"role": "user", "content": prompt}],
         )
 
@@ -211,18 +213,18 @@ def find_cheapest_day_of_week(
 
 החזר JSON:
 {{
-  "cheapest_day": "שלישי",
+  "cheapest_day": "Tuesday",
   "cheapest_day_avg": 000,
-  "most_expensive_day": "שישי",
+  "most_expensive_day": "Friday",
   "most_expensive_day_avg": 000,
   "savings_by_day": 000,
   "savings_pct": 0.0,
-  "best_time": "בוקר מוקדם",
+  "best_time": "early morning",
   "days_ranking": [
-    {{"day": "ראשון", "avg_price": 000}},
+    {{"day": "Sunday", "avg_price": 000}},
     ...
   ],
-  "tip": "טיפ מעשי בעברית"
+  "tip": "practical tip"
 }}"""
 
     try:
@@ -372,21 +374,21 @@ def best_time_to_book(
   "optimal_weeks_before": 8,
   "optimal_days_range": "49-63",
   "price_curve": [
-    {{"weeks_before": 26, "relative_price": 1.2, "label": "26 שבועות"}},
-    {{"weeks_before": 16, "relative_price": 1.1, "label": "16 שבועות"}},
-    {{"weeks_before": 8,  "relative_price": 1.0, "label": "8 שבועות ✅"}},
-    {{"weeks_before": 4,  "relative_price": 1.15, "label": "4 שבועות"}},
-    {{"weeks_before": 2,  "relative_price": 1.3,  "label": "2 שבועות"}},
-    {{"weeks_before": 1,  "relative_price": 1.5,  "label": "שבוע אחרון"}},
-    {{"weeks_before": 0,  "relative_price": 1.8,  "label": "יום-יומיים"}}
+    {{"weeks_before": 26, "relative_price": 1.2, "label": "26 weeks"}},
+    {{"weeks_before": 16, "relative_price": 1.1, "label": "16 weeks"}},
+    {{"weeks_before": 8,  "relative_price": 1.0, "label": "8 weeks ✅"}},
+    {{"weeks_before": 4,  "relative_price": 1.15, "label": "4 weeks"}},
+    {{"weeks_before": 2,  "relative_price": 1.3,  "label": "2 weeks"}},
+    {{"weeks_before": 1,  "relative_price": 1.5,  "label": "last week"}},
+    {{"weeks_before": 0,  "relative_price": 1.8,  "label": "1-2 days"}}
   ],
   "potential_savings_pct": 30,
-  "worst_time": "שבוע לפני",
-  "best_time": "6-8 שבועות לפני",
-  "seasonal_advice": "בעונת קיץ הזמן 3 חודשים מראש",
-  "last_minute_exception": "האם יש מקרים שלאחרונה דווקא זול?",
-  "rule_of_thumb": "כלל אצבע פשוט בעברית",
-  "tip": "טיפ נוסף מעשי"
+  "worst_time": "one week before",
+  "best_time": "6-8 weeks before",
+  "seasonal_advice": "in summer season book 3 months ahead",
+  "last_minute_exception": "are there cases where last-minute is cheaper?",
+  "rule_of_thumb": "simple rule of thumb",
+  "tip": "additional practical tip"
 }}"""
 
     try:

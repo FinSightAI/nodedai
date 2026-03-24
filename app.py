@@ -208,6 +208,12 @@ if "lang" not in st.session_state:
 _lang = st.session_state.lang
 _rtl = _lang == "he"
 
+# Sync language to all AI modules
+for _mod in [agent, sentiment_analyzer, price_predictor, smart_search,
+             trip_planner, deal_hunter, visa_check, competitor_check,
+             deal_insights, price_dna, positioning]:
+    _mod._lang = _lang
+
 
 def _t(he: str, en: str = "") -> str:
     """Inline bilingual helper: returns English when lang=en, Hebrew otherwise."""

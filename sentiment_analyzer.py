@@ -7,21 +7,22 @@ import re
 from datetime import datetime
 import anthropic
 
+_lang = "he"
 
-SENTIMENT_PROMPT = """נתח את ההשפעה הצפויה של חדשות ואירועים על מחירי טיסות למסלול:
+SENTIMENT_PROMPT = """Analyze the expected impact of news and events on flight prices for the route:
 {origin} ↔ {destination}
-תאריך טיסה: {travel_date}
+Travel date: {travel_date}
 
-חפש חדשות עדכניות על:
-1. שביתות ועיצומים (חברות תעופה, שדות תעופה, מטפלים בקרקע)
-2. אירועים פוליטיים (בחירות, מחאות, חוסר יציבות)
-3. אסונות טבע ומזג אוויר קיצוני
-4. אירועי ספורט ותרבות גדולים (אולימפיאדה, מונדיאל, פסטיבלים)
-5. עונות תיירות ו-Peak Seasons
-6. מצב כלכלי (מחיר דלק, שינויי מטבע)
-7. פתיחת/סגירת נתיבים חדשים
+Search for recent news about:
+1. Strikes and labor actions (airlines, airports, ground handlers)
+2. Political events (elections, protests, instability)
+3. Natural disasters and extreme weather
+4. Major sports and cultural events (Olympics, World Cup, festivals)
+5. Tourism seasons and Peak Seasons
+6. Economic factors (fuel prices, currency changes)
+7. Opening/closing of new routes
 
-החזר JSON:
+Return JSON:
 {{
   "overall_sentiment": "bullish" / "bearish" / "neutral",
   "sentiment_score": 7.5,
@@ -31,17 +32,17 @@ SENTIMENT_PROMPT = """נתח את ההשפעה הצפויה של חדשות וא
   "key_events": [
     {{
       "type": "strike" / "event" / "weather" / "political" / "seasonal" / "economic",
-      "title": "כותרת האירוע בעברית",
+      "title": "event title",
       "impact": "positive" / "negative" / "neutral",
-      "impact_on_price": "מעלה מחירים" / "מוריד מחירים" / "ניטרלי",
+      "impact_on_price": "raises prices" / "lowers prices" / "neutral",
       "magnitude": "high" / "medium" / "low",
-      "timeframe": "מיידי" / "שבועיים" / "חודש",
-      "source": "שם המקור"
+      "timeframe": "immediate" / "two weeks" / "one month",
+      "source": "source name"
     }}
   ],
-  "recommendation": "קנה עכשיו" / "המתן" / "לא ברור",
-  "reasoning": "ניתוח מפורט בעברית (3-4 משפטים)",
-  "best_booking_window": "מתי כדאי להזמין",
+  "recommendation": "buy now" / "wait" / "unclear",
+  "reasoning": "detailed analysis (3-4 sentences)",
+  "best_booking_window": "when to book",
   "risk_level": "high" / "medium" / "low",
   "last_updated": "{now}"
 }}"""
@@ -61,7 +62,7 @@ def analyze_sentiment(
     prompt = SENTIMENT_PROMPT.format(
         origin=origin,
         destination=destination,
-        travel_date=travel_date or "לא צוין",
+        travel_date=travel_date or ("Not specified" if _lang == "en" else "לא צוין"),
         now=now,
     )
 
@@ -72,9 +73,10 @@ def analyze_sentiment(
             thinking={"type": "adaptive"},
             tools=[{"type": "web_search_20260209", "name": "web_search"}],
             system=(
-                "אתה אנליסט מחירי תעופה מומחה. "
-                "נתח חדשות בזמן אמת והערך את השפעתן על מחירי טיסות. "
-                "היה ספציפי ומבוסס על עובדות בלבד."
+                "You are an expert flight price analyst. "
+                "Analyze real-time news and assess their impact on flight prices. "
+                "Be specific and fact-based only."
+                + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else "")
             ),
             messages=[{"role": "user", "content": prompt}],
         )
@@ -105,7 +107,7 @@ def format_sentiment(data: dict) -> dict:
         "score": data.get("sentiment_score", 5),
         "confidence": data.get("confidence", "low"),
         "key_events": data.get("key_events", []),
-        "recommendation": data.get("recommendation", "לא ברור"),
+        "recommendation": data.get("recommendation", "unclear" if _lang == "en" else "לא ברור"),
         "reasoning": data.get("reasoning", ""),
         "best_booking_window": data.get("best_booking_window", ""),
         "risk_level": data.get("risk_level", "medium"),

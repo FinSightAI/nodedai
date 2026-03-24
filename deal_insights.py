@@ -10,6 +10,8 @@ from pathlib import Path
 from collections import Counter, defaultdict
 import anthropic
 
+_lang = "he"
+
 DB_PATH = Path(__file__).parent / "prices.db"
 
 
@@ -94,7 +96,7 @@ def get_deal_patterns() -> dict:
     stats = _get_db_stats()
 
     if stats["total_deals"] == 0:
-        return {"empty": True, "message": "אין עדיין דילים ב-DB. הפעל ציד דילים קודם."}
+        return {"empty": True, "message": "No deals in DB yet. Run deal hunting first." if _lang == "en" else "אין עדיין דילים ב-DB. הפעל ציד דילים קודם."}
 
     # Best day of week
     day_avg = {
@@ -116,20 +118,27 @@ def get_deal_patterns() -> dict:
     # Most deal-rich destination
     top_dest = stats["by_destination"][0]["destination"] if stats["by_destination"] else None
 
-    day_names_he = {
-        "Monday": "שני", "Tuesday": "שלישי", "Wednesday": "רביעי",
-        "Thursday": "חמישי", "Friday": "שישי", "Saturday": "שבת", "Sunday": "ראשון"
-    }
+    day_names = (
+        {
+            "Monday": "Monday", "Tuesday": "Tuesday", "Wednesday": "Wednesday",
+            "Thursday": "Thursday", "Friday": "Friday", "Saturday": "Saturday", "Sunday": "Sunday"
+        }
+        if _lang == "en" else
+        {
+            "Monday": "שני", "Tuesday": "שלישי", "Wednesday": "רביעי",
+            "Thursday": "חמישי", "Friday": "שישי", "Saturday": "שבת", "Sunday": "ראשון"
+        }
+    )
 
     return {
         "total_deals": stats["total_deals"],
         "avg_score": stats["avg_score"],
         "best_day": {
-            "name": day_names_he.get(best_day, best_day),
+            "name": day_names.get(best_day, best_day),
             "avg_score": round(day_avg.get(best_day, 0), 2),
         } if best_day else None,
         "worst_day": {
-            "name": day_names_he.get(worst_day, worst_day),
+            "name": day_names.get(worst_day, worst_day),
             "avg_score": round(day_avg.get(worst_day, 0), 2),
         } if worst_day else None,
         "best_hour": best_hour,
@@ -137,7 +146,7 @@ def get_deal_patterns() -> dict:
         "top_airlines": stats["by_airline"][:5],
         "deal_types": dict(stats["by_deal_type"]),
         "recent_top": stats["recent_top"],
-        "day_scores": {day_names_he.get(d, d): round(v, 2) for d, v in day_avg.items()},
+        "day_scores": {day_names.get(d, d): round(v, 2) for d, v in day_avg.items()},
         "hour_scores": {f"{h:02d}:00": round(v, 2) for h, v in sorted(hour_avg.items())},
     }
 
@@ -149,7 +158,7 @@ def get_ai_insights() -> dict:
     """
     stats = _get_db_stats()
     if stats["total_deals"] == 0:
-        return {"error": "אין נתונים לניתוח"}
+        return {"error": "No data to analyze" if _lang == "en" else "אין נתונים לניתוח"}
 
     client = anthropic.Anthropic()
 
@@ -190,7 +199,7 @@ def get_ai_insights() -> dict:
             model="claude-opus-4-6",
             max_tokens=1500,
             thinking={"type": "adaptive"},
-            system="אתה אנליסט נסיעות. נתח דפוסי דילים ותן המלצות מעשיות.",
+            system="You are a travel analyst. Analyze deal patterns and give practical recommendations." + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else ""),
             messages=[{"role": "user", "content": prompt}],
         )
         text = "".join(b.text for b in response.content if b.type == "text")

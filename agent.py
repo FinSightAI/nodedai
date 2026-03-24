@@ -26,28 +26,31 @@ def get_client() -> anthropic.Anthropic:
     return _client
 
 
+# Module-level language (set by app.py)
+_lang = "he"
+
 # ── System prompt ──────────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """אתה סוכן מחירי נסיעות מקצועי. תפקידך למצוא את המחירים הטובים ביותר לטיסות, מלונות, דירות וחבילות נופש.
+SYSTEM_PROMPT_HE = """You are a professional travel price agent. Find the best prices for flights, hotels, apartments and vacation packages.
 
-כשמחפשים מחיר:
-1. חפש באינטרנט מחירים עדכניים
-2. בדוק מספר מקורות (Google Flights, Booking.com, Airbnb, Kayak וכו')
-3. מצא את המחיר הטוב ביותר הזמין
+When searching for a price:
+1. Search the internet for current prices
+2. Check multiple sources (Google Flights, Booking.com, Airbnb, Kayak, etc.)
+3. Find the best available price
 
-תמיד החזר JSON תקני בפורמט:
+Always return valid JSON in this format:
 {
   "found": true/false,
   "price": 123.45,
-  "currency": "USD" / "ILS" / "EUR" וכו',
-  "source": "שם האתר / מקור",
-  "details": "תיאור הדיל - חברת תעופה / מלון / וכו'",
+  "currency": "USD" / "ILS" / "EUR" etc,
+  "source": "website name / source",
+  "details": "deal description - airline / hotel / etc",
   "deal_quality": "excellent" / "good" / "average" / "poor",
-  "notes": "הערות חשובות"
+  "notes": "important notes"
 }
 
-אם לא מוצאים מחיר, החזר {"found": false, "reason": "סיבה"}
+If no price found, return {"found": false, "reason": "reason"}
 
-היה מדויק! מחירים ריאליים בלבד. אל תמציא מחירים."""
+Be accurate! Realistic prices only. Do not invent prices."""
 
 
 def build_search_prompt(item: dict) -> str:
@@ -64,39 +67,39 @@ def build_search_prompt(item: dict) -> str:
     if custom_query:
         base = custom_query
     elif category == "flight":
-        base = f"טיסה מ-{origin} ל-{destination}"
+        base = f"Flight from {origin} to {destination}"
         if date_from:
-            base += f" בתאריך {date_from}"
+            base += f" on {date_from}"
         if date_to:
-            base += f" חזרה {date_to}"
+            base += f" return {date_to}"
     elif category == "hotel":
-        base = f"מלון ב{destination}"
+        base = f"Hotel in {destination}"
         if date_from:
-            base += f" צ'ק-אין {date_from}"
+            base += f" check-in {date_from}"
         if date_to:
-            base += f" צ'ק-אאוט {date_to}"
+            base += f" check-out {date_to}"
     elif category == "apartment":
-        base = f"דירה להשכרה ב{destination}"
+        base = f"Apartment rental in {destination}"
         if date_from:
-            base += f" מ-{date_from}"
+            base += f" from {date_from}"
         if date_to:
-            base += f" עד {date_to}"
+            base += f" to {date_to}"
     elif category == "package":
-        base = f"חבילת נופש ל{destination}"
+        base = f"Vacation package to {destination}"
         if origin:
-            base += f" מ{origin}"
+            base += f" from {origin}"
         if date_from:
             base += f" {date_from}"
     else:
-        base = f"מחיר {destination}"
+        base = f"Price for {destination}"
 
     return (
-        f"מצא את המחיר הטוב ביותר עבור: {base}\n"
-        f"(בדיקה בתאריך: {today})\n\n"
-        f"חפש מחירים ריאליים ועדכניים. "
-        f"בדוק Google Flights, Booking.com, Airbnb, Kayak, Skyscanner, "
-        f"ואתרים ישראלים כמו Gulliver, Israir, Arkia.\n\n"
-        f"החזר JSON בפורמט המדויק שהוגדר."
+        f"Find the best price for: {base}\n"
+        f"(Check date: {today})\n\n"
+        f"Search for realistic, current prices. "
+        f"Check Google Flights, Booking.com, Airbnb, Kayak, Skyscanner, "
+        f"and Israeli sites like Gulliver, Israir, Arkia.\n\n"
+        f"Return JSON in the exact format specified."
     )
 
 
@@ -154,7 +157,7 @@ def _claude_web_search(item: dict) -> dict:
             model="claude-opus-4-6",
             max_tokens=2048,
             thinking={"type": "adaptive"},
-            system=SYSTEM_PROMPT,
+            system=SYSTEM_PROMPT_HE + (" Respond in English." if _lang == "en" else " השב בעברית."),
             tools=[
                 {"type": "web_search_20260209", "name": "web_search"},
                 {"type": "web_fetch_20260209", "name": "web_fetch"},
@@ -234,7 +237,7 @@ def analyze_deal(item: dict, price_history: list) -> str:
     client = get_client()
 
     if len(price_history) < 2:
-        return "אין מספיק היסטוריה לניתוח"
+        return "Not enough history to analyze"
 
     prices = [r["price"] for r in price_history[:20]]
     avg = sum(prices) / len(prices)
@@ -242,14 +245,14 @@ def analyze_deal(item: dict, price_history: list) -> str:
     maximum = max(prices)
     current = prices[0]
 
-    prompt = f"""נתח האם זה עסקה טובה:
-- פריט: {item['name']} ({item['category']}) ל{item['destination']}
-- מחיר נוכחי: {current}
-- ממוצע (עד 20 מדידות): {avg:.0f}
-- מינימום שנראה: {minimum}
-- מקסימום שנראה: {maximum}
+    prompt = f"""Analyze whether this is a good deal:
+- Item: {item['name']} ({item['category']}) to {item['destination']}
+- Current price: {current}
+- Average (up to 20 measurements): {avg:.0f}
+- Minimum seen: {minimum}
+- Maximum seen: {maximum}
 
-תן המלצה קצרה (2-3 משפטים) בעברית: האם לקנות עכשיו? למה?"""
+Give a short recommendation (2-3 sentences){" in English" if _lang == "en" else " in Hebrew"}: Should I buy now? Why?"""
 
     try:
         response = client.messages.create(
@@ -263,7 +266,7 @@ def analyze_deal(item: dict, price_history: list) -> str:
     except Exception:
         pass
 
-    return f"מחיר נוכחי {current:.0f} לעומת ממוצע {avg:.0f}"
+    return f"Current price {current:.0f} vs average {avg:.0f}"
 
 
 def smart_search_opportunities(destinations: list[str]) -> list[dict]:
@@ -274,32 +277,32 @@ def smart_search_opportunities(destinations: list[str]) -> list[dict]:
     client = get_client()
 
     dest_str = ", ".join(destinations)
-    prompt = f"""מצא 3 הזדמנויות טיול מצוינות עכשיו לאחד מהיעדים הבאים: {dest_str}
+    prompt = f"""Find 3 excellent travel opportunities right now to one of these destinations: {dest_str}
 
-חפש:
-- טיסות זולות
-- מלונות במבצע
-- חבילות נופש
+Search for:
+- Cheap flights
+- Hotels on sale
+- Vacation packages
 
-לכל הזדמנות החזר JSON:
+For each opportunity return JSON:
 {{
   "destination": "...",
   "type": "flight/hotel/package",
-  "deal": "תיאור הדיל",
+  "deal": "deal description",
   "price": 000,
   "currency": "USD",
-  "why_good": "למה זה מצוין עכשיו",
+  "why_good": "why this is excellent right now",
   "urgency": "high/medium/low"
 }}
 
-החזר רשימת JSON: [{{}}, {{}}, ...]"""
+Return JSON list: [{{}}, {{}}, ...]"""
 
     try:
         response = client.messages.create(
             model="claude-opus-4-6",
             max_tokens=2048,
             thinking={"type": "adaptive"},
-            system="אתה מומחה נסיעות שמחפש הזדמנויות מחיר. חפש תמיד מחירים ריאליים.",
+            system="You are a travel expert searching for price opportunities. Always search for realistic prices." + (" Respond in English." if _lang == "en" else ""),
             tools=[
                 {"type": "web_search_20260209", "name": "web_search"},
             ],

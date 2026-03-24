@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import anthropic
 
+_lang = "he"
+
 DB_PATH = Path(__file__).parent / "prices.db"
 
 
@@ -49,7 +51,7 @@ def generate_price_dna(watch_id: int = None) -> dict:
         history = _load_all_history()
 
     if len(history) < 5:
-        return {"error": "צריך לפחות 5 בדיקות מחיר לניתוח"}
+        return {"error": "Need at least 5 price checks to analyze" if _lang == "en" else "צריך לפחות 5 בדיקות מחיר לניתוח"}
 
     prices = [r["price"] for r in history]
     currency = history[0].get("currency", "USD")
@@ -58,14 +60,23 @@ def generate_price_dna(watch_id: int = None) -> dict:
     monthly = defaultdict(list)
     weekly = defaultdict(list)
     hourly = defaultdict(list)
-    dow_map = {"Monday": "שני", "Tuesday": "שלישי", "Wednesday": "רביעי",
-                "Thursday": "חמישי", "Friday": "שישי", "Saturday": "שבת", "Sunday": "ראשון"}
+    dow_map = (
+        {"Monday": "Monday", "Tuesday": "Tuesday", "Wednesday": "Wednesday",
+         "Thursday": "Thursday", "Friday": "Friday", "Saturday": "Saturday", "Sunday": "Sunday"}
+        if _lang == "en" else
+        {"Monday": "שני", "Tuesday": "שלישי", "Wednesday": "רביעי",
+         "Thursday": "חמישי", "Friday": "שישי", "Saturday": "שבת", "Sunday": "ראשון"}
+    )
 
-    month_he = {
-        1: "ינואר", 2: "פברואר", 3: "מרץ", 4: "אפריל",
-        5: "מאי", 6: "יוני", 7: "יולי", 8: "אוגוסט",
-        9: "ספטמבר", 10: "אוקטובר", 11: "נובמבר", 12: "דצמבר"
-    }
+    month_he = (
+        {1: "January", 2: "February", 3: "March", 4: "April",
+         5: "May", 6: "June", 7: "July", 8: "August",
+         9: "September", 10: "October", 11: "November", 12: "December"}
+        if _lang == "en" else
+        {1: "ינואר", 2: "פברואר", 3: "מרץ", 4: "אפריל",
+         5: "מאי", 6: "יוני", 7: "יולי", 8: "אוגוסט",
+         9: "ספטמבר", 10: "אוקטובר", 11: "נובמבר", 12: "דצמבר"}
+    )
 
     for r in history:
         try:
@@ -167,7 +178,7 @@ def get_ai_price_dna(watch_id: int = None) -> dict:
             model="claude-opus-4-6",
             max_tokens=1500,
             thinking={"type": "adaptive"},
-            system="אתה אנליסט מחירי תעופה. נתח דפוסים ותן המלצות מבוססות נתונים.",
+            system="You are a flight price analyst. Analyze patterns and give data-driven recommendations." + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else ""),
             messages=[{"role": "user", "content": prompt}],
         )
         text = "".join(b.text for b in response.content if b.type == "text")
@@ -219,7 +230,7 @@ def find_personal_sweet_spot(watch_id: int) -> dict:
                     "min_price_date": min_date.strftime("%d/%m/%Y"),
                     "days_before_travel": days_before,
                     "weeks_before_travel": weeks_before,
-                    "sweet_spot": f"{weeks_before} שבועות לפני הטיסה",
+                    "sweet_spot": f"{weeks_before} {'weeks before the flight' if _lang == 'en' else 'שבועות לפני הטיסה'}",
                     "current_price": prices[-1],
                     "is_past_sweet_spot": datetime.now() > min_date,
                 }
@@ -229,9 +240,9 @@ def find_personal_sweet_spot(watch_id: int) -> dict:
         # Without travel date — find lowest in first/mid/late period
         n = len(prices)
         thirds = [
-            ("מוקדם (4+ חודשים)", min(prices[:n//3])),
-            ("אמצע (2-4 חודשים)", min(prices[n//3:2*n//3])),
-            ("מאוחר (0-2 חודשים)", min(prices[2*n//3:])),
+            ("Early (4+ months)" if _lang == "en" else "מוקדם (4+ חודשים)", min(prices[:n//3])),
+            ("Mid (2-4 months)" if _lang == "en" else "אמצע (2-4 חודשים)", min(prices[n//3:2*n//3])),
+            ("Late (0-2 months)" if _lang == "en" else "מאוחר (0-2 חודשים)", min(prices[2*n//3:])),
         ]
         best_period = min(thirds, key=lambda x: x[1])
         return {

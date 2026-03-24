@@ -8,6 +8,8 @@ import re
 from typing import Optional
 import anthropic
 
+_lang = "he"
+
 POSITIONING_AIRPORTS = [
     {"code": "AMS", "city": "אמסטרדם", "country": "הולנד", "hub_score": 9},
     {"code": "LHR", "city": "לונדון", "country": "בריטניה", "hub_score": 10},
@@ -134,9 +136,10 @@ def find_positioning_opportunities(
                 {"type": "web_fetch_20260209", "name": "web_fetch"},
             ],
             system=(
-                "אתה מומחה ל-positioning flights ו-travel hacking. "
-                "מצא הזדמנויות אמיתיות שרוב האנשים מפספסים. "
-                "התמקד בחברות low-cost אירופאיות ושדות תעופה קטנים."
+                "You are an expert in positioning flights and travel hacking. "
+                "Find real opportunities most people miss. "
+                "Focus on European low-cost carriers and smaller airports."
+                + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else "")
             ),
             messages=[{"role": "user", "content": prompt}],
         )
@@ -287,8 +290,8 @@ def calculate_positioning_roi(
         "roi_pct": round(roi, 1),
         "worth_it": net_savings > 0 and savings_pct > 8,
         "verdict": (
-            "🟢 כדאי מאוד!" if net_savings > 100
-            else "🟡 כדאי בינוני" if net_savings > 0
-            else "🔴 לא משתלם"
+            ("🟢 Very worthwhile!" if _lang == "en" else "🟢 כדאי מאוד!") if net_savings > 100
+            else ("🟡 Moderately worthwhile" if _lang == "en" else "🟡 כדאי בינוני") if net_savings > 0
+            else ("🔴 Not worthwhile" if _lang == "en" else "🔴 לא משתלם")
         ),
     }

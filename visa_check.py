@@ -5,21 +5,23 @@ import json
 import re
 import anthropic
 
-VISA_PROMPT = """בדוק את דרישות הכניסה לבעלי דרכון ישראלי למדינה/עיר: {destination}
+_lang = "he"
 
-אנא ספק מידע מדויק ועדכני על:
-1. האם נדרשת ויזה?
-2. האם יש Visa On Arrival?
-3. האם יש eVisa (ויזה אלקטרונית)?
-4. תקופת שהות מקסימלית ללא ויזה
-5. עלות ויזה (אם נדרשת)
-6. זמן עיבוד הויזה
-7. מסמכים נדרשים
-8. הערות חשובות (כולל האם ישראל שהיחסים עם המדינה)
+VISA_PROMPT = """Check entry requirements for Israeli passport holders to the country/city: {destination}
 
-החזר JSON:
+Please provide accurate and current information about:
+1. Is a visa required?
+2. Is there Visa On Arrival?
+3. Is there an eVisa (electronic visa)?
+4. Maximum stay without a visa
+5. Visa cost (if required)
+6. Visa processing time
+7. Required documents
+8. Important notes (including diplomatic relations with Israel)
+
+Return JSON:
 {{
-  "destination": "שם המדינה/עיר",
+  "destination": "country/city name",
   "country_code": "XX",
   "visa_required": true/false,
   "visa_on_arrival": true/false,
@@ -29,16 +31,16 @@ VISA_PROMPT = """בדוק את דרישות הכניסה לבעלי דרכון �
   "visa_cost_usd": 0,
   "processing_days": 0,
   "status": "visa_free" / "visa_on_arrival" / "e_visa" / "visa_required" / "not_allowed",
-  "status_label": "תווית בעברית",
-  "requirements": ["מסמך 1", "מסמך 2"],
-  "important_notes": ["הערה חשובה 1", "הערה חשובה 2"],
-  "embassy_info": "מידע על שגרירות/קונסוליה",
+  "status_label": "status description",
+  "requirements": ["document 1", "document 2"],
+  "important_notes": ["important note 1", "important note 2"],
+  "embassy_info": "embassy/consulate information",
   "last_updated": "YYYY-MM",
   "confidence": "high" / "medium" / "low",
-  "source": "מקור המידע"
+  "source": "information source"
 }}
 
-שים לב: מידע עדכני לשנת 2025-2026. אם אין קשרים דיפלומטיים עם ישראל, ציין זאת."""
+Note: Current information for 2025-2026. If there are no diplomatic relations with Israel, mention it."""
 
 
 def check_visa(destination: str, passport: str = "Israeli") -> dict:
@@ -54,7 +56,7 @@ def check_visa(destination: str, passport: str = "Israeli") -> dict:
             model="claude-opus-4-6",
             max_tokens=1500,
             tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            system="אתה מומחה לדרישות כניסה ודרכונים. ספק מידע מדויק ועדכני בלבד.",
+            system="You are an expert in entry requirements and passports. Provide accurate and current information only." + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else ""),
             messages=[{"role": "user", "content": prompt}],
         )
         text = "".join(b.text for b in response.content if b.type == "text")
@@ -86,4 +88,22 @@ STATUS_CONFIG = {
 
 
 def get_status_config(status: str) -> dict:
-    return STATUS_CONFIG.get(status, {"icon": "❓", "color": "#aaa", "label": "לא ידוע"})
+    labels_en = {
+        "visa_free": "Visa Free",
+        "visa_on_arrival": "Visa on Arrival",
+        "e_visa": "eVisa",
+        "visa_required": "Visa Required",
+        "not_allowed": "Entry Not Allowed",
+    }
+    labels_he = {
+        "visa_free": "ללא ויזה",
+        "visa_on_arrival": "ויזה בהגעה",
+        "e_visa": "eVisa",
+        "visa_required": "ויזה נדרשת",
+        "not_allowed": "כניסה אסורה",
+    }
+    base = STATUS_CONFIG.get(status, {"icon": "❓", "color": "#aaa", "label": "לא ידוע"})
+    if _lang == "en":
+        label = labels_en.get(status, "Unknown")
+        return {**base, "label": label}
+    return base

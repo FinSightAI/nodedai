@@ -7,29 +7,30 @@ import re
 from datetime import datetime
 import anthropic
 
+_lang = "he"
 
-PLANNER_PROMPT = """אתה מתכנן טיולים מקצועי. תכנן טיול מלא לפי הפרמטרים הבאים.
+PLANNER_PROMPT = """You are a professional trip planner. Plan a complete trip based on the following parameters.
 
-יעד: {destination}
-מוצא: {origin}
-תאריכים: {date_from} → {date_to} ({days} ימים)
-תקציב כולל: {budget} {currency}
-מספר נוסעים: {travelers}
-סגנון: {style}
-העדפות מיוחדות: {preferences}
+Destination: {destination}
+Origin: {origin}
+Dates: {date_from} → {date_to} ({days} days)
+Total budget: {budget} {currency}
+Number of travelers: {travelers}
+Style: {style}
+Special preferences: {preferences}
 
-צור תכנית טיול מלאה הכוללת:
-1. סקירת עלויות (טיסה, מלון, אוכל, פעילויות, תחבורה)
-2. תכנית יומית מפורטת
-3. המלצות ספציפיות (מסעדות, אטרקציות, שכונות)
-4. טיפים לחיסכון
-5. זמני ההזמנה הטובים ביותר
+Create a complete trip plan including:
+1. Cost overview (flight, hotel, food, activities, transport)
+2. Detailed daily itinerary
+3. Specific recommendations (restaurants, attractions, neighborhoods)
+4. Money-saving tips
+5. Best booking times
 
-חפש מחירים ריאליים עדכניים ובנה תקציב מפורט.
+Search for realistic current prices and build a detailed budget.
 
-החזר JSON מובנה:
+Return structured JSON:
 {{
-  "summary": "תיאור קצר",
+  "summary": "brief description",
   "total_estimated": 0000,
   "currency": "USD",
   "budget_breakdown": {{
@@ -44,29 +45,29 @@ PLANNER_PROMPT = """אתה מתכנן טיולים מקצועי. תכנן טיו
     {{
       "day": 1,
       "date": "YYYY-MM-DD",
-      "title": "שם היום",
-      "activities": ["פעילות 1", "פעילות 2"],
+      "title": "day name",
+      "activities": ["activity 1", "activity 2"],
       "meals": {{"breakfast": "", "lunch": "", "dinner": ""}},
-      "accommodation": "שם מלון/דירה",
+      "accommodation": "hotel/apartment name",
       "estimated_cost": 000,
-      "tips": "טיפ חשוב"
+      "tips": "important tip"
     }}
   ],
-  "best_deals": ["דיל 1", "דיל 2", "דיל 3"],
-  "booking_advice": "מתי ואיפה להזמין",
-  "warnings": ["אזהרה חשובה אם יש"]
+  "best_deals": ["deal 1", "deal 2", "deal 3"],
+  "booking_advice": "when and where to book",
+  "warnings": ["important warning if any"]
 }}"""
 
 
 def plan_trip(
     destination: str,
-    origin: str = "תל אביב",
+    origin: str = "Tel Aviv",
     date_from: str = "",
     date_to: str = "",
     budget: float = 3000,
     currency: str = "USD",
     travelers: int = 2,
-    style: str = "מאוזן",          # תקציבי / מאוזן / לוקסוס
+    style: str = "Balanced",          # Budget / Balanced / Luxury
     preferences: str = "",
 ) -> dict:
     """Generate a complete trip plan using Claude."""
@@ -84,14 +85,14 @@ def plan_trip(
     prompt = PLANNER_PROMPT.format(
         destination=destination,
         origin=origin,
-        date_from=date_from or "גמיש",
-        date_to=date_to or "גמיש",
+        date_from=date_from or ("Flexible" if _lang == "en" else "גמיש"),
+        date_to=date_to or ("Flexible" if _lang == "en" else "גמיש"),
         days=days,
         budget=budget,
         currency=currency,
         travelers=travelers,
         style=style,
-        preferences=preferences or "אין",
+        preferences=preferences or ("None" if _lang == "en" else "אין"),
     )
 
     try:
@@ -105,9 +106,10 @@ def plan_trip(
                 {"type": "web_fetch_20260209", "name": "web_fetch"},
             ],
             system=(
-                "אתה מתכנן טיולים מקצועי עם ניסיון של 20 שנה. "
-                "תמיד חפש מחירים ריאליים עדכניים לפני שאתה מציע. "
-                "היה ספציפי עם שמות מלונות, מסעדות ואטרקציות."
+                "You are a professional trip planner with 20 years of experience. "
+                "Always search for realistic, current prices before suggesting. "
+                "Be specific with hotel names, restaurants and attractions."
+                + (" Respond in English." if _lang == "en" else "")
             ),
             messages=[{"role": "user", "content": prompt}],
         )
@@ -136,10 +138,10 @@ def plan_trip(
                 pass
 
         # Return raw text if JSON parsing fails
-        return {"raw": text, "summary": "תכנית נוצרה — ראה טקסט מלא"}
+        return {"raw": text, "summary": "Plan created — see full text" if _lang == "en" else "תכנית נוצרה — ראה טקסט מלא"}
 
     except Exception as e:
-        return {"error": str(e), "summary": "שגיאה בתכנון"}
+        return {"error": str(e), "summary": "Planning error" if _lang == "en" else "שגיאה בתכנון"}
 
 
 def quick_budget_estimate(

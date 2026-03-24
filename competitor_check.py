@@ -5,6 +5,8 @@ import json
 import re
 import anthropic
 
+_lang = "he"
+
 BOOKING_SITES = [
     "Kayak (kayak.com)",
     "Expedia (expedia.com)",
@@ -28,9 +30,9 @@ def compare_prices(
     """
     client = anthropic.Anthropic()
 
-    trip_type = "טיסה הלוך-חזור" if date_return else "טיסה חד-כיוונית"
+    trip_type = ("Round-trip flight" if _lang == "en" else "טיסה הלוך-חזור") if date_return else ("One-way flight" if _lang == "en" else "טיסה חד-כיוונית")
     if category == "hotel":
-        trip_type = f"מלון ב-{destination}"
+        trip_type = f"Hotel in {destination}"
 
     prompt = f"""חפש מחירים עבור:
 סוג: {trip_type}
@@ -72,7 +74,7 @@ def compare_prices(
                 {"type": "web_search_20260209", "name": "web_search"},
                 {"type": "web_fetch_20260209", "name": "web_fetch"},
             ],
-            system="אתה מומחה השוואת מחירי טיסות. חפש מחירים אמיתיים ועדכניים בלבד.",
+            system="You are an expert in flight price comparison. Search for realistic and current prices only." + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else ""),
             messages=[{"role": "user", "content": prompt}],
         )
         text = "".join(b.text for b in response.content if b.type == "text")

@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Optional
 import anthropic
 
+_lang = "he"
+
 DB_PATH = Path(__file__).parent / "prices.db"
 
 # ── Deal sources ───────────────────────────────────────────────────────────────
@@ -24,30 +26,30 @@ DEAL_SOURCES = {
     "kayak_explore":  "https://www.kayak.com/explore/TLV",
 }
 
-HUNT_PROMPT = """אתה ציידי דילים מקצועי. סרוק את האתרים הבאים ומצא את 5 הדילים הכי שווים שיצאו מישראל.
+HUNT_PROMPT = """You are a professional deal hunter. Scan the following websites and find the 5 best deals departing from Israel.
 
-התמקד בדילים שיוצאים מ-TLV/SDV/ETH.
-חפש: מחירים נמוכים בצורה חריגה, שגיאות מחיר, מכירות פלאש, מבצעים מוגבלים בזמן.
+Focus on deals departing from TLV/SDV/ETH.
+Look for: unusually low prices, error fares, flash sales, time-limited promotions.
 
-לכל דיל החזר:
+For each deal return:
 {
   "origin": "TLV",
-  "destination": "שם עיר",
+  "destination": "city name",
   "destination_code": "XXX",
   "price": 000,
   "currency": "USD",
   "deal_type": "error_fare" / "flash_sale" / "promo" / "regular_cheap",
-  "airline": "שם חברה",
-  "dates": "תאריכים אפשריים",
+  "airline": "airline name",
+  "dates": "possible dates",
   "urgency": "immediate" / "today" / "this_week",
   "discount_pct": 00,
-  "source": "שם אתר",
-  "why_amazing": "למה זה דיל מדהים (עברית)",
-  "book_url": "URL להזמנה אם ידוע",
-  "expires": "מתי פג תוקף אם ידוע"
+  "source": "website name",
+  "why_amazing": "why this deal is amazing",
+  "book_url": "booking URL if known",
+  "expires": "when it expires if known"
 }
 
-החזר JSON array. היה מאוד מדויק — רק דילים שהם ריאליים ועדכניים."""
+Return JSON array only. Be very accurate — only realistic and current deals."""
 
 
 def ensure_deals_table():
@@ -99,10 +101,11 @@ def hunt_deals(sources: Optional[list] = None) -> list[dict]:
                 {"type": "web_fetch_20260209",  "name": "web_fetch"},
             ],
             system=(
-                "אתה ציידי דילים אגרסיבי. "
-                "סרוק כל אתר לעומק. "
-                "מצא דילים שאנשים אחרים יפספסו. "
-                "תמיד חפש מחירי שגיאה — אלה הזהב."
+                "You are an aggressive deal hunter. "
+                "Scan every site thoroughly. "
+                "Find deals others will miss. "
+                "Always look for error fares — these are gold."
+                + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else "")
             ),
             messages=[{"role": "user", "content": prompt}],
         )
