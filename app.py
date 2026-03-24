@@ -211,6 +211,11 @@ _lang = st.session_state.lang
 _rtl = _lang == "he"
 
 
+def _t(he: str, en: str = "") -> str:
+    """Inline bilingual helper: returns English when lang=en, Hebrew otherwise."""
+    return en if (_lang == "en" and en) else he
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 CAT_EMOJI = {"flight": "✈️", "hotel": "🏨", "apartment": "🏠", "package": "📦"}
 DEAL_COLOR = {
@@ -339,7 +344,7 @@ if page == "🏠 לוח בקרה":
     if st.session_state.monitor_running:
         st_autorefresh(interval=60_000, key="dashboard_refresh")
 
-    st.title("🌍 לוח בקרה")
+    st.title(_t("🌍 לוח בקרה", "🌍 Dashboard"))
 
     items = db.get_all_watch_items(enabled_only=False)
 
@@ -350,19 +355,19 @@ if page == "🏠 לוח בקרה":
     alerts_today = 0  # could read from log
 
     with col1:
-        st.metric("סה״כ מעקבים", len(items))
+        st.metric(_t("סה״כ מעקבים", "Total Watches"), len(items))
     with col2:
-        st.metric("פעילים", active)
+        st.metric(_t("פעילים", "Active"), active)
     with col3:
-        st.metric("עם מחיר", with_price)
+        st.metric(_t("עם מחיר", "With Price"), with_price)
     with col4:
-        monitor_status = "🟢 פועל" if st.session_state.monitor_running else "🔴 כבוי"
-        st.metric("ניטור", monitor_status)
+        monitor_status = _t("🟢 פועל", "🟢 Running") if st.session_state.monitor_running else _t("🔴 כבוי", "🔴 Stopped")
+        st.metric(_t("ניטור", "Monitor"), monitor_status)
 
     st.divider()
 
     if not items:
-        st.info("אין פריטים עדיין. לחץ **'➕ הוסף מעקב'** בתפריט השמאלי.")
+        st.info(_t("אין פריטים עדיין. לחץ **'➕ הוסף מעקב'** בתפריט השמאלי.", "No items yet. Click **'➕ Add Watch'** in the sidebar."))
     else:
         # ── Items grid ─────────────────────────────────────────────────────────
         for item in items:
@@ -379,11 +384,11 @@ if page == "🏠 לוח בקרה":
 
                 with left:
                     # Info
-                    st.markdown(f"**יעד:** {item['destination']}")
+                    st.markdown(f"**{_t('יעד', 'Dest')}:** {item['destination']}")
                     if item.get("origin"):
-                        st.markdown(f"**מוצא:** {item['origin']}")
+                        st.markdown(f"**{_t('מוצא', 'Origin')}:** {item['origin']}")
                     if item.get("date_from"):
-                        st.markdown(f"**תאריכים:** {item['date_from']} → {item.get('date_to', '')}")
+                        st.markdown(f"**{_t('תאריכים', 'Dates')}:** {item['date_from']} → {item.get('date_to', '')}")
 
                     st.divider()
 
@@ -392,28 +397,28 @@ if page == "🏠 לוח בקרה":
                         st.markdown(
                             f"<h2 style='color:{price_color};margin:0'>"
                             f"{fmt_price(last['price'], last['currency'])}</h2>"
-                            f"<small style='color:#aaa'>מחיר נוכחי | {last['checked_at'][11:16]}</small>",
+                            f"<small style='color:#aaa'>{_t('מחיר נוכחי', 'Current price')} | {last['checked_at'][11:16]}</small>",
                             unsafe_allow_html=True,
                         )
                         if lowest and lowest["price"] < last["price"]:
                             savings = last["price"] - lowest["price"]
-                            st.caption(f"⬇ מינימום: {fmt_price(lowest['price'], lowest['currency'])} (חסכון {savings:.0f})")
+                            st.caption(f"⬇ {_t('מינימום', 'Min')}: {fmt_price(lowest['price'], lowest['currency'])} ({_t('חסכון', 'saving')} {savings:.0f})")
                         if item["max_price"]:
                             diff = last["price"] - item["max_price"]
                             if diff <= 0:
-                                st.success(f"🎯 מתחת ליעד! ({fmt_price(item['max_price'])})")
+                                st.success(f"🎯 {_t('מתחת ליעד!', 'Below target!')} ({fmt_price(item['max_price'])})")
                             else:
-                                st.caption(f"🎯 יעד: {fmt_price(item['max_price'])} (עוד {diff:.0f})")
+                                st.caption(f"🎯 {_t('יעד', 'Target')}: {fmt_price(item['max_price'])} ({_t('עוד', 'gap')} {diff:.0f})")
                     else:
-                        st.markdown("*אין מחיר עדיין*")
+                        st.markdown(f"*{_t('אין מחיר עדיין', 'No price yet')}*")
 
                     st.divider()
 
                     # Action buttons
                     b1, b2, b3 = st.columns(3)
                     with b1:
-                        if st.button("🔍 בדוק", key=f"check_{item['id']}"):
-                            with st.spinner("מחפש מחיר..."):
+                        if st.button(_t("🔍 בדוק", "🔍 Check"), key=f"check_{item['id']}"):
+                            with st.spinner(_t("מחפש מחיר...", "Searching price...")):
                                 result = agent.search_price(item)
                                 if result.get("found"):
                                     price = float(result["price"])
@@ -435,7 +440,7 @@ if page == "🏠 לוח בקרה":
                                     st.success(f"✅ {fmt_price(price, result.get('currency',''))}")
                                     st.rerun()
                                 else:
-                                    st.error(result.get("reason", "לא נמצא"))
+                                    st.error(result.get("reason", _t("לא נמצא", "Not found")))
                     with b2:
                         enabled_label = "⏸" if item["enabled"] else "▶"
                         if st.button(enabled_label, key=f"tog_{item['id']}"):
@@ -452,7 +457,7 @@ if page == "🏠 לוח בקרה":
                     if fig:
                         st.plotly_chart(fig, use_container_width=True, key=f"chart_{item['id']}")
                     else:
-                        st.info("📊 גרף יופיע לאחר 2+ בדיקות מחיר")
+                        st.info(_t("📊 גרף יופיע לאחר 2+ בדיקות מחיר", "📊 Chart will appear after 2+ price checks"))
 
                     # Last details
                     if last:
@@ -472,8 +477,8 @@ if page == "🏠 לוח בקרה":
 
                     # AI analysis
                     if len(history) >= 2:
-                        if st.button("🤖 ניתוח AI", key=f"anal_{item['id']}"):
-                            with st.spinner("מנתח..."):
+                        if st.button(_t("🤖 ניתוח AI", "🤖 AI Analysis"), key=f"anal_{item['id']}"):
+                            with st.spinner(_t("מנתח...", "Analyzing...")):
                                 analysis = agent.analyze_deal(item, history)
                             st.info(f"💡 {analysis}")
 
@@ -482,41 +487,41 @@ if page == "🏠 לוח בקרה":
 # PAGE: Add Item
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "➕ הוסף מעקב":
-    st.title("➕ הוסף פריט למעקב")
+    st.title(_t("➕ הוסף פריט למעקב", "➕ Add Watch Item"))
 
     with st.form("add_item_form"):
         col1, col2 = st.columns(2)
 
         with col1:
-            name = st.text_input("שם הפריט *", placeholder="טיסה לברצלונה")
+            name = st.text_input(_t("שם הפריט *", "Item name *"), placeholder=_t("טיסה לברצלונה", "Flight to Barcelona"))
             category = st.selectbox(
-                "קטגוריה *",
+                _t("קטגוריה *", "Category *"),
                 ["flight", "hotel", "apartment", "package"],
                 format_func=lambda x: f"{CAT_EMOJI[x]} {x}",
             )
-            destination = st.text_input("יעד *", placeholder="ברצלונה")
-            origin = st.text_input("עיר מוצא", placeholder="TLV (לטיסות)")
+            destination = st.text_input(_t("יעד *", "Destination *"), placeholder=_t("ברצלונה", "Barcelona"))
+            origin = st.text_input(_t("עיר מוצא", "Origin city"), placeholder=_t("TLV (לטיסות)", "TLV (for flights)"))
 
         with col2:
-            date_from = st.date_input("תאריך התחלה", value=None)
-            date_to = st.date_input("תאריך סיום", value=None)
+            date_from = st.date_input(_t("תאריך התחלה", "Start date"), value=None)
+            date_to = st.date_input(_t("תאריך סיום", "End date"), value=None)
             max_price = st.number_input(
-                "מחיר יעד (התרע כשיורד אל/מתחת)", min_value=0.0, value=0.0, step=10.0
+                _t("מחיר יעד (התרע כשיורד אל/מתחת)", "Target price (alert when drops to/below)"), min_value=0.0, value=0.0, step=10.0
             )
-            drop_pct = st.slider("התרע בירידה של %", 5, 50, 10)
+            drop_pct = st.slider(_t("התרע בירידה של %", "Alert on % drop"), 5, 50, 10)
 
         custom_query = st.text_area(
-            "שאילתה מותאמת אישית (אופציונלי)",
-            placeholder="מצא טיסה זולה מ-TLV לברצלונה בתחילת מאי, כולל מזוודה",
+            _t("שאילתה מותאמת אישית (אופציונלי)", "Custom query (optional)"),
+            placeholder=_t("מצא טיסה זולה מ-TLV לברצלונה בתחילת מאי, כולל מזוודה", "Find cheap flight from TLV to Barcelona early May, with luggage"),
             height=80,
         )
 
-        check_now = st.checkbox("בדוק מחיר מיד לאחר הוספה", value=True)
-        submitted = st.form_submit_button("➕ הוסף", use_container_width=True)
+        check_now = st.checkbox(_t("בדוק מחיר מיד לאחר הוספה", "Check price immediately after adding"), value=True)
+        submitted = st.form_submit_button(_t("➕ הוסף", "➕ Add"), use_container_width=True)
 
     if submitted:
         if not name or not destination:
-            st.error("שם ויעד הם שדות חובה")
+            st.error(_t("שם ויעד הם שדות חובה", "Name and destination are required"))
         else:
             item = db.WatchItem(
                 id=None,
@@ -531,13 +536,13 @@ elif page == "➕ הוסף מעקב":
                 drop_pct=float(drop_pct),
             )
             new_id = db.add_watch_item(item)
-            st.success(f"✅ נוסף! (ID: {new_id})")
+            st.success(f"✅ {_t('נוסף!', 'Added!')} (ID: {new_id})")
 
             if check_now:
                 items_all = db.get_all_watch_items(enabled_only=False)
                 item_dict = next((i for i in items_all if i["id"] == new_id), None)
                 if item_dict:
-                    with st.spinner("🔍 מחפש מחיר..."):
+                    with st.spinner(_t("🔍 מחפש מחיר...", "🔍 Searching price...")):
                         result = agent.search_price(item_dict)
 
                     if result.get("found"):
@@ -557,49 +562,49 @@ elif page == "➕ הוסף מעקב":
                         dq = result.get("deal_quality", "")
                         dq_color = DEAL_COLOR.get(dq, "#aaa")
                         st.markdown(
-                            f"### 💰 מחיר שנמצא: "
+                            f"### 💰 {_t('מחיר שנמצא:', 'Price found:')} "
                             f"**{fmt_price(price, result.get('currency',''))}**"
                         )
                         st.markdown(
                             f"<span style='color:{dq_color}'>⭐ {dq}</span> | "
-                            f"מקור: {result.get('source', '')}",
+                            f"{_t('מקור', 'Source')}: {result.get('source', '')}",
                             unsafe_allow_html=True,
                         )
                         if result.get("details"):
                             st.caption(result["details"][:200])
                     else:
-                        st.warning(f"לא נמצא מחיר: {result.get('reason', '')}")
+                        st.warning(f"{_t('לא נמצא מחיר:', 'Price not found:')} {result.get('reason', '')}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Smart Opportunities
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🌟 הזדמנויות AI":
-    st.title("🌟 הזדמנויות חכמות")
-    st.caption("Claude מחפש את הדילים הטובים ביותר עבורך")
+    st.title(_t("🌟 הזדמנויות חכמות", "🌟 Smart Opportunities"))
+    st.caption(_t("Claude מחפש את הדילים הטובים ביותר עבורך", "Claude finds the best deals for you"))
 
     with st.form("opp_form"):
         dests = st.text_input(
-            "יעדים לחיפוש (מופרד בפסיקים)",
-            placeholder="לונדון, פריז, ברצלונה, אמסטרדם",
-            value="לונדון, פריז, ברצלונה",
+            _t("יעדים לחיפוש (מופרד בפסיקים)", "Destinations to search (comma separated)"),
+            placeholder=_t("לונדון, פריז, ברצלונה, אמסטרדם", "London, Paris, Barcelona, Amsterdam"),
+            value=_t("לונדון, פריז, ברצלונה", "London, Paris, Barcelona"),
         )
         categories_sel = st.multiselect(
-            "סוגי מוצרים",
-            ["טיסות", "מלונות", "חבילות"],
-            default=["טיסות", "מלונות", "חבילות"],
+            _t("סוגי מוצרים", "Product types"),
+            [_t("טיסות", "Flights"), _t("מלונות", "Hotels"), _t("חבילות", "Packages")],
+            default=[_t("טיסות", "Flights"), _t("מלונות", "Hotels"), _t("חבילות", "Packages")],
         )
-        search_btn = st.form_submit_button("🔍 חפש הזדמנויות", use_container_width=True)
+        search_btn = st.form_submit_button(_t("🔍 חפש הזדמנויות", "🔍 Search Opportunities"), use_container_width=True)
 
     if search_btn:
         dest_list = [d.strip() for d in dests.split(",") if d.strip()]
-        with st.spinner("🤖 Claude מחפש הזדמנויות... (עשוי לקחת 30-60 שניות)"):
+        with st.spinner(_t("🤖 Claude מחפש הזדמנויות... (עשוי לקחת 30-60 שניות)", "🤖 Claude searching opportunities... (may take 30-60 seconds)")):
             opps = agent.smart_search_opportunities(dest_list)
 
         if not opps:
-            st.warning("לא נמצאו הזדמנויות כרגע. נסה שוב מאוחר יותר.")
+            st.warning(_t("לא נמצאו הזדמנויות כרגע. נסה שוב מאוחר יותר.", "No opportunities found right now. Try again later."))
         else:
-            st.success(f"נמצאו {len(opps)} הזדמנויות! 🎉")
+            st.success(f"{_t('נמצאו', 'Found')} {len(opps)} {_t('הזדמנויות!', 'opportunities!')} 🎉")
             st.divider()
 
             cols = st.columns(min(len(opps), 3))
@@ -622,9 +627,9 @@ elif page == "🌟 הזדמנויות AI":
                         st.markdown(
                             f"💡 *{opp.get('why_good', '')}*"
                         )
-                        st.markdown(f"{urg_color} דחיפות: **{urgency}**")
+                        st.markdown(f"{urg_color} {_t('דחיפות', 'Urgency')}: **{urgency}**")
 
-                        if st.button(f"➕ הוסף למעקב", key=f"add_opp_{i}"):
+                        if st.button(_t("➕ הוסף למעקב", "➕ Add to watchlist"), key=f"add_opp_{i}"):
                             new_item = db.WatchItem(
                                 id=None,
                                 name=f"{cat_emoji} {opp.get('destination', '')}",
@@ -637,10 +642,10 @@ elif page == "🌟 הזדמנויות AI":
                                 drop_pct=10.0,
                             )
                             db.add_watch_item(new_item)
-                            st.success("נוסף!")
+                            st.success(_t("נוסף!", "Added!"))
 
             if len(opps) > 3:
-                with st.expander(f"עוד {len(opps)-3} הזדמנויות"):
+                with st.expander(f"{_t('עוד', 'More')} {len(opps)-3} {_t('הזדמנויות', 'opportunities')}"):
                     for opp in opps[3:]:
                         st.markdown(
                             f"**{opp.get('destination')}** — "
@@ -653,16 +658,16 @@ elif page == "🌟 הזדמנויות AI":
 # PAGE: Deal Hunter
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🔥 ציד דילים":
-    st.title("🔥 ציד דילים — Error Fares & Flash Sales")
-    st.caption("סורק secretflying, El Al, Israir, Arkia, Ryanair, WizzAir — מחפש שגיאות מחיר ומבצעי פלאש")
+    st.title(_t("🔥 ציד דילים — Error Fares & Flash Sales", "🔥 Deal Hunter — Error Fares & Flash Sales"))
+    st.caption(_t("סורק secretflying, El Al, Israir, Arkia, Ryanair, WizzAir — מחפש שגיאות מחיר ומבצעי פלאש", "Scans secretflying, El Al, Israir, Arkia, Ryanair, WizzAir — finds error fares and flash sales"))
 
     GRADE_COLOR = {"A+": "#00ff88", "A": "#44ff88", "B": "#88ff44", "C": "#ffcc00", "D": "#ff4444"}
     URGENCY_ICON = {"immediate": "🚨", "today": "⚡", "this_week": "📅"}
 
-    tab1, tab2 = st.tabs(["🔍 ציד חדש", "📋 דילים שנמצאו"])
+    tab1, tab2 = st.tabs([_t("🔍 ציד חדש", "🔍 New Hunt"), _t("📋 דילים שנמצאו", "📋 Found Deals")])
 
     with tab1:
-        st.markdown("בחר אתרי מקור לסריקה:")
+        st.markdown(_t("בחר אתרי מקור לסריקה:", "Select source sites to scan:"))
         sources_selected = {}
         src_cols = st.columns(4)
         for i, (name, url) in enumerate(deal_hunter.DEAL_SOURCES.items()):
@@ -671,24 +676,24 @@ elif page == "🔥 ציד דילים":
 
         selected_urls = [deal_hunter.DEAL_SOURCES[k] for k, v in sources_selected.items() if v]
 
-        if st.button("🔥 צוד דילים עכשיו!", use_container_width=True, type="primary"):
+        if st.button(_t("🔥 צוד דילים עכשיו!", "🔥 Hunt Deals Now!"), use_container_width=True, type="primary"):
             if not selected_urls:
-                st.error("בחר לפחות מקור אחד")
+                st.error(_t("בחר לפחות מקור אחד", "Select at least one source"))
             else:
-                with st.spinner(f"🤖 Claude סורק {len(selected_urls)} אתרים... (30-90 שניות)"):
+                with st.spinner(f"🤖 Claude {_t('סורק', 'scanning')} {len(selected_urls)} {_t('אתרים... (30-90 שניות)', 'sites... (30-90 seconds)')}"):
                     found = deal_hunter.hunt_deals(selected_urls)
 
                 if not found or (len(found) == 1 and "error" in found[0]):
                     err = found[0].get("error", "") if found else ""
-                    st.warning(f"לא נמצאו דילים. {err}")
+                    st.warning(f"{_t('לא נמצאו דילים.', 'No deals found.')} {err}")
                 else:
-                    st.success(f"🎉 נמצאו {len(found)} דילים!")
+                    st.success(f"🎉 {_t('נמצאו', 'Found')} {len(found)} {_t('דילים!', 'deals!')}")
                     for d in found:
                         grade = d.get("ai_grade", d.get("deal_type", ""))
                         gcolor = GRADE_COLOR.get(grade, "#aaa")
                         urgency = URGENCY_ICON.get(d.get("urgency", ""), "📅")
                         with st.container():
-                            book_link = f'<br><a href="{d["book_url"]}" target="_blank">🔗 הזמן</a>' if d.get("book_url") else ""
+                            book_link = f'<br><a href="{d["book_url"]}" target="_blank">🔗 {_t("הזמן", "Book")}</a>' if d.get("book_url") else ""
                             st.markdown(
                                 f"<div style='background:rgba(255,255,255,0.04);border-radius:10px;"
                                 f"padding:12px 16px;margin-bottom:8px;border-left:3px solid {gcolor}'>"
@@ -703,17 +708,17 @@ elif page == "🔥 ציד דילים":
                             )
 
     with tab2:
-        min_score_filter = st.slider("ציון מינימלי", 0.0, 10.0, 5.0, 0.5)
+        min_score_filter = st.slider(_t("ציון מינימלי", "Minimum score"), 0.0, 10.0, 5.0, 0.5)
         recent = deal_hunter.get_recent_deals(limit=50, min_score=min_score_filter)
 
         if not recent:
-            st.info("אין דילים שמורים עדיין. לחץ 'צוד דילים' כדי להתחיל.")
+            st.info(_t("אין דילים שמורים עדיין. לחץ 'צוד דילים' כדי להתחיל.", "No saved deals yet. Click 'Hunt Deals' to start."))
         else:
-            st.caption(f"מציג {len(recent)} דילים (מינימום ציון {min_score_filter})")
+            st.caption(f"{_t('מציג', 'Showing')} {len(recent)} {_t('דילים (מינימום ציון', 'deals (min score')} {min_score_filter})")
 
             # Score leaderboard with AI scoring
-            if st.button("🤖 נקד דילים עם AI", key="ai_score_btn"):
-                with st.spinner("מנקד..."):
+            if st.button(_t("🤖 נקד דילים עם AI", "🤖 Score Deals with AI"), key="ai_score_btn"):
+                with st.spinner(_t("מנקד...", "Scoring...")):
                     scored = deal_scorer.score_and_filter(recent, min_score=0)
                 recent = scored if scored else recent
 
@@ -726,14 +731,14 @@ elif page == "🔥 ציד דילים":
 
                 with st.expander(
                     f"{urgency} **{d.get('destination','')}** — "
-                    f"${d.get('price', 0):.0f} | ציון: {score:.1f}/10 {grade}"
+                    f"${d.get('price', 0):.0f} | {_t('ציון', 'Score')}: {score:.1f}/10 {grade}"
                 ):
                     c1, c2 = st.columns([2, 1])
                     with c1:
-                        st.markdown(f"**חברה:** {d.get('airline','')}")
-                        st.markdown(f"**תאריכים:** {d.get('dates','')}")
-                        st.markdown(f"**סוג:** {d.get('deal_type','')}")
-                        st.markdown(f"**מקור:** {d.get('source','')}")
+                        st.markdown(f"**{_t('חברה', 'Airline')}:** {d.get('airline','')}")
+                        st.markdown(f"**{_t('תאריכים', 'Dates')}:** {d.get('dates','')}")
+                        st.markdown(f"**{_t('סוג', 'Type')}:** {d.get('deal_type','')}")
+                        st.markdown(f"**{_t('מקור', 'Source')}:** {d.get('source','')}")
                         why = d.get("ai_why") or d.get("why_amazing", "")
                         if why:
                             st.info(f"💡 {why}")
@@ -750,38 +755,38 @@ elif page == "🔥 ציד דילים":
                             unsafe_allow_html=True,
                         )
                         if d.get("book_url"):
-                            st.link_button("🔗 הזמן", d["book_url"])
+                            st.link_button(_t("🔗 הזמן", "🔗 Book"), d["book_url"])
                         if d.get("expires"):
-                            st.caption(f"⏰ פג תוקף: {d['expires']}")
+                            st.caption(f"⏰ {_t('פג תוקף', 'Expires')}: {d['expires']}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Surprise Me
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🎲 הפתיעני":
-    st.title("🎲 הפתיעני — מצא את הדסטינציה הכי שווה")
-    st.caption("הכנס תקציב ותאריכים — Claude ימצא את היעד הכי שווה שאולי לא חשבת עליו")
+    st.title(_t("🎲 הפתיעני — מצא את הדסטינציה הכי שווה", "🎲 Surprise Me — Find the Best Destination"))
+    st.caption(_t("הכנס תקציב ותאריכים — Claude ימצא את היעד הכי שווה שאולי לא חשבת עליו", "Enter budget and dates — Claude will find the best destination you might not have thought of"))
 
     with st.form("surprise_form"):
         c1, c2, c3 = st.columns(3)
         with c1:
-            budget = st.number_input("תקציב לאדם ($)", value=800, min_value=200, step=50)
-            currency = st.selectbox("מטבע", ["USD", "EUR", "ILS"])
+            budget = st.number_input(_t("תקציב לאדם ($)", "Budget per person ($)"), value=800, min_value=200, step=50)
+            currency = st.selectbox(_t("מטבע", "Currency"), ["USD", "EUR", "ILS"])
         with c2:
-            from_date = st.date_input("תאריך יציאה", value=None)
-            to_date = st.date_input("תאריך חזרה", value=None)
+            from_date = st.date_input(_t("תאריך יציאה", "Departure date"), value=None)
+            to_date = st.date_input(_t("תאריך חזרה", "Return date"), value=None)
         with c3:
-            duration = st.slider("ימי טיול", 3, 21, 7)
-            style = st.selectbox("סגנון", ["כל סגנון", "תקציבי", "רומנטי", "הרפתקאות", "תרבות", "טבע", "לוקסוס"])
+            duration = st.slider(_t("ימי טיול", "Trip days"), 3, 21, 7)
+            style = st.selectbox(_t("סגנון", "Style"), [_t("כל סגנון", "Any style"), _t("תקציבי", "Budget"), _t("רומנטי", "Romantic"), _t("הרפתקאות", "Adventure"), _t("תרבות", "Culture"), _t("טבע", "Nature"), _t("לוקסוס", "Luxury")])
 
-        interests = st.text_input("תחומי עניין", placeholder="אוכל, היסטוריה, שפת ים, הייקינג...")
-        surprise_btn = st.form_submit_button("🎲 הפתיעני!", use_container_width=True, type="primary")
+        interests = st.text_input(_t("תחומי עניין", "Interests"), placeholder=_t("אוכל, היסטוריה, שפת ים, הייקינג...", "Food, history, beach, hiking..."))
+        surprise_btn = st.form_submit_button(_t("🎲 הפתיעני!", "🎲 Surprise Me!"), use_container_width=True, type="primary")
 
     if surprise_btn:
         from_str = str(from_date) if from_date else ""
         to_str = str(to_date) if to_date else ""
 
-        with st.spinner("🤖 Claude מחפש את הדסטינציות הכי שוות עבורך... (30-60 שניות)"):
+        with st.spinner(_t("🤖 Claude מחפש את הדסטינציות הכי שוות עבורך... (30-60 שניות)", "🤖 Claude finding the best destinations for you... (30-60 seconds)")):
             results = smart_search.surprise_me(
                 budget=budget,
                 currency=currency,
@@ -794,9 +799,9 @@ elif page == "🎲 הפתיעני":
 
         if not results or (len(results) == 1 and "error" in results[0]):
             err = results[0].get("error", "") if results else ""
-            st.error(f"לא נמצאו תוצאות. {err}")
+            st.error(f"{_t('לא נמצאו תוצאות.', 'No results found.')} {err}")
         else:
-            st.success(f"🎉 נמצאו {len(results)} יעדים מדהימים!")
+            st.success(f"🎉 {_t('נמצאו', 'Found')} {len(results)} {_t('יעדים מדהימים!', 'amazing destinations!')}")
             st.divider()
 
             for i, dest in enumerate(results):
@@ -827,9 +832,9 @@ elif page == "🎲 הפתיעני":
                         if dest.get("best_time_to_book"):
                             st.caption(f"📅 מתי להזמין: {dest['best_time_to_book']}")
                     with c2:
-                        st.metric("סה״כ לאדם", f"${dest.get('total_price', 0):,}")
-                        st.caption(f"✈️ טיסה: ${dest.get('flight_price', 0):,}")
-                        st.caption(f"🏨 מלון/לילה: ${dest.get('hotel_price_night', 0):,}")
+                        st.metric(_t("סה״כ לאדם", "Total per person"), f"${dest.get('total_price', 0):,}")
+                        st.caption(f"✈️ {_t('טיסה', 'Flight')}: ${dest.get('flight_price', 0):,}")
+                        st.caption(f"🏨 {_t('מלון/לילה', 'Hotel/night')}: ${dest.get('hotel_price_night', 0):,}")
                     with c3:
                         st.markdown(
                             f"<div style='text-align:center;padding:10px'>"
@@ -839,7 +844,7 @@ elif page == "🎲 הפתיעני":
                             f"</div>",
                             unsafe_allow_html=True,
                         )
-                        if st.button("➕ הוסף למעקב", key=f"add_surprise_{i}"):
+                        if st.button(_t("➕ הוסף למעקב", "➕ Add to watchlist"), key=f"add_surprise_{i}"):
                             new_item = db.WatchItem(
                                 id=None,
                                 name=f"🎲 {dest.get('destination','')}",
@@ -853,7 +858,7 @@ elif page == "🎲 הפתיעני":
                                 drop_pct=10.0,
                             )
                             db.add_watch_item(new_item)
-                            st.success("נוסף למעקב! ✅")
+                            st.success(_t("נוסף למעקב! ✅", "Added to watchlist! ✅"))
 
                     st.divider()
 
@@ -862,35 +867,35 @@ elif page == "🎲 הפתיעני":
 # PAGE: Smart Tools
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🛠️ כלים חכמים":
-    st.title("🛠️ כלים חכמים")
-    st.caption("חיפוש מתקדם: Split Ticket, שדות תעופה קרובים, Last Minute, יום זול בשבוע, חבילה vs. עצמאי")
+    st.title(_t("🛠️ כלים חכמים", "🛠️ Smart Tools"))
+    st.caption(_t("חיפוש מתקדם: Split Ticket, שדות תעופה קרובים, Last Minute, יום זול בשבוע, חבילה vs. עצמאי", "Advanced search: Split Ticket, nearby airports, Last Minute, cheapest day, package vs. independent"))
 
     tool_tab = st.tabs([
         "✂️ Split Ticket",
-        "🏙️ שדות תעופה",
+        _t("🏙️ שדות תעופה", "🏙️ Airports"),
         "⏰ Last Minute",
-        "📆 יום זול",
-        "📦 חבילה vs. עצמאי",
-        "📅 מתי להזמין",
+        _t("📆 יום זול", "📆 Cheapest Day"),
+        _t("📦 חבילה vs. עצמאי", "📦 Package vs. Independent"),
+        _t("📅 מתי להזמין", "📅 When to Book"),
     ])
 
     # ── Split Ticket ────────────────────────────────────────────────────────
     with tool_tab[0]:
-        st.subheader("✂️ Split Ticket — הלוך-חזור vs. שני כרטיסים נפרדים")
-        st.caption("לפעמים שני כרטיסים חד-כיווניים זולים יותר מהלוך-חזור")
+        st.subheader(_t("✂️ Split Ticket — הלוך-חזור vs. שני כרטיסים נפרדים", "✂️ Split Ticket — Round-trip vs. two one-ways"))
+        st.caption(_t("לפעמים שני כרטיסים חד-כיווניים זולים יותר מהלוך-חזור", "Sometimes two one-way tickets are cheaper than a round-trip"))
 
         with st.form("split_form"):
             sc1, sc2 = st.columns(2)
             with sc1:
-                split_origin = st.text_input("מוצא", value="TLV")
-                split_dest = st.text_input("יעד", placeholder="LHR")
+                split_origin = st.text_input(_t("מוצא", "Origin"), value="TLV")
+                split_dest = st.text_input(_t("יעד", "Destination"), placeholder="LHR")
             with sc2:
-                split_out = st.date_input("תאריך יציאה", key="split_out")
-                split_ret = st.date_input("תאריך חזרה", key="split_ret")
-            split_btn = st.form_submit_button("✂️ השווה", use_container_width=True, type="primary")
+                split_out = st.date_input(_t("תאריך יציאה", "Departure date"), key="split_out")
+                split_ret = st.date_input(_t("תאריך חזרה", "Return date"), key="split_ret")
+            split_btn = st.form_submit_button(_t("✂️ השווה", "✂️ Compare"), use_container_width=True, type="primary")
 
         if split_btn and split_dest:
-            with st.spinner("🤖 Claude משווה מחירים... (30-60 שניות)"):
+            with st.spinner(_t("🤖 Claude משווה מחירים... (30-60 שניות)", "🤖 Claude comparing prices... (30-60 seconds)")):
                 result = smart_search.check_split_ticket(
                     origin=split_origin,
                     destination=split_dest,
@@ -905,48 +910,48 @@ elif page == "🛠️ כלים חכמים":
                 savings = result.get("savings", 0)
 
                 c1, c2, c3 = st.columns(3)
-                c1.metric("הלוך-חזור", f"${result.get('roundtrip_price', 0):,}")
+                c1.metric(_t("הלוך-חזור", "Round-trip"), f"${result.get('roundtrip_price', 0):,}")
                 c2.metric(
-                    "שני חד-כיווניים",
+                    _t("שני חד-כיווניים", "Two one-ways"),
                     f"${result.get('split_total', 0):,}",
                     delta=f"-${savings:,.0f}" if savings > 0 else f"+${-savings:,.0f}",
                     delta_color="normal" if savings > 0 else "inverse",
                 )
-                c3.metric("חיסכון", f"${savings:,.0f} ({result.get('savings_pct', 0):.1f}%)")
+                c3.metric(_t("חיסכון", "Savings"), f"${savings:,.0f} ({result.get('savings_pct', 0):.1f}%)")
 
                 st.divider()
                 if rec == "split":
-                    st.success(f"✅ **Split Ticket משתלם!** חסכון של ${savings:,.0f}")
+                    st.success(f"✅ **{_t('Split Ticket משתלם!', 'Split Ticket wins!')}** {_t('חסכון של', 'Saving')} ${savings:,.0f}")
                 else:
-                    st.info(f"ℹ️ **הלוך-חזור עדיף** במקרה זה")
+                    st.info(f"ℹ️ **{_t('הלוך-חזור עדיף', 'Round-trip is better')}** {_t('במקרה זה', 'in this case')}")
 
-                st.markdown(f"**נימוק:** {result.get('reasoning', '')}")
+                st.markdown(f"**{_t('נימוק', 'Reasoning')}:** {result.get('reasoning', '')}")
 
                 lc1, lc2 = st.columns(2)
                 with lc1:
                     if result.get("book_out_url"):
-                        st.link_button("✈️ הזמן יציאה", result["book_out_url"])
+                        st.link_button(_t("✈️ הזמן יציאה", "✈️ Book outbound"), result["book_out_url"])
                 with lc2:
                     if result.get("book_return_url"):
-                        st.link_button("✈️ הזמן חזרה", result["book_return_url"])
+                        st.link_button(_t("✈️ הזמן חזרה", "✈️ Book return"), result["book_return_url"])
 
     # ── Nearby Airports ─────────────────────────────────────────────────────
     with tool_tab[1]:
-        st.subheader("🏙️ השווה שדות תעופה — TLV / SDV / ETH / HFA")
-        st.caption("לפעמים טיסה מאילת או חיפה זולה יותר מנתב\"ג")
+        st.subheader(_t("🏙️ השווה שדות תעופה — TLV / SDV / ETH / HFA", "🏙️ Compare Airports — TLV / SDV / ETH / HFA"))
+        st.caption(_t("לפעמים טיסה מאילת או חיפה זולה יותר מנתב\"ג", "Sometimes flying from Eilat or Haifa is cheaper than Ben Gurion"))
 
         with st.form("nearby_form"):
             na_c1, na_c2, na_c3 = st.columns(3)
             with na_c1:
-                na_dest = st.text_input("יעד", placeholder="ATH, FCO, BCN...")
+                na_dest = st.text_input(_t("יעד", "Destination"), placeholder="ATH, FCO, BCN...")
             with na_c2:
-                na_date = st.date_input("תאריך יציאה", key="na_date")
+                na_date = st.date_input(_t("תאריך יציאה", "Departure date"), key="na_date")
             with na_c3:
-                na_ret = st.date_input("תאריך חזרה (אופציונלי)", value=None, key="na_ret")
-            na_btn = st.form_submit_button("🔍 השווה", use_container_width=True, type="primary")
+                na_ret = st.date_input(_t("תאריך חזרה (אופציונלי)", "Return date (optional)"), value=None, key="na_ret")
+            na_btn = st.form_submit_button(_t("🔍 השווה", "🔍 Compare"), use_container_width=True, type="primary")
 
         if na_btn and na_dest:
-            with st.spinner("🤖 Claude בודק כל שדות התעופה..."):
+            with st.spinner(_t("🤖 Claude בודק כל שדות התעופה...", "🤖 Claude checking all airports...")):
                 airports = smart_search.check_nearby_airports(
                     destination=na_dest,
                     date=str(na_date),
@@ -954,10 +959,10 @@ elif page == "🛠️ כלים חכמים":
                 )
 
             if not airports:
-                st.warning("לא נמצאו תוצאות. ודא שהיעד נכון.")
+                st.warning(_t("לא נמצאו תוצאות. ודא שהיעד נכון.", "No results found. Check the destination."))
             else:
                 cheapest = airports[0]
-                st.success(f"🏆 הכי זול: **{cheapest['airport_name']}** — ${cheapest['price']:,}")
+                st.success(f"🏆 {_t('הכי זול', 'Cheapest')}: **{cheapest['airport_name']}** — ${cheapest['price']:,}")
                 st.divider()
 
                 for ap in airports:
@@ -971,7 +976,7 @@ elif page == "🛠️ כלים חכמים":
                         f"<b style='color:{color}'>{ap['airport_code']} — {ap['airport_name']}</b>"
                         f"  <span style='float:right;color:{color}'>${ap['price']:,}</span><br>"
                         f"<small style='color:#aaa'>{ap.get('airline','')} "
-                        f"{'(הכי זול ✅)' if is_best else f'(+${savings_vs_best:,})'}"
+                        f"{'(' + _t('הכי זול', 'Cheapest') + ' ✅)' if is_best else f'(+${savings_vs_best:,})'}"
                         f"{'  ' + ap.get('notes','') if ap.get('notes') else ''}</small>"
                         f"</div>",
                         unsafe_allow_html=True,
@@ -979,21 +984,21 @@ elif page == "🛠️ כלים חכמים":
 
     # ── Last Minute ─────────────────────────────────────────────────────────
     with tool_tab[2]:
-        st.subheader("⏰ Last Minute — דילים לשבוע הקרוב")
-        st.caption("חברות תעופה מוכרות כרטיסים ריקים בזול ברגע האחרון")
+        st.subheader(_t("⏰ Last Minute — דילים לשבוע הקרוב", "⏰ Last Minute — Deals for the Coming Week"))
+        st.caption(_t("חברות תעופה מוכרות כרטיסים ריקים בזול ברגע האחרון", "Airlines sell empty seats cheap at the last minute"))
 
         with st.form("lm_form"):
             lm_c1, lm_c2, lm_c3 = st.columns(3)
             with lm_c1:
-                lm_origin = st.text_input("מוצא", value="TLV")
+                lm_origin = st.text_input(_t("מוצא", "Origin"), value="TLV")
             with lm_c2:
-                lm_days = st.slider("כמה ימים קדימה", 3, 14, 7)
+                lm_days = st.slider(_t("כמה ימים קדימה", "Days ahead"), 3, 14, 7)
             with lm_c3:
-                lm_max = st.number_input("מחיר מקסימלי ($)", value=300, min_value=50, step=50)
-            lm_btn = st.form_submit_button("⏰ מצא Last Minute", use_container_width=True, type="primary")
+                lm_max = st.number_input(_t("מחיר מקסימלי ($)", "Max price ($)"), value=300, min_value=50, step=50)
+            lm_btn = st.form_submit_button(_t("⏰ מצא Last Minute", "⏰ Find Last Minute"), use_container_width=True, type="primary")
 
         if lm_btn:
-            with st.spinner(f"🤖 Claude מחפש דילי last-minute ל-{lm_days} הימים הקרובים..."):
+            with st.spinner(f"🤖 Claude {_t('מחפש דילי last-minute ל', 'searching last-minute deals for the next')}-{lm_days} {_t('הימים הקרובים...', 'days...')}"):
                 deals = smart_search.find_last_minute_deals(
                     origin=lm_origin,
                     days_ahead=lm_days,
@@ -1001,9 +1006,9 @@ elif page == "🛠️ כלים חכמים":
                 )
 
             if not deals:
-                st.info(f"לא נמצאו דילים מתחת ל-${lm_max}. נסה להגדיל את המחיר המקסימלי.")
+                st.info(f"{_t('לא נמצאו דילים מתחת ל', 'No deals found below')}-${lm_max}. {_t('נסה להגדיל את המחיר המקסימלי.', 'Try increasing the max price.')}")
             else:
-                st.success(f"🎉 נמצאו {len(deals)} דילי last-minute!")
+                st.success(f"🎉 {_t('נמצאו', 'Found')} {len(deals)} {_t('דילי last-minute!', 'last-minute deals!')}")
                 import pandas as pd
                 df = pd.DataFrame(deals)
                 display_cols = [c for c in ["destination", "departure_date", "price", "airline", "seats_left", "deal_type", "why_cheap"] if c in df.columns]
@@ -1011,30 +1016,30 @@ elif page == "🛠️ כלים חכמים":
 
                 for d in deals[:3]:
                     with st.expander(f"✈️ {d.get('destination','')} — ${d.get('price',0):,} ({d.get('departure_date','')})"):
-                        st.markdown(f"**חברה:** {d.get('airline','')}")
-                        st.markdown(f"**סיבת הזול:** {d.get('why_cheap','')}")
+                        st.markdown(f"**{_t('חברה', 'Airline')}:** {d.get('airline','')}")
+                        st.markdown(f"**{_t('סיבת הזול', 'Why cheap')}:** {d.get('why_cheap','')}")
                         if d.get("seats_left"):
-                            st.warning(f"⚠️ נותרו {d['seats_left']} מקומות!")
+                            st.warning(f"⚠️ {_t('נותרו', 'Only')} {d['seats_left']} {_t('מקומות!', 'seats left!')}")
                         if d.get("book_by"):
-                            st.caption(f"⏰ הזמן עד: {d['book_by']}")
+                            st.caption(f"⏰ {_t('הזמן עד', 'Book by')}: {d['book_by']}")
 
     # ── Cheapest Day ─────────────────────────────────────────────────────────
     with tool_tab[3]:
-        st.subheader("📆 איזה יום בשבוע הכי זול?")
-        st.caption("ניתוח ממוצע מחירים לפי יום שבוע — תחסוך עד 30%")
+        st.subheader(_t("📆 איזה יום בשבוע הכי זול?", "📆 Which day of the week is cheapest?"))
+        st.caption(_t("ניתוח ממוצע מחירים לפי יום שבוע — תחסוך עד 30%", "Average price analysis by weekday — save up to 30%"))
 
         with st.form("cheap_day_form"):
             cd_c1, cd_c2, cd_c3 = st.columns(3)
             with cd_c1:
-                cd_origin = st.text_input("מוצא", value="TLV")
+                cd_origin = st.text_input(_t("מוצא", "Origin"), value="TLV")
             with cd_c2:
-                cd_dest = st.text_input("יעד", placeholder="BCN")
+                cd_dest = st.text_input(_t("יעד", "Destination"), placeholder="BCN")
             with cd_c3:
-                cd_month = st.text_input("חודש (YYYY-MM)", value=datetime.now().strftime("%Y-%m"))
-            cd_btn = st.form_submit_button("📆 נתח ימים", use_container_width=True, type="primary")
+                cd_month = st.text_input(_t("חודש (YYYY-MM)", "Month (YYYY-MM)"), value=datetime.now().strftime("%Y-%m"))
+            cd_btn = st.form_submit_button(_t("📆 נתח ימים", "📆 Analyze Days"), use_container_width=True, type="primary")
 
         if cd_btn and cd_dest:
-            with st.spinner("🤖 Claude מנתח מחירים לפי ימי שבוע..."):
+            with st.spinner(_t("🤖 Claude מנתח מחירים לפי ימי שבוע...", "🤖 Claude analyzing prices by weekday...")):
                 result = smart_search.find_cheapest_day_of_week(
                     origin=cd_origin,
                     destination=cd_dest,
@@ -1044,20 +1049,20 @@ elif page == "🛠️ כלים חכמים":
             if "error" in result:
                 st.error(result["error"])
             elif not result:
-                st.warning("לא נמצאו נתונים")
+                st.warning(_t("לא נמצאו נתונים", "No data found"))
             else:
                 c1, c2, c3 = st.columns(3)
-                c1.metric("יום הכי זול", result.get("cheapest_day", ""))
-                c2.metric("יום הכי יקר", result.get("most_expensive_day", ""))
+                c1.metric(_t("יום הכי זול", "Cheapest day"), result.get("cheapest_day", ""))
+                c2.metric(_t("יום הכי יקר", "Most expensive day"), result.get("most_expensive_day", ""))
                 c3.metric(
-                    "חיסכון פוטנציאלי",
+                    _t("חיסכון פוטנציאלי", "Potential savings"),
                     f"${result.get('savings_by_day', 0):,}",
                     delta=f"-{result.get('savings_pct', 0):.0f}%",
                 )
 
                 st.info(f"💡 {result.get('tip', '')}")
                 if result.get("best_time"):
-                    st.caption(f"⏰ שעה מומלצת: {result['best_time']}")
+                    st.caption(f"⏰ {_t('שעה מומלצת', 'Recommended time')}: {result['best_time']}")
 
                 # Ranking chart
                 ranking = result.get("days_ranking", [])
@@ -1078,22 +1083,22 @@ elif page == "🛠️ כלים חכמים":
 
     # ── Package vs. Separate ─────────────────────────────────────────────────
     with tool_tab[4]:
-        st.subheader("📦 חבילה מאורגנת vs. הזמנה עצמאית")
-        st.caption("מחשב אם Gulliver/IsraFlight/Dan זול יותר מלהזמין לבד")
+        st.subheader(_t("📦 חבילה מאורגנת vs. הזמנה עצמאית", "📦 Package vs. Independent Booking"))
+        st.caption(_t("מחשב אם Gulliver/IsraFlight/Dan זול יותר מלהזמין לבד", "Calculates if Gulliver/IsraFlight/Dan is cheaper than booking independently"))
 
         with st.form("pkg_form"):
             pk_c1, pk_c2 = st.columns(2)
             with pk_c1:
-                pk_origin = st.text_input("מוצא", value="TLV")
-                pk_dest = st.text_input("יעד", placeholder="פראג")
-                pk_travelers = st.number_input("נוסעים", value=2, min_value=1, max_value=10)
+                pk_origin = st.text_input(_t("מוצא", "Origin"), value="TLV")
+                pk_dest = st.text_input(_t("יעד", "Destination"), placeholder=_t("פראג", "Prague"))
+                pk_travelers = st.number_input(_t("נוסעים", "Travelers"), value=2, min_value=1, max_value=10)
             with pk_c2:
-                pk_from = st.date_input("תאריך יציאה", key="pk_from")
-                pk_to = st.date_input("תאריך חזרה", key="pk_to")
-            pk_btn = st.form_submit_button("📦 השווה", use_container_width=True, type="primary")
+                pk_from = st.date_input(_t("תאריך יציאה", "Departure date"), key="pk_from")
+                pk_to = st.date_input(_t("תאריך חזרה", "Return date"), key="pk_to")
+            pk_btn = st.form_submit_button(_t("📦 השווה", "📦 Compare"), use_container_width=True, type="primary")
 
         if pk_btn and pk_dest:
-            with st.spinner("🤖 Claude משווה חבילה vs. עצמאי... (30-60 שניות)"):
+            with st.spinner(_t("🤖 Claude משווה חבילה vs. עצמאי... (30-60 שניות)", "🤖 Claude comparing package vs. independent... (30-60 seconds)")):
                 result = smart_search.compare_package_vs_separate(
                     origin=pk_origin,
                     destination=pk_dest,
@@ -1105,7 +1110,7 @@ elif page == "🛠️ כלים חכמים":
             if "error" in result:
                 st.error(result["error"])
             elif not result:
-                st.warning("לא נמצאו נתונים")
+                st.warning(_t("לא נמצאו נתונים", "No data found"))
             else:
                 rec = result.get("recommendation", "")
                 pkg_price = result.get("package_price", 0)
@@ -1116,76 +1121,76 @@ elif page == "🛠️ כלים חכמים":
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.metric(
-                        f"📦 חבילה ({result.get('package_provider', '')})",
+                        f"📦 {_t('חבילה', 'Package')} ({result.get('package_provider', '')})",
                         f"${pkg_price:,}",
                         delta=f"-${saving_pkg:,}" if saving_pkg > 0 else None,
                     )
                     includes = result.get("package_includes", [])
                     if includes:
-                        st.caption("כולל: " + " | ".join(includes[:3]))
+                        st.caption(_t("כולל", "Includes") + ": " + " | ".join(includes[:3]))
                 with c2:
                     st.metric(
-                        "🎒 הזמנה עצמאית",
+                        _t("🎒 הזמנה עצמאית", "🎒 Independent booking"),
                         f"${sep_price:,}",
                         delta=f"-${saving_sep:,}" if saving_sep > 0 else None,
                     )
                     st.caption(
-                        f"✈️ טיסה: ${result.get('separate_flight',0):,} | "
-                        f"🏨 מלון: ${result.get('separate_hotel_total',0):,}"
+                        f"✈️ {_t('טיסה', 'Flight')}: ${result.get('separate_flight',0):,} | "
+                        f"🏨 {_t('מלון', 'Hotel')}: ${result.get('separate_hotel_total',0):,}"
                     )
                 with c3:
-                    winner = "📦 חבילה" if rec == "package" else "🎒 עצמאי"
+                    winner = _t("📦 חבילה", "📦 Package") if rec == "package" else _t("🎒 עצמאי", "🎒 Independent")
                     st.markdown(
                         f"<div style='text-align:center;padding:20px;background:rgba(0,255,136,0.1);"
                         f"border-radius:10px;border:1px solid #00ff88'>"
                         f"<h3 style='color:#00ff88;margin:0'>✅ {winner}</h3>"
-                        f"<small>המומלץ</small></div>",
+                        f"<small>{_t('המומלץ', 'Recommended')}</small></div>",
                         unsafe_allow_html=True,
                     )
 
-                st.markdown(f"**נימוק:** {result.get('reasoning', '')}")
+                st.markdown(f"**{_t('נימוק', 'Reasoning')}:** {result.get('reasoning', '')}")
 
                 tips = result.get("tips", [])
                 if tips:
-                    st.subheader("💡 טיפים")
+                    st.subheader(_t("💡 טיפים", "💡 Tips"))
                     for tip in tips:
                         st.markdown(f"• {tip}")
 
     # ── Best Time to Book ────────────────────────────────────────────────────
     with tool_tab[5]:
-        st.subheader("📅 מתי הכי כדאי להזמין?")
-        st.caption("ניתוח נתוני עבר: כמה שבועות לפני הטיסה המחיר הכי נמוך?")
+        st.subheader(_t("📅 מתי הכי כדאי להזמין?", "📅 When is the best time to book?"))
+        st.caption(_t("ניתוח נתוני עבר: כמה שבועות לפני הטיסה המחיר הכי נמוך?", "Historical data analysis: how many weeks before the flight is the price lowest?"))
 
         with st.form("btb_form"):
             btb_c1, btb_c2, btb_c3 = st.columns(3)
             with btb_c1:
-                btb_origin = st.text_input("מוצא", value="TLV")
+                btb_origin = st.text_input(_t("מוצא", "Origin"), value="TLV")
             with btb_c2:
-                btb_dest = st.text_input("יעד", placeholder="NYC, BKK, LON...")
+                btb_dest = st.text_input(_t("יעד", "Destination"), placeholder="NYC, BKK, LON...")
             with btb_c3:
-                btb_month = st.text_input("חודש נסיעה (אופציונלי)", placeholder="יולי 2025")
-            btb_btn = st.form_submit_button("📅 נתח", use_container_width=True, type="primary")
+                btb_month = st.text_input(_t("חודש נסיעה (אופציונלי)", "Travel month (optional)"), placeholder=_t("יולי 2025", "July 2025"))
+            btb_btn = st.form_submit_button(_t("📅 נתח", "📅 Analyze"), use_container_width=True, type="primary")
 
         if btb_btn and btb_dest:
-            with st.spinner("🤖 Claude מנתח דפוסי מחיר היסטוריים..."):
+            with st.spinner(_t("🤖 Claude מנתח דפוסי מחיר היסטוריים...", "🤖 Claude analyzing historical price patterns...")):
                 result = smart_search.best_time_to_book(btb_origin, btb_dest, btb_month)
 
             if "error" in result:
                 st.error(result["error"])
             elif not result:
-                st.warning("לא נמצאו נתונים")
+                st.warning(_t("לא נמצאו נתונים", "No data found"))
             else:
                 c1, c2, c3 = st.columns(3)
-                c1.metric("⭐ זמן מיטבי", f"{result.get('optimal_weeks_before', '?')} שבועות לפני")
-                c2.metric("💰 חיסכון פוטנציאלי", f"{result.get('potential_savings_pct', 0)}%")
-                c3.metric("⚠️ הגרוע ביותר", result.get("worst_time", ""))
+                c1.metric(_t("⭐ זמן מיטבי", "⭐ Optimal time"), f"{result.get('optimal_weeks_before', '?')} {_t('שבועות לפני', 'weeks before')}")
+                c2.metric(_t("💰 חיסכון פוטנציאלי", "💰 Potential savings"), f"{result.get('potential_savings_pct', 0)}%")
+                c3.metric(_t("⚠️ הגרוע ביותר", "⚠️ Worst time"), result.get("worst_time", ""))
 
-                st.success(f"**כלל אצבע:** {result.get('rule_of_thumb', '')}")
+                st.success(f"**{_t('כלל אצבע', 'Rule of thumb')}:** {result.get('rule_of_thumb', '')}")
 
                 if result.get("seasonal_advice"):
                     st.info(f"📆 {result['seasonal_advice']}")
                 if result.get("last_minute_exception"):
-                    st.caption(f"🎲 חריג: {result['last_minute_exception']}")
+                    st.caption(f"🎲 {_t('חריג', 'Exception')}: {result['last_minute_exception']}")
                 if result.get("tip"):
                     st.info(f"💡 {result['tip']}")
 
@@ -1220,24 +1225,24 @@ elif page == "🛠️ כלים חכמים":
 # PAGE: Competitor Comparison
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🔍 השוואת אתרים":
-    st.title("🔍 השוואת אתרים — Kayak vs. Expedia vs. Google Flights")
-    st.caption("אותה טיסה, 5 אתרים שונים — מי הכי זול?")
+    st.title(_t("🔍 השוואת אתרים — Kayak vs. Expedia vs. Google Flights", "🔍 Site Comparison — Kayak vs. Expedia vs. Google Flights"))
+    st.caption(_t("אותה טיסה, 5 אתרים שונים — מי הכי זול?", "Same flight, 5 different sites — who's cheapest?"))
 
     with st.form("comp_form"):
         cc1, cc2 = st.columns(2)
         with cc1:
-            comp_origin = st.text_input("מוצא", value="TLV")
-            comp_dest = st.text_input("יעד *", placeholder="NYC, LON, BKK...")
-            comp_travelers = st.number_input("נוסעים", value=1, min_value=1, max_value=9)
+            comp_origin = st.text_input(_t("מוצא", "Origin"), value="TLV")
+            comp_dest = st.text_input(_t("יעד *", "Destination *"), placeholder="NYC, LON, BKK...")
+            comp_travelers = st.number_input(_t("נוסעים", "Travelers"), value=1, min_value=1, max_value=9)
         with cc2:
-            comp_out = st.date_input("תאריך יציאה")
-            comp_ret = st.date_input("תאריך חזרה (ריק = חד-כיווני)", value=None)
-            comp_cat = st.selectbox("סוג", ["flight", "hotel"],
-                                     format_func=lambda x: "✈️ טיסה" if x == "flight" else "🏨 מלון")
-        comp_btn = st.form_submit_button("🔍 השווה בכל האתרים", use_container_width=True, type="primary")
+            comp_out = st.date_input(_t("תאריך יציאה", "Departure date"))
+            comp_ret = st.date_input(_t("תאריך חזרה (ריק = חד-כיווני)", "Return date (empty = one-way)"), value=None)
+            comp_cat = st.selectbox(_t("סוג", "Type"), ["flight", "hotel"],
+                                     format_func=lambda x: _t("✈️ טיסה", "✈️ Flight") if x == "flight" else _t("🏨 מלון", "🏨 Hotel"))
+        comp_btn = st.form_submit_button(_t("🔍 השווה בכל האתרים", "🔍 Compare all sites"), use_container_width=True, type="primary")
 
     if comp_btn and comp_dest:
-        with st.spinner("🤖 Claude מחפש בכל האתרים בו-זמנית... (60-90 שניות)"):
+        with st.spinner(_t("🤖 Claude מחפש בכל האתרים בו-זמנית... (60-90 שניות)", "🤖 Claude searching all sites simultaneously... (60-90 seconds)")):
             results = competitor_check.compare_prices(
                 origin=comp_origin,
                 destination=comp_dest,
@@ -1249,11 +1254,11 @@ elif page == "🔍 השוואת אתרים":
 
         if not results or (len(results) == 1 and "error" in results[0]):
             err = results[0].get("error", "") if results else ""
-            st.error(f"לא נמצאו תוצאות. {err}")
+            st.error(f"{_t('לא נמצאו תוצאות.', 'No results found.')} {err}")
         else:
             cheapest = results[0]
             st.success(
-                f"🏆 הכי זול: **{cheapest.get('site','')}** — "
+                f"🏆 {_t('הכי זול', 'Cheapest')}: **{cheapest.get('site','')}** — "
                 f"${cheapest.get('price',0):,} {cheapest.get('currency','')}"
             )
             st.divider()
@@ -1285,16 +1290,16 @@ elif page == "🔍 השוואת אתרים":
                     unsafe_allow_html=True,
                 )
                 if r.get("url"):
-                    st.link_button(f"🔗 הזמן ב-{r['site']}", r["url"])
+                    st.link_button(f"🔗 {_t('הזמן ב', 'Book at')}-{r['site']}", r["url"])
                 st.markdown("")
 
             # Summary table
             import pandas as pd
             st.divider()
-            with st.expander("📋 טבלת השוואה"):
+            with st.expander(_t("📋 טבלת השוואה", "📋 Comparison table")):
                 df_cols = ["site", "price", "currency", "airline", "stops", "duration_hours", "notes"]
                 df = pd.DataFrame([{c: r.get(c, "") for c in df_cols} for r in results])
-                df.columns = ["אתר", "מחיר", "מטבע", "חברה", "עצירות", "שעות טיסה", "הערות"]
+                df.columns = [_t("אתר", "Site"), _t("מחיר", "Price"), _t("מטבע", "Currency"), _t("חברה", "Airline"), _t("עצירות", "Stops"), _t("שעות טיסה", "Flight hours"), _t("הערות", "Notes")]
                 st.dataframe(df, use_container_width=True, hide_index=True)
 
 
@@ -1302,26 +1307,26 @@ elif page == "🔍 השוואת אתרים":
 # PAGE: Sentiment Analyzer
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "📰 סנטימנט & חדשות":
-    st.title("📰 ניתוח סנטימנט — חדשות שמשפיעות על מחירים")
-    st.caption("Claude סורק חדשות: שביתות, בחירות, מזג אוויר, אירועים — ומנבא השפעה על מחירי טיסות")
+    st.title(_t("📰 ניתוח סנטימנט — חדשות שמשפיעות על מחירים", "📰 Sentiment Analysis — News Affecting Prices"))
+    st.caption(_t("Claude סורק חדשות: שביתות, בחירות, מזג אוויר, אירועים — ומנבא השפעה על מחירי טיסות", "Claude scans news: strikes, elections, weather, events — and predicts impact on flight prices"))
 
     with st.form("sent_form"):
         sc1, sc2, sc3 = st.columns(3)
         with sc1:
-            sent_origin = st.text_input("מוצא", value="TLV")
+            sent_origin = st.text_input(_t("מוצא", "Origin"), value="TLV")
         with sc2:
-            sent_dest = st.text_input("יעד *", placeholder="לונדון, NYC, בנגקוק...")
+            sent_dest = st.text_input(_t("יעד *", "Destination *"), placeholder=_t("לונדון, NYC, בנגקוק...", "London, NYC, Bangkok..."))
         with sc3:
-            sent_date = st.text_input("תאריך טיסה מתוכנן", placeholder="יולי 2025")
-        sent_btn = st.form_submit_button("📰 נתח חדשות & סנטימנט", use_container_width=True, type="primary")
+            sent_date = st.text_input(_t("תאריך טיסה מתוכנן", "Planned flight date"), placeholder=_t("יולי 2025", "July 2025"))
+        sent_btn = st.form_submit_button(_t("📰 נתח חדשות & סנטימנט", "📰 Analyze News & Sentiment"), use_container_width=True, type="primary")
 
     if sent_btn and sent_dest:
-        with st.spinner("🤖 Claude סורק חדשות ומנתח השפעות... (30-60 שניות)"):
+        with st.spinner(_t("🤖 Claude סורק חדשות ומנתח השפעות... (30-60 שניות)", "🤖 Claude scanning news and analyzing impacts... (30-60 seconds)")):
             raw = sentiment_analyzer.analyze_sentiment(sent_origin, sent_dest, sent_date)
             fmt = sentiment_analyzer.format_sentiment(raw)
 
         if not fmt or "error" in raw:
-            st.error(raw.get("error", "לא ניתן לנתח"))
+            st.error(raw.get("error", _t("לא ניתן לנתח", "Cannot analyze")))
         else:
             # Main verdict
             c1, c2, c3, c4 = st.columns(4)
@@ -1330,14 +1335,14 @@ elif page == "📰 סנטימנט & חדשות":
                     f"<div class='metric-card'>"
                     f"<div style='font-size:2.5em'>{fmt['sentiment_icon']}</div>"
                     f"<b style='color:{fmt['sentiment_color']}'>{fmt['sentiment'].upper()}</b><br>"
-                    f"<small>סנטימנט שוק</small></div>",
+                    f"<small>{_t('סנטימנט שוק', 'Market sentiment')}</small></div>",
                     unsafe_allow_html=True,
                 )
             with c2:
                 st.markdown(
                     f"<div class='metric-card'>"
                     f"<div style='font-size:2em'>{fmt['impact_icon']}</div>"
-                    f"<b>{'מחירים עולים' if fmt['price_impact']=='rising' else 'מחירים יורדים' if fmt['price_impact']=='falling' else 'יציב'}</b><br>"
+                    f"<b>{_t('מחירים עולים', 'Prices rising') if fmt['price_impact']=='rising' else _t('מחירים יורדים', 'Prices falling') if fmt['price_impact']=='falling' else _t('יציב', 'Stable')}</b><br>"
                     f"<span style='color:#00ff88'>{fmt['impact_pct']:+.0f}%</span> צפוי"
                     f"</div>",
                     unsafe_allow_html=True,
@@ -1347,8 +1352,8 @@ elif page == "📰 סנטימנט & חדשות":
                 st.markdown(
                     f"<div class='metric-card'>"
                     f"<div style='font-size:2em'>{risk_icon}</div>"
-                    f"<b style='color:{fmt['risk_color']}'>סיכון {fmt['risk_level']}</b><br>"
-                    f"<small>רמת אי-וודאות</small></div>",
+                    f"<b style='color:{fmt['risk_color']}'>{_t('סיכון', 'Risk')} {fmt['risk_level']}</b><br>"
+                    f"<small>{_t('רמת אי-וודאות', 'Uncertainty level')}</small></div>",
                     unsafe_allow_html=True,
                 )
             with c4:
@@ -1357,28 +1362,28 @@ elif page == "📰 סנטימנט & חדשות":
                     f"<div class='metric-card'>"
                     f"<div style='font-size:1.5em'>🎯</div>"
                     f"<b style='color:{conf_color}'>{fmt['recommendation']}</b><br>"
-                    f"<small>ביטחון: {fmt['confidence']}</small></div>",
+                    f"<small>{_t('ביטחון', 'Confidence')}: {fmt['confidence']}</small></div>",
                     unsafe_allow_html=True,
                 )
 
             st.divider()
 
             # Reasoning
-            st.markdown(f"### 💡 ניתוח\n{fmt['reasoning']}")
+            st.markdown(f"### 💡 {_t('ניתוח', 'Analysis')}\n{fmt['reasoning']}")
             if fmt.get("best_booking_window"):
-                st.success(f"📅 **מתי להזמין:** {fmt['best_booking_window']}")
+                st.success(f"📅 **{_t('מתי להזמין', 'When to book')}:** {fmt['best_booking_window']}")
 
             # Key events
             events = fmt.get("key_events", [])
             if events:
                 st.divider()
-                st.subheader(f"📌 {len(events)} אירועים מרכזיים")
+                st.subheader(f"📌 {len(events)} {_t('אירועים מרכזיים', 'key events')}")
                 event_type_icons = {
                     "strike": "✊", "event": "🎭", "weather": "🌩️",
                     "political": "🏛️", "seasonal": "📅", "economic": "💹",
                 }
                 impact_colors = {"negative": "#ff4444", "positive": "#00ff88", "neutral": "#aaaaaa"}
-                magnitude_labels = {"high": "השפעה גבוהה", "medium": "בינונית", "low": "נמוכה"}
+                magnitude_labels = {"high": _t("השפעה גבוהה", "High impact"), "medium": _t("בינונית", "Medium"), "low": _t("נמוכה", "Low")}
 
                 for ev in events:
                     ev_icon = event_type_icons.get(ev.get("type", ""), "📌")
@@ -1401,7 +1406,7 @@ elif page == "📰 סנטימנט & חדשות":
                 mode="gauge+number",
                 value=score,
                 domain={"x": [0, 1], "y": [0, 1]},
-                title={"text": "ציון סנטימנט (0=זול, 10=יקר)", "font": {"color": "white"}},
+                title={"text": _t("ציון סנטימנט (0=זול, 10=יקר)", "Sentiment score (0=cheap, 10=expensive)"), "font": {"color": "white"}},
                 gauge={
                     "axis": {"range": [0, 10], "tickcolor": "#aaa"},
                     "bar": {"color": "#667eea"},
@@ -1424,66 +1429,66 @@ elif page == "📰 סנטימנט & חדשות":
 # PAGE: Deal Expiry Tracker
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "⏰ דילים שפגים":
-    st.title("⏰ דילים שפגים בקרוב")
-    st.caption("התראות על דילים שעומדים לפוג — כדי שלא תפספס")
+    st.title(_t("⏰ דילים שפגים בקרוב", "⏰ Expiring Deals"))
+    st.caption(_t("התראות על דילים שעומדים לפוג — כדי שלא תפספס", "Alerts for deals about to expire — so you don't miss out"))
 
     if st.session_state.monitor_running:
         st_autorefresh(interval=300_000, key="expiry_refresh")  # refresh every 5 min
 
-    hours_window = st.slider("הצג דילים שפגים בתוך כמה שעות", 1, 24, 3)
+    hours_window = st.slider(_t("הצג דילים שפגים בתוך כמה שעות", "Show deals expiring within how many hours"), 1, 24, 3)
 
     expiring = deal_hunter.get_expiring_deals(hours_ahead=hours_window)
 
     col_exp, col_all = st.columns([1, 1])
     with col_exp:
-        st.metric("דילים שפגים בקרוב", len(expiring), delta=None)
+        st.metric(_t("דילים שפגים בקרוב", "Deals expiring soon"), len(expiring), delta=None)
     with col_all:
         all_deals = deal_hunter.get_recent_deals(limit=200, min_score=0)
-        st.metric("סה״כ דילים במאגר", len(all_deals))
+        st.metric(_t("סה״כ דילים במאגר", "Total deals in database"), len(all_deals))
 
     st.divider()
 
     if not expiring:
-        st.success(f"✅ אין דילים שפגים בתוך {hours_window} השעות הקרובות")
-        st.caption("הרץ 'ציד דילים' כדי לאסוף דילים חדשים עם תאריך תפוגה")
+        st.success(f"✅ {_t('אין דילים שפגים בתוך', 'No deals expiring within')} {hours_window} {_t('השעות הקרובות', 'hours')}")
+        st.caption(_t("הרץ 'ציד דילים' כדי לאסוף דילים חדשים עם תאריך תפוגה", "Run 'Deal Hunter' to collect new deals with expiry dates"))
     else:
-        st.warning(f"⚠️ {len(expiring)} דיל/ים פגים בתוך {hours_window} שעות!")
+        st.warning(f"⚠️ {len(expiring)} {_t('דיל/ים פגים בתוך', 'deal(s) expiring within')} {hours_window} {_t('שעות!', 'hours!')}")
         for d in expiring:
             mins = d.get("expires_in_minutes", 60)
             urgency_color = "#ff4444" if mins <= 30 else "#ffcc00" if mins <= 60 else "#ffa500"
-            time_str = f"~{mins} דקות" if mins < 120 else f"~{mins//60} שעות"
+            time_str = f"~{mins} {_t('דקות', 'minutes')}" if mins < 120 else f"~{mins//60} {_t('שעות', 'hours')}"
 
             st.markdown(
                 f"<div style='background:rgba(255,75,75,0.1);border:1px solid {urgency_color};"
                 f"border-radius:10px;padding:14px 18px;margin-bottom:10px'>"
                 f"<div style='display:flex;justify-content:space-between'>"
                 f"<b style='font-size:1.1em'>✈️ {d.get('destination','')} ({d.get('destination_code','')})</b>"
-                f"<b style='color:{urgency_color}'>⏰ פג בעוד {time_str}</b>"
+                f"<b style='color:{urgency_color}'>⏰ {_t('פג בעוד', 'Expires in')} {time_str}</b>"
                 f"</div>"
                 f"<span style='font-size:1.4em;color:#00ff88'>${d.get('price',0):,.0f}</span>"
-                f" | {d.get('airline','')} | ציון: {d.get('score',0):.1f}/10<br>"
+                f" | {d.get('airline','')} | {_t('ציון', 'Score')}: {d.get('score',0):.1f}/10<br>"
                 f"<small style='color:#aaa'>{d.get('why_amazing','')[:100]}</small><br>"
-                f"<small>פג: {d.get('expires','')}</small>"
+                f"<small>{_t('פג', 'Expires')}: {d.get('expires','')}</small>"
                 f"</div>",
                 unsafe_allow_html=True,
             )
             bc1, bc2 = st.columns(2)
             if d.get("book_url"):
                 with bc1:
-                    st.link_button("🔗 הזמן עכשיו!", d["book_url"])
+                    st.link_button(_t("🔗 הזמן עכשיו!", "🔗 Book Now!"), d["book_url"])
             with bc2 if d.get("book_url") else bc1:
-                if st.button("📲 שלח התראה", key=f"alert_exp_{d.get('id',0)}"):
+                if st.button(_t("📲 שלח התראה", "📲 Send Alert"), key=f"alert_exp_{d.get('id',0)}"):
                     import notifiers
                     msg = deal_scorer.format_deal_alert(d)
-                    notifiers.broadcast(f"⏰ דיל פג בעוד {time_str}!", msg)
-                    st.success("נשלחה התראה!")
+                    notifiers.broadcast(f"⏰ {_t('דיל פג בעוד', 'Deal expires in')} {time_str}!", msg)
+                    st.success(_t("נשלחה התראה!", "Alert sent!"))
 
     # All deals with expiry
     st.divider()
-    with st.expander("📋 כל הדילים עם תאריך תפוגה"):
+    with st.expander(_t("📋 כל הדילים עם תאריך תפוגה", "📋 All deals with expiry date")):
         deals_with_expiry = [d for d in all_deals if d.get("expires")]
         if not deals_with_expiry:
-            st.info("אין דילים עם תאריך תפוגה מוגדר")
+            st.info(_t("אין דילים עם תאריך תפוגה מוגדר", "No deals with expiry date defined"))
         else:
             import pandas as pd
             df = pd.DataFrame(deals_with_expiry)
@@ -1495,27 +1500,27 @@ elif page == "⏰ דילים שפגים":
 # PAGE: Visa Check
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🛂 בדיקת ויזה":
-    st.title("🛂 בדיקת ויזה — דרכון ישראלי")
-    st.caption("בדוק דרישות כניסה לכל יעד עבור בעלי דרכון ישראלי")
+    st.title(_t("🛂 בדיקת ויזה — דרכון ישראלי", "🛂 Visa Check — Israeli Passport"))
+    st.caption(_t("בדוק דרישות כניסה לכל יעד עבור בעלי דרכון ישראלי", "Check entry requirements for every destination for Israeli passport holders"))
 
     STATUS_ICONS = {
-        "visa_free": ("✅", "#00ff88", "ללא ויזה"),
-        "visa_on_arrival": ("🟡", "#ffd93d", "ויזה בהגעה"),
+        "visa_free": ("✅", "#00ff88", _t("ללא ויזה", "Visa-free")),
+        "visa_on_arrival": ("🟡", "#ffd93d", _t("ויזה בהגעה", "Visa on arrival")),
         "e_visa": ("🔵", "#74b9ff", "eVisa"),
-        "visa_required": ("🔴", "#ff6b6b", "ויזה נדרשת"),
-        "not_allowed": ("⛔", "#ff0000", "כניסה אסורה"),
+        "visa_required": ("🔴", "#ff6b6b", _t("ויזה נדרשת", "Visa required")),
+        "not_allowed": ("⛔", "#ff0000", _t("כניסה אסורה", "Entry not allowed")),
     }
 
     # Quick multi-check or single destination
-    vc_tab1, vc_tab2 = st.tabs(["🔍 יעד אחד", "📋 בדיקה מרובה"])
+    vc_tab1, vc_tab2 = st.tabs([_t("🔍 יעד אחד", "🔍 Single destination"), _t("📋 בדיקה מרובה", "📋 Multiple check")])
 
     with vc_tab1:
         with st.form("visa_single"):
-            vc_dest = st.text_input("יעד *", placeholder="תאילנד, יפן, ארה״ב, מרוקו...")
-            vc_btn = st.form_submit_button("🛂 בדוק ויזה", use_container_width=True, type="primary")
+            vc_dest = st.text_input(_t("יעד *", "Destination *"), placeholder=_t("תאילנד, יפן, ארה״ב, מרוקו...", "Thailand, Japan, USA, Morocco..."))
+            vc_btn = st.form_submit_button(_t("🛂 בדוק ויזה", "🛂 Check Visa"), use_container_width=True, type="primary")
 
         if vc_btn and vc_dest:
-            with st.spinner(f"🤖 Claude בודק דרישות כניסה ל{vc_dest}..."):
+            with st.spinner(f"🤖 Claude {_t('בודק דרישות כניסה ל', 'checking entry requirements for')}{vc_dest}..."):
                 result = visa_check.check_visa(vc_dest)
 
             if "error" in result:
@@ -1539,13 +1544,13 @@ elif page == "🛂 בדיקת ויזה":
                 # Details grid
                 dc1, dc2, dc3 = st.columns(3)
                 with dc1:
-                    st.metric("תקופת שהות מקס׳", f"{result.get('max_stay_days', '?')} ימים")
+                    st.metric(_t("תקופת שהות מקס׳", "Max stay"), f"{result.get('max_stay_days', '?')} {_t('ימים', 'days')}")
                 with dc2:
                     cost = result.get("visa_cost_usd", 0)
-                    st.metric("עלות ויזה", f"${cost}" if cost else "חינם")
+                    st.metric(_t("עלות ויזה", "Visa cost"), f"${cost}" if cost else _t("חינם", "Free"))
                 with dc3:
                     proc = result.get("processing_days", 0)
-                    st.metric("זמן עיבוד", f"{proc} ימים" if proc else "מיידי")
+                    st.metric(_t("זמן עיבוד", "Processing time"), f"{proc} {_t('ימים', 'days')}" if proc else _t("מיידי", "Immediate"))
 
                 st.divider()
 
@@ -1554,50 +1559,50 @@ elif page == "🛂 בדיקת ויזה":
                 rc1, rc2 = st.columns(2)
                 with rc1:
                     if reqs:
-                        st.subheader("📄 מסמכים נדרשים")
+                        st.subheader(_t("📄 מסמכים נדרשים", "📄 Required Documents"))
                         for r in reqs:
                             st.markdown(f"• {r}")
                 with rc2:
                     if notes:
-                        st.subheader("⚠️ הערות חשובות")
+                        st.subheader(_t("⚠️ הערות חשובות", "⚠️ Important Notes"))
                         for n in notes:
                             st.warning(n)
 
                 if result.get("embassy_info"):
-                    st.info(f"🏛️ **שגרירות:** {result['embassy_info']}")
+                    st.info(f"🏛️ **{_t('שגרירות', 'Embassy')}:** {result['embassy_info']}")
 
                 conf_color = {"high": "#00ff88", "medium": "#ffd93d", "low": "#ff6b6b"}.get(
                     result.get("confidence", "low"), "#aaa"
                 )
                 st.caption(
-                    f"<span style='color:{conf_color}'>מקור: {result.get('source','')} | "
-                    f"עדכון: {result.get('last_updated','')} | ביטחון: {result.get('confidence','')}</span>"
-                    f"<br><small>⚠️ המידע לצורך הכוונה בלבד. בדוק תמיד מול משרד החוץ לפני נסיעה.</small>",
+                    f"<span style='color:{conf_color}'>{_t('מקור', 'Source')}: {result.get('source','')} | "
+                    f"{_t('עדכון', 'Updated')}: {result.get('last_updated','')} | {_t('ביטחון', 'Confidence')}: {result.get('confidence','')}</span>"
+                    f"<br><small>⚠️ {_t('המידע לצורך הכוונה בלבד. בדוק תמיד מול משרד החוץ לפני נסיעה.', 'Information for guidance only. Always verify with the Foreign Ministry before travel.')}</small>",
                     unsafe_allow_html=True,
                 )
 
     with vc_tab2:
-        st.caption("בדוק מספר יעדים בו-זמנית")
+        st.caption(_t("בדוק מספר יעדים בו-זמנית", "Check multiple destinations simultaneously"))
         multi_dests = st.text_area(
-            "יעדים (כל יעד בשורה)",
-            placeholder="תאילנד\nיפן\nארה״ב\nמרוקו\nהודו",
+            _t("יעדים (כל יעד בשורה)", "Destinations (one per line)"),
+            placeholder=_t("תאילנד\nיפן\nארה״ב\nמרוקו\nהודו", "Thailand\nJapan\nUSA\nMorocco\nIndia"),
             height=150,
         )
-        if st.button("🛂 בדוק הכל", use_container_width=True, type="primary", key="visa_multi_btn"):
+        if st.button(_t("🛂 בדוק הכל", "🛂 Check All"), use_container_width=True, type="primary", key="visa_multi_btn"):
             dest_list = [d.strip() for d in multi_dests.splitlines() if d.strip()]
             if not dest_list:
-                st.error("הכנס לפחות יעד אחד")
+                st.error(_t("הכנס לפחות יעד אחד", "Enter at least one destination"))
             else:
                 results_multi = []
                 progress = st.progress(0)
                 for i, dest in enumerate(dest_list):
-                    with st.spinner(f"בודק {dest}..."):
+                    with st.spinner(f"{_t('בודק', 'Checking')} {dest}..."):
                         r = visa_check.check_visa(dest)
                         r["destination_query"] = dest
                         results_multi.append(r)
                     progress.progress((i + 1) / len(dest_list))
 
-                st.success(f"✅ נבדקו {len(results_multi)} יעדים")
+                st.success(f"✅ {_t('נבדקו', 'Checked')} {len(results_multi)} {_t('יעדים', 'destinations')}")
                 st.divider()
 
                 # Group by status
@@ -1619,7 +1624,7 @@ elif page == "🛂 בדיקת ויזה":
                         cost = r.get("visa_cost_usd", 0)
                         st.markdown(
                             f"**{r.get('destination', r.get('destination_query',''))}** — "
-                            f"{stay} ימים"
+                            f"{stay} {_t('ימים', 'days')}"
                             f"{f' | ${cost}' if cost else ''}"
                         )
 
@@ -1628,28 +1633,31 @@ elif page == "🛂 בדיקת ויזה":
 # PAGE: Settings
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "⚙️ הגדרות":
-    st.title("⚙️ הגדרות")
+    st.title(_t("⚙️ הגדרות", "⚙️ Settings"))
 
     # ── API Key ────────────────────────────────────────────────────────────────
     st.subheader("🔑 Claude API Key")
     api_key_val = os.environ.get("ANTHROPIC_API_KEY", "")
     if api_key_val:
-        st.success(f"מוגדר ✅  (sk-ant-...{api_key_val[-6:]})")
+        st.success(f"{_t('מוגדר', 'Configured')} ✅  (sk-ant-...{api_key_val[-6:]})")
     else:
-        new_key = st.text_input("הכנס Anthropic API Key", type="password")
-        if st.button("שמור API Key") and new_key:
+        new_key = st.text_input(_t("הכנס Anthropic API Key", "Enter Anthropic API Key"), type="password")
+        if st.button(_t("שמור API Key", "Save API Key")) and new_key:
             _save_env("ANTHROPIC_API_KEY", new_key)
-            st.success("נשמר! רענן את הדף.")
+            st.success(_t("נשמר! רענן את הדף.", "Saved! Refresh the page."))
 
     st.divider()
 
     # ── Notifications ──────────────────────────────────────────────────────────
-    st.subheader("🔔 ערוצי התראה")
+    st.subheader(_t("🔔 ערוצי התראה", "🔔 Notification Channels"))
 
-    st.markdown("""
+    st.markdown(_t("""
 כשמחיר יורד, ה-agent שולח התראה בכל הערוצים המוגדרים.
 ניתן להגדיר כמה ערוצים שרוצים במקביל.
-""")
+""", """
+When a price drops, the agent sends an alert on all configured channels.
+You can configure multiple channels simultaneously.
+"""))
 
     # ntfy.sh ──────────────────────────────────────────────────────────────────
     with st.expander("📱 **ntfy.sh** — פוש לנייד (חינמי, מומלץ!)", expanded=True):
@@ -1673,13 +1681,13 @@ elif page == "⚙️ הגדרות":
                 label_visibility="collapsed",
             )
         with col2:
-            if st.button("שמור", key="save_ntfy") and new_ntfy:
+            if st.button(_t("שמור", "Save"), key="save_ntfy") and new_ntfy:
                 _save_env("NTFY_TOPIC", new_ntfy)
                 st.success("✅")
                 st.rerun()
 
         if ntfy_topic:
-            st.success(f"מוגדר: ntfy.sh/{ntfy_topic}")
+            st.success(f"{_t('מוגדר', 'Configured')}: ntfy.sh/{ntfy_topic}")
 
     # Telegram ─────────────────────────────────────────────────────────────────
     with st.expander("✈️ **Telegram** — הודעות לטלגרם"):
@@ -1705,15 +1713,15 @@ elif page == "⚙️ הגדרות":
             "Chat ID", value=tg_chat,
             placeholder="123456789",
         )
-        if st.button("שמור Telegram", key="save_tg"):
+        if st.button(_t("שמור Telegram", "Save Telegram"), key="save_tg"):
             if new_tg_token:
                 _save_env("TELEGRAM_BOT_TOKEN", new_tg_token)
             if new_tg_chat:
                 _save_env("TELEGRAM_CHAT_ID", new_tg_chat)
-            st.success("✅ נשמר! רענן.")
+            st.success(f"✅ {_t('נשמר! רענן.', 'Saved! Refresh.')}")
 
         if tg_token and tg_chat:
-            st.success("Telegram מוגדר ✅")
+            st.success(f"Telegram {_t('מוגדר', 'configured')} ✅")
 
     # ── Amadeus API ────────────────────────────────────────────────────────────
     st.divider()
@@ -1740,31 +1748,31 @@ elif page == "⚙️ הגדרות":
 
     colA, colB = st.columns(2)
     with colA:
-        if st.button("💾 שמור Amadeus", key="save_am") and new_am_id:
+        if st.button(_t("💾 שמור Amadeus", "💾 Save Amadeus"), key="save_am") and new_am_id:
             _save_env("AMADEUS_CLIENT_ID", new_am_id)
             _save_env("AMADEUS_CLIENT_SECRET", new_am_secret)
             load_dotenv(Path(__file__).parent / ".env", override=True)
-            st.success("✅ נשמר!")
+            st.success("✅ " + _t("נשמר!", "Saved!"))
     with colB:
-        if st.button("🧪 בדוק חיבור Amadeus", key="test_am"):
+        if st.button(_t("🧪 בדוק חיבור Amadeus", "🧪 Test Amadeus connection"), key="test_am"):
             import amadeus_client
             load_dotenv(Path(__file__).parent / ".env", override=True)
-            with st.spinner("בודק..."):
+            with st.spinner(_t("בודק...", "Testing...")):
                 result = amadeus_client.test_connection()
             if result["ok"]:
-                st.success(result.get("message", "✅ מחובר"))
+                st.success(result.get("message", _t("✅ מחובר", "✅ Connected")))
             else:
-                st.error(result.get("error", "שגיאה"))
+                st.error(result.get("error", _t("שגיאה", "Error")))
 
     if am_id and am_secret:
-        st.success("Amadeus מוגדר ✅ — טיסות ומלונות יחפשו דרך API רשמי")
+        st.success(_t("Amadeus מוגדר ✅ — טיסות ומלונות יחפשו דרך API רשמי", "Amadeus configured ✅ — flights and hotels will search via official API"))
     else:
-        st.info("ללא Amadeus — המחירים יחפשו דרך Claude web search (פחות מדויק)")
+        st.info(_t("ללא Amadeus — המחירים יחפשו דרך Claude web search (פחות מדויק)", "Without Amadeus — prices will search via Claude web search (less accurate)"))
 
     # Test all ──────────────────────────────────────────────────────────────────
     st.divider()
-    if st.button("🧪 שלח הודעת בדיקה לכל הערוצים", use_container_width=True):
-        with st.spinner("שולח..."):
+    if st.button(_t("🧪 שלח הודעת בדיקה לכל הערוצים", "🧪 Send test message to all channels"), use_container_width=True):
+        with st.spinner(_t("שולח...", "Sending...")):
             import alerts as alerts_module
             # Reload env
             load_dotenv(Path(__file__).parent / ".env", override=True)
@@ -1775,15 +1783,20 @@ elif page == "⚙️ הגדרות":
     st.divider()
 
     # ── Monitor ────────────────────────────────────────────────────────────────
-    st.subheader("🔄 ניטור אוטומטי")
+    st.subheader(_t("🔄 ניטור אוטומטי", "🔄 Automatic Monitor"))
     st.info(
-        "הניטור הרציף בודק את כל הפריטים הפעילים בצורה אוטומטית.\n\n"
-        "⚠️ כל בדיקה משתמשת ב-Claude API (עלות כ-$0.01-0.05 לפריט).\n"
-        "מומלץ להגדיר מרווח של 60+ דקות."
+        _t(
+            "הניטור הרציף בודק את כל הפריטים הפעילים בצורה אוטומטית.\n\n"
+            "⚠️ כל בדיקה משתמשת ב-Claude API (עלות כ-$0.01-0.05 לפריט).\n"
+            "מומלץ להגדיר מרווח של 60+ דקות.",
+            "Continuous monitoring checks all active items automatically.\n\n"
+            "⚠️ Each check uses the Claude API (cost ~$0.01-0.05 per item).\n"
+            "Recommended interval: 60+ minutes."
+        )
     )
 
     st.divider()
-    st.subheader("📊 סטטיסטיקות DB")
+    st.subheader(_t("📊 סטטיסטיקות DB", "📊 DB Statistics"))
     items_all = db.get_all_watch_items(enabled_only=False)
     total_records = 0
     for it in items_all:
@@ -1791,23 +1804,23 @@ elif page == "⚙️ הגדרות":
         total_records += len(hist)
 
     c1, c2, c3 = st.columns(3)
-    c1.metric("פריטי מעקב", len(items_all))
-    c2.metric("רשומות מחיר", total_records)
+    c1.metric(_t("פריטי מעקב", "Watch items"), len(items_all))
+    c2.metric(_t("רשומות מחיר", "Price records"), total_records)
     db_size = Path("prices.db").stat().st_size // 1024 if Path("prices.db").exists() else 0
-    c3.metric("גודל DB", f"{db_size} KB")
+    c3.metric(_t("גודל DB", "DB size"), f"{db_size} KB")
 
     st.divider()
-    st.subheader("🗑 ניהול נתונים")
-    if st.button("מחק את כל הנתונים", type="secondary"):
+    st.subheader(_t("🗑 ניהול נתונים", "🗑 Data Management"))
+    if st.button(_t("מחק את כל הנתונים", "Delete all data"), type="secondary"):
         if st.session_state.get("confirm_delete"):
             import sqlite3
             with db.get_db() as conn:
                 conn.executescript("DELETE FROM price_records; DELETE FROM watch_items;")
-            st.success("נמחק הכל")
+            st.success(_t("נמחק הכל", "All data deleted"))
             st.session_state.confirm_delete = False
         else:
             st.session_state.confirm_delete = True
-            st.warning("לחץ שוב לאישור מחיקה")
+            st.warning(_t("לחץ שוב לאישור מחיקה", "Click again to confirm deletion"))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1816,12 +1829,12 @@ elif page == "⚙️ הגדרות":
 elif page == "📊 היסטוריית מחירים":
     import pandas as pd
 
-    st.title("📊 היסטוריית מחירים")
-    st.caption("גרפים מפורטים, השוואת פריטים, סטטיסטיקות ומגמות")
+    st.title(_t("📊 היסטוריית מחירים", "📊 Price History"))
+    st.caption(_t("גרפים מפורטים, השוואת פריטים, סטטיסטיקות ומגמות", "Detailed charts, item comparison, statistics and trends"))
 
     items = db.get_all_watch_items(enabled_only=False)
     if not items:
-        st.info("הוסף פריטים ובדוק מחירים כדי לראות היסטוריה.")
+        st.info(_t("הוסף פריטים ובדוק מחירים כדי לראות היסטוריה.", "Add items and check prices to see history."))
     else:
         item_map = {f"{CAT_EMOJI.get(i['category'],'🔍')} {i['name']} ({i['destination']})": i for i in items}
 
@@ -1829,17 +1842,17 @@ elif page == "📊 היסטוריית מחירים":
         ctrl1, ctrl2, ctrl3 = st.columns([3, 1, 1])
         with ctrl1:
             selected_names = st.multiselect(
-                "בחר פריטים להשוואה",
+                _t("בחר פריטים להשוואה", "Select items to compare"),
                 list(item_map.keys()),
                 default=list(item_map.keys())[:1],
             )
         with ctrl2:
-            history_limit = st.selectbox("רשומות", [30, 60, 100, 200, 500], index=1)
+            history_limit = st.selectbox(_t("רשומות", "Records"), [30, 60, 100, 200, 500], index=1)
         with ctrl3:
-            chart_type = st.selectbox("סוג גרף", ["קו", "עמודות", "קו + נקודות"])
+            chart_type = st.selectbox(_t("סוג גרף", "Chart type"), [_t("קו", "Line"), _t("עמודות", "Bar"), _t("קו + נקודות", "Line + Points")])
 
         if not selected_names:
-            st.info("בחר לפחות פריט אחד")
+            st.info(_t("בחר לפחות פריט אחד", "Select at least one item"))
             st.stop()
 
         selected_items = [item_map[n] for n in selected_names]
@@ -1864,10 +1877,10 @@ elif page == "📊 היסטוריית מחירים":
                     f"<div class='metric-card'>"
                     f"<b>{CAT_EMOJI.get(item['category'],'')}{item['name']}</b><br>"
                     f"<span style='font-size:1.6em;color:#00ff88'>{last['price']:,.0f} {currency}</span><br>"
-                    f"<small>מינימום: {stats['min_price']:,.0f} | מקסימום: {stats['max_price']:,.0f}</small><br>"
-                    f"<small>ממוצע: {stats['avg_price']:,.0f} | {stats['total_checks']} בדיקות</small><br>"
+                    f"<small>{_t('מינימום', 'Min')}: {stats['min_price']:,.0f} | {_t('מקסימום', 'Max')}: {stats['max_price']:,.0f}</small><br>"
+                    f"<small>{_t('ממוצע', 'Avg')}: {stats['avg_price']:,.0f} | {stats['total_checks']} {_t('בדיקות', 'checks')}</small><br>"
                     f"<span style='color:{'#ff4444' if trend=='rising' else '#00ff88' if trend=='falling' else '#aaa'}'>"
-                    f"{trend_icon} מגמה: {trend_pct:+.1f}%</span>"
+                    f"{trend_icon} {_t('מגמה', 'Trend')}: {trend_pct:+.1f}%</span>"
                     f"</div>",
                     unsafe_allow_html=True,
                 )
@@ -1889,9 +1902,9 @@ elif page == "📊 היסטוריית מחירים":
             ys = [r["price"] for r in history]
             color = COLORS[i % len(COLORS)]
 
-            if chart_type == "עמודות":
+            if chart_type == _t("עמודות", "Bar"):
                 fig.add_trace(go.Bar(x=xs, y=ys, name=item["name"], marker_color=color))
-            elif chart_type == "קו":
+            elif chart_type == _t("קו", "Line"):
                 fig.add_trace(go.Scatter(
                     x=xs, y=ys, name=item["name"],
                     mode="lines",
@@ -1942,17 +1955,17 @@ elif page == "📊 היסטוריית מחירים":
                 fig2 = go.Figure()
                 fig2.add_trace(go.Scatter(
                     x=xs, y=prices_series.tolist(),
-                    name="מחיר", mode="lines",
+                    name=_t("מחיר", "Price"), mode="lines",
                     line=dict(color="#667eea", width=2),
                     fill="tozeroy", fillcolor="rgba(102,126,234,0.08)",
                 ))
                 fig2.add_trace(go.Scatter(
                     x=xs, y=ma.tolist(),
-                    name="ממוצע נע (5)", mode="lines",
+                    name=_t("ממוצע נע (5)", "Moving avg (5)"), mode="lines",
                     line=dict(color="#ffd93d", width=1.5, dash="dot"),
                 ))
                 fig2.update_layout(
-                    title=dict(text="📉 ממוצע נע", font=dict(color="white", size=13)),
+                    title=dict(text=_t("📉 ממוצע נע", "📉 Moving Average"), font=dict(color="white", size=13)),
                     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.03)",
                     font=dict(color="#ccc"), height=220,
                     margin=dict(l=10, r=10, t=35, b=10),
@@ -1961,7 +1974,7 @@ elif page == "📊 היסטוריית מחירים":
                 st.plotly_chart(fig2, use_container_width=True)
 
         # ── Raw data table ──────────────────────────────────────────────────
-        with st.expander("📋 טבלת נתונים גולמיים"):
+        with st.expander(_t("📋 טבלת נתונים גולמיים", "📋 Raw data table")):
             for item in selected_items:
                 history = db.get_price_history(item["id"], limit=history_limit)
                 if not history:
@@ -1977,86 +1990,86 @@ elif page == "📊 היסטוריית מחירים":
 # PAGE: Alert Rules
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🎯 כללי התראה":
-    st.title("🎯 כללי התראה חכמים")
-    st.caption("הגדר תנאים מורכבים: התרע רק כשמחיר מתחת ל-X + ירידה של Y% + ביום מסוים")
+    st.title(_t("🎯 כללי התראה חכמים", "🎯 Smart Alert Rules"))
+    st.caption(_t("הגדר תנאים מורכבים: התרע רק כשמחיר מתחת ל-X + ירידה של Y% + ביום מסוים", "Set complex conditions: alert only when price below X + drop of Y% + on a specific day"))
 
     items = db.get_all_watch_items(enabled_only=False)
 
-    tab_new, tab_list = st.tabs(["➕ כלל חדש", "📋 כללים קיימים"])
+    tab_new, tab_list = st.tabs([_t("➕ כלל חדש", "➕ New Rule"), _t("📋 כללים קיימים", "📋 Existing Rules")])
 
     # ── New Rule Form ────────────────────────────────────────────────────────
     with tab_new:
         with st.form("rule_form"):
-            st.subheader("הגדרת כלל חדש")
+            st.subheader(_t("הגדרת כלל חדש", "Define New Rule"))
 
             rule_name = st.text_input(
-                "שם הכלל *",
-                placeholder="טיסה זולה לאירופה בסוף שבוע",
+                _t("שם הכלל *", "Rule name *"),
+                placeholder=_t("טיסה זולה לאירופה בסוף שבוע", "Cheap flight to Europe on weekend"),
             )
 
             # Which item
-            item_options = {"כל הפריטים": None}
+            item_options = {_t("כל הפריטים", "All items"): None}
             item_options.update({
                 f"{CAT_EMOJI.get(i['category'],'🔍')} {i['name']}": i["id"]
                 for i in items
             })
-            rule_item = st.selectbox("החל על", list(item_options.keys()))
+            rule_item = st.selectbox(_t("החל על", "Apply to"), list(item_options.keys()))
 
             st.divider()
-            st.markdown("**תנאים** (כל תנאי שמסומן חייב להתקיים):")
+            st.markdown(f"**{_t('תנאים', 'Conditions')}** ({_t('כל תנאי שמסומן חייב להתקיים', 'all checked conditions must be met')}):")
 
             rc1, rc2 = st.columns(2)
             with rc1:
-                use_max_price = st.checkbox("מחיר מקסימלי")
-                max_price_val = st.number_input("מחיר עד ($)", value=400, min_value=0, step=10,
+                use_max_price = st.checkbox(_t("מחיר מקסימלי", "Maximum price"))
+                max_price_val = st.number_input(_t("מחיר עד ($)", "Price up to ($)"), value=400, min_value=0, step=10,
                                                  disabled=not use_max_price)
 
-                use_drop = st.checkbox("ירידת מחיר מינימלית")
-                min_drop_val = st.slider("ירידה מינימלית (%)", 5, 60, 15,
+                use_drop = st.checkbox(_t("ירידת מחיר מינימלית", "Minimum price drop"))
+                min_drop_val = st.slider(_t("ירידה מינימלית (%)", "Minimum drop (%)"), 5, 60, 15,
                                           disabled=not use_drop)
 
-                use_quality = st.checkbox("איכות דיל מינימלית")
+                use_quality = st.checkbox(_t("איכות דיל מינימלית", "Minimum deal quality"))
                 quality_val = st.selectbox(
-                    "איכות מינימלית",
+                    _t("איכות מינימלית", "Minimum quality"),
                     ["average", "good", "excellent"],
-                    format_func=lambda x: {"average": "⚠️ סביר", "good": "✅ טוב", "excellent": "🔥 מעולה"}[x],
+                    format_func=lambda x: {"average": _t("⚠️ סביר", "⚠️ Fair"), "good": _t("✅ טוב", "✅ Good"), "excellent": _t("🔥 מעולה", "🔥 Excellent")}[x],
                     disabled=not use_quality,
                 )
 
             with rc2:
-                use_days = st.checkbox("ימי שבוע ספציפיים")
+                use_days = st.checkbox(_t("ימי שבוע ספציפיים", "Specific weekdays"))
                 days_options = {
-                    "ראשון": 6, "שני": 0, "שלישי": 1,
-                    "רביעי": 2, "חמישי": 3, "שישי": 4, "שבת": 5,
+                    _t("ראשון", "Sunday"): 6, _t("שני", "Monday"): 0, _t("שלישי", "Tuesday"): 1,
+                    _t("רביעי", "Wednesday"): 2, _t("חמישי", "Thursday"): 3, _t("שישי", "Friday"): 4, _t("שבת", "Saturday"): 5,
                 }
                 selected_days = st.multiselect(
-                    "ימים",
+                    _t("ימים", "Days"),
                     list(days_options.keys()),
-                    default=["שישי", "שבת"],
+                    default=[_t("שישי", "Friday"), _t("שבת", "Saturday")],
                     disabled=not use_days,
                 )
 
-                use_airlines = st.checkbox("סנן לפי חברת תעופה")
+                use_airlines = st.checkbox(_t("סנן לפי חברת תעופה", "Filter by airline"))
                 airlines_include_str = st.text_input(
-                    "חברות מועדפות (מופרד בפסיקים)",
+                    _t("חברות מועדפות (מופרד בפסיקים)", "Preferred airlines (comma separated)"),
                     placeholder="El Al, Ryanair, EasyJet",
                     disabled=not use_airlines,
                 )
                 airlines_exclude_str = st.text_input(
-                    "חברות לחסימה (מופרד בפסיקים)",
+                    _t("חברות לחסימה (מופרד בפסיקים)", "Blocked airlines (comma separated)"),
                     placeholder="",
                     disabled=not use_airlines,
                 )
 
-                use_score = st.checkbox("ציון AI מינימלי")
-                min_score_val = st.slider("ציון מינימלי (0-10)", 0.0, 10.0, 7.0, 0.5,
+                use_score = st.checkbox(_t("ציון AI מינימלי", "Minimum AI score"))
+                min_score_val = st.slider(_t("ציון מינימלי (0-10)", "Minimum score (0-10)"), 0.0, 10.0, 7.0, 0.5,
                                            disabled=not use_score)
 
-            rule_submit = st.form_submit_button("➕ הוסף כלל", use_container_width=True, type="primary")
+            rule_submit = st.form_submit_button(_t("➕ הוסף כלל", "➕ Add Rule"), use_container_width=True, type="primary")
 
         if rule_submit:
             if not rule_name:
-                st.error("הכנס שם לכלל")
+                st.error(_t("הכנס שם לכלל", "Enter a rule name"))
             else:
                 conditions = {}
                 if use_max_price:
@@ -2080,42 +2093,42 @@ elif page == "🎯 כללי התראה":
                 watch_id = item_options[rule_item]
                 rule_id = db.add_alert_rule(rule_name, conditions, watch_id)
 
-                st.success(f"✅ כלל '{rule_name}' נוסף! (ID: {rule_id})")
+                st.success(f"✅ {_t('כלל', 'Rule')} '{rule_name}' {_t('נוסף!', 'added!')} (ID: {rule_id})")
 
                 # Preview
                 cond_summary = []
                 if "max_price" in conditions:
-                    cond_summary.append(f"מחיר ≤ ${conditions['max_price']}")
+                    cond_summary.append(f"{_t('מחיר', 'Price')} ≤ ${conditions['max_price']}")
                 if "min_drop_pct" in conditions:
-                    cond_summary.append(f"ירידה ≥ {conditions['min_drop_pct']}%")
+                    cond_summary.append(f"{_t('ירידה', 'Drop')} ≥ {conditions['min_drop_pct']}%")
                 if "min_deal_quality" in conditions:
-                    cond_summary.append(f"איכות ≥ {conditions['min_deal_quality']}")
+                    cond_summary.append(f"{_t('איכות', 'Quality')} ≥ {conditions['min_deal_quality']}")
                 if "days_of_week" in conditions:
                     day_names = {6:"א׳",0:"ב׳",1:"ג׳",2:"ד׳",3:"ה׳",4:"ו׳",5:"ש׳"}
-                    cond_summary.append("ימים: " + ", ".join(day_names.get(d,"?") for d in conditions["days_of_week"]))
+                    cond_summary.append(_t("ימים", "Days") + ": " + ", ".join(day_names.get(d,"?") for d in conditions["days_of_week"]))
                 if "airlines_include" in conditions:
-                    cond_summary.append("חברות: " + ", ".join(conditions["airlines_include"]))
+                    cond_summary.append(_t("חברות", "Airlines") + ": " + ", ".join(conditions["airlines_include"]))
                 if "min_ai_score" in conditions:
-                    cond_summary.append(f"ציון ≥ {conditions['min_ai_score']}")
+                    cond_summary.append(f"{_t('ציון', 'Score')} ≥ {conditions['min_ai_score']}")
 
                 if cond_summary:
-                    st.info("תנאים: " + " | ".join(cond_summary))
+                    st.info(_t("תנאים", "Conditions") + ": " + " | ".join(cond_summary))
                 else:
-                    st.warning("לא הוגדרו תנאים — הכלל יופעל תמיד")
+                    st.warning(_t("לא הוגדרו תנאים — הכלל יופעל תמיד", "No conditions defined — rule will always trigger"))
 
     # ── Existing Rules List ──────────────────────────────────────────────────
     with tab_list:
         all_rules = db.get_alert_rules()
 
         if not all_rules:
-            st.info("אין כללים עדיין. צור כלל ב-'כלל חדש'.")
+            st.info(_t("אין כללים עדיין. צור כלל ב-'כלל חדש'.", "No rules yet. Create a rule in 'New Rule'."))
         else:
-            st.caption(f"{len(all_rules)} כללים מוגדרים")
+            st.caption(f"{len(all_rules)} {_t('כללים מוגדרים', 'rules defined')}")
 
             # Item name lookup
             item_names_by_id = {i["id"]: i["name"] for i in items}
             day_names = {6: "א׳", 0: "ב׳", 1: "ג׳", 2: "ד׳", 3: "ה׳", 4: "ו׳", 5: "ש׳"}
-            quality_labels = {"average": "⚠️ סביר", "good": "✅ טוב", "excellent": "🔥 מעולה"}
+            quality_labels = {"average": _t("⚠️ סביר", "⚠️ Fair"), "good": _t("✅ טוב", "✅ Good"), "excellent": _t("🔥 מעולה", "🔥 Excellent")}
 
             for rule in all_rules:
                 cond = rule["conditions"]
@@ -2137,33 +2150,33 @@ elif page == "🎯 כללי התראה":
                 if "min_ai_score" in cond:
                     tags.append(f"⭐≥{cond['min_ai_score']}")
 
-                applies_to = item_names_by_id.get(rule.get("watch_id")) or "כל הפריטים"
+                applies_to = item_names_by_id.get(rule.get("watch_id")) or _t("כל הפריטים", "All items")
                 last_t = rule.get("last_triggered", "")
-                last_t_str = f"הופעל: {last_t[:16].replace('T',' ')}" if last_t else "לא הופעל עדיין"
+                last_t_str = f"{_t('הופעל', 'Triggered')}: {last_t[:16].replace('T',' ')}" if last_t else _t("לא הופעל עדיין", "Never triggered")
 
                 with st.expander(
-                    f"{status_icon} **{rule['name']}** | {applies_to} | {' '.join(tags) or 'ללא תנאים'}"
+                    f"{status_icon} **{rule['name']}** | {applies_to} | {' '.join(tags) or _t('ללא תנאים', 'No conditions')}"
                 ):
                     lc1, lc2, lc3 = st.columns(3)
 
                     with lc1:
-                        st.markdown(f"**פריט:** {applies_to}")
-                        st.markdown(f"**נוצר:** {rule['created_at'][:10]}")
+                        st.markdown(f"**{_t('פריט', 'Item')}:** {applies_to}")
+                        st.markdown(f"**{_t('נוצר', 'Created')}:** {rule['created_at'][:10]}")
                         st.caption(last_t_str)
 
                     with lc2:
-                        st.markdown("**תנאים:**")
+                        st.markdown(f"**{_t('תנאים', 'Conditions')}:**")
                         if not cond:
-                            st.caption("ללא תנאים — מופעל תמיד")
+                            st.caption(_t("ללא תנאים — מופעל תמיד", "No conditions — always triggers"))
                         for k, v in cond.items():
                             labels = {
-                                "max_price": "💲 מחיר מקסימלי",
-                                "min_drop_pct": "📉 ירידה מינימלית",
-                                "min_deal_quality": "⭐ איכות מינימלית",
-                                "days_of_week": "📅 ימי שבוע",
-                                "airlines_include": "✈️ חברות מועדפות",
-                                "airlines_exclude": "🚫 חברות חסומות",
-                                "min_ai_score": "🤖 ציון AI מינימלי",
+                                "max_price": _t("💲 מחיר מקסימלי", "💲 Max price"),
+                                "min_drop_pct": _t("📉 ירידה מינימלית", "📉 Min drop"),
+                                "min_deal_quality": _t("⭐ איכות מינימלית", "⭐ Min quality"),
+                                "days_of_week": _t("📅 ימי שבוע", "📅 Weekdays"),
+                                "airlines_include": _t("✈️ חברות מועדפות", "✈️ Preferred airlines"),
+                                "airlines_exclude": _t("🚫 חברות חסומות", "🚫 Blocked airlines"),
+                                "min_ai_score": _t("🤖 ציון AI מינימלי", "🤖 Min AI score"),
                             }
                             display_v = v
                             if k == "days_of_week":
@@ -2173,56 +2186,56 @@ elif page == "🎯 כללי התראה":
                             st.caption(f"{labels.get(k, k)}: **{display_v}**")
 
                     with lc3:
-                        toggle_label = "⏸ השבת" if is_enabled else "▶ הפעל"
+                        toggle_label = _t("⏸ השבת", "⏸ Disable") if is_enabled else _t("▶ הפעל", "▶ Enable")
                         if st.button(toggle_label, key=f"tog_rule_{rule['id']}"):
                             db.toggle_alert_rule(rule["id"], not is_enabled)
                             st.rerun()
-                        if st.button("🗑 מחק", key=f"del_rule_{rule['id']}"):
+                        if st.button(_t("🗑 מחק", "🗑 Delete"), key=f"del_rule_{rule['id']}"):
                             db.delete_alert_rule(rule["id"])
                             st.rerun()
 
             # Test rules
             st.divider()
-            st.subheader("🧪 בדוק כלל")
-            st.caption("הדמה של כלל מול מחיר קיים")
+            st.subheader(_t("🧪 בדוק כלל", "🧪 Test Rule"))
+            st.caption(_t("הדמה של כלל מול מחיר קיים", "Simulate a rule against an existing price"))
             if items:
                 test_item_name = st.selectbox(
-                    "פריט לבדיקה",
+                    _t("פריט לבדיקה", "Item to test"),
                     [f"{CAT_EMOJI.get(i['category'],'🔍')} {i['name']}" for i in items],
                     key="test_rule_item",
                 )
                 test_item = items[[f"{CAT_EMOJI.get(i['category'],'🔍')} {i['name']}" for i in items].index(test_item_name)]
-                test_price = st.number_input("מחיר לבדיקה ($)", value=300, min_value=0, step=10)
-                if st.button("🧪 בדוק", key="run_rule_test"):
+                test_price = st.number_input(_t("מחיר לבדיקה ($)", "Test price ($)"), value=300, min_value=0, step=10)
+                if st.button(_t("🧪 בדוק", "🧪 Test"), key="run_rule_test"):
                     matches = db.evaluate_alert_rules(test_item["id"], float(test_price), {})
                     if matches:
                         for m in matches:
-                            st.success(f"✅ כלל '{m['rule_name']}' **יופעל** — {m['message']}")
+                            st.success(f"✅ {_t('כלל', 'Rule')} '{m['rule_name']}' **{_t('יופעל', 'will trigger')}** — {m['message']}")
                     else:
-                        st.info("אף כלל לא יופעל למחיר זה")
+                        st.info(_t("אף כלל לא יופעל למחיר זה", "No rule will trigger for this price"))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Flexible Dates
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "📅 תאריכים גמישים":
-    st.title("📅 מצא את הפלייט הכי זול בחודש")
-    st.caption("חיפוש כל תאריכי החודש ומציאת הכי זול")
+    st.title(_t("📅 מצא את הפלייט הכי זול בחודש", "📅 Find the Cheapest Flight of the Month"))
+    st.caption(_t("חיפוש כל תאריכי החודש ומציאת הכי זול", "Search all dates of the month and find the cheapest"))
 
     with st.form("flex_form"):
         c1, c2, c3 = st.columns(3)
         with c1:
-            origin_flex = st.text_input("מוצא", value="TLV")
+            origin_flex = st.text_input(_t("מוצא", "Origin"), value="TLV")
         with c2:
-            dest_flex = st.text_input("יעד", placeholder="לונדון")
+            dest_flex = st.text_input(_t("יעד", "Destination"), placeholder=_t("לונדון", "London"))
         with c3:
-            month_flex = st.text_input("חודש (YYYY-MM)", value=datetime.now().strftime("%Y-%m"))
+            month_flex = st.text_input(_t("חודש (YYYY-MM)", "Month (YYYY-MM)"), value=datetime.now().strftime("%Y-%m"))
 
-        duration_flex = st.slider("משך הטיול (ימים)", 3, 21, 7)
-        submitted_flex = st.form_submit_button("🔍 חפש", use_container_width=True)
+        duration_flex = st.slider(_t("משך הטיול (ימים)", "Trip duration (days)"), 3, 21, 7)
+        submitted_flex = st.form_submit_button(_t("🔍 חפש", "🔍 Search"), use_container_width=True)
 
     if submitted_flex and dest_flex:
-        with st.spinner(f"בודק כל תאריכי {month_flex}... (עשוי לקחת כמה דקות)"):
+        with st.spinner(f"{_t('בודק כל תאריכי', 'Checking all dates of')} {month_flex}... ({_t('עשוי לקחת כמה דקות', 'may take a few minutes')})..."):
             results = flexible_search.search_cheapest_days(
                 origin=origin_flex,
                 destination=dest_flex,
@@ -2231,29 +2244,33 @@ elif page == "📅 תאריכים גמישים":
             )
 
         if not results:
-            st.warning("לא נמצאו תוצאות. ודא שה-Amadeus API מוגדר.")
+            st.warning(_t("לא נמצאו תוצאות. ודא שה-Amadeus API מוגדר.", "No results found. Make sure the Amadeus API is configured."))
         else:
-            st.success(f"נמצאו {len(results)} אפשרויות!")
+            st.success(f"{_t('נמצאו', 'Found')} {len(results)} {_t('אפשרויות!', 'options!')}")
 
             # Winner
             best = results[0]
             st.markdown(
-                f"### 🏆 הכי זול: "
+                f"### 🏆 {_t('הכי זול', 'Cheapest')}: "
                 f"**{best['price']:.0f} {best['currency']}**"
                 f" — {best['date']}"
             )
             if best.get("return_date"):
-                st.caption(f"חזרה: {best['return_date']} | {best.get('details','')}")
+                st.caption(f"{_t('חזרה', 'Return')}: {best['return_date']} | {best.get('details','')}")
 
             # Table
             import pandas as pd
             df = pd.DataFrame(results)
-            df["מחיר"] = df["price"].apply(lambda p: f"{p:.0f}")
-            df["תאריך יציאה"] = df["date"]
-            df["תאריך חזרה"] = df.get("return_date", "")
-            df["איכות"] = df.get("deal_quality", "")
+            price_col = _t("מחיר", "Price")
+            dep_col = _t("תאריך יציאה", "Departure")
+            ret_col = _t("תאריך חזרה", "Return")
+            qual_col = _t("איכות", "Quality")
+            df[price_col] = df["price"].apply(lambda p: f"{p:.0f}")
+            df[dep_col] = df["date"]
+            df[ret_col] = df.get("return_date", "")
+            df[qual_col] = df.get("deal_quality", "")
             st.dataframe(
-                df[["תאריך יציאה", "תאריך חזרה", "מחיר", "איכות"]],
+                df[[dep_col, ret_col, price_col, qual_col]],
                 use_container_width=True, hide_index=True
             )
 
@@ -2281,23 +2298,23 @@ elif page == "📅 תאריכים גמישים":
 # PAGE: Price Prediction
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "📈 חיזוי מחיר":
-    st.title("📈 חיזוי מחיר — AI")
-    st.caption("Claude מנתח היסטוריה ומחזיר: לקנות עכשיו או להמתין?")
+    st.title(_t("📈 חיזוי מחיר — AI", "📈 Price Prediction — AI"))
+    st.caption(_t("Claude מנתח היסטוריה ומחזיר: לקנות עכשיו או להמתין?", "Claude analyzes history and returns: buy now or wait?"))
 
     items = db.get_all_watch_items(enabled_only=False)
     if not items:
-        st.info("הוסף פריטים ובדוק מחירים קודם כדי לקבל חיזויים.")
+        st.info(_t("הוסף פריטים ובדוק מחירים קודם כדי לקבל חיזויים.", "Add items and check prices first to get predictions."))
     else:
         item_names = {f"{i['name']} ({i['destination']})": i for i in items}
-        selected_name = st.selectbox("בחר פריט לניתוח", list(item_names.keys()))
+        selected_name = st.selectbox(_t("בחר פריט לניתוח", "Select item to analyze"), list(item_names.keys()))
         item = item_names[selected_name]
         history = db.get_price_history(item["id"], limit=50)
 
         if len(history) < 3:
-            st.warning(f"צריך לפחות 3 בדיקות מחיר. כרגע יש {len(history)}.")
+            st.warning(f"{_t('צריך לפחות 3 בדיקות מחיר. כרגע יש', 'Need at least 3 price checks. Currently have')} {len(history)}.")
         else:
-            if st.button("🤖 נתח עכשיו", use_container_width=True):
-                with st.spinner("Claude מנתח מגמות שוק..."):
+            if st.button(_t("🤖 נתח עכשיו", "🤖 Analyze Now"), use_container_width=True):
+                with st.spinner(_t("Claude מנתח מגמות שוק...", "Claude analyzing market trends...")):
                     pred = price_predictor.predict_price(item, history)
                     fmt = price_predictor.format_prediction(pred)
 
@@ -2307,12 +2324,12 @@ elif page == "📈 חיזוי מחיר":
                     # Main verdict
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        st.metric("מגמה", f"{fmt['icon']} {fmt['trend']}")
+                        st.metric(_t("מגמה", "Trend"), f"{fmt['icon']} {fmt['trend']}")
                     with col2:
                         delta = fmt.get("trend_pct", 0)
-                        st.metric("שינוי צפוי", f"{delta:+.1f}%")
+                        st.metric(_t("שינוי צפוי", "Expected change"), f"{delta:+.1f}%")
                     with col3:
-                        st.metric("דחיפות (1-10)", fmt.get("urgency", "?"))
+                        st.metric(_t("דחיפות (1-10)", "Urgency (1-10)"), fmt.get("urgency", "?"))
 
                     # Recommendation box
                     color_map = {"green": "success", "orange": "warning", "blue": "info"}
@@ -2320,50 +2337,50 @@ elif page == "📈 חיזוי מחיר":
                     box_fn(f"**{fmt['recommendation']}** | {fmt['confidence']}")
 
                     # Reasoning
-                    st.markdown(f"**💡 ניתוח:**\n{fmt['reasoning']}")
+                    st.markdown(f"**💡 {_t('ניתוח', 'Analysis')}:**\n{fmt['reasoning']}")
 
                     # Price forecasts
                     if fmt.get("predicted_7d") or fmt.get("predicted_30d"):
                         c1, c2 = st.columns(2)
                         with c1:
                             if fmt.get("predicted_7d"):
-                                st.metric("חיזוי 7 ימים", f"{fmt['predicted_7d']:.0f}")
+                                st.metric(_t("חיזוי 7 ימים", "7-day forecast"), f"{fmt['predicted_7d']:.0f}")
                         with c2:
                             if fmt.get("predicted_30d"):
-                                st.metric("חיזוי 30 ימים", f"{fmt['predicted_30d']:.0f}")
+                                st.metric(_t("חיזוי 30 ימים", "30-day forecast"), f"{fmt['predicted_30d']:.0f}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Trip Planner
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🗺️ תכנן טיול":
-    st.title("🗺️ תכנן טיול מלא עם AI")
-    st.caption("Claude יתכנן עבורך טיול מלא — יעד, תקציב, לוח זמנים")
+    st.title(_t("🗺️ תכנן טיול מלא עם AI", "🗺️ Plan a Full Trip with AI"))
+    st.caption(_t("Claude יתכנן עבורך טיול מלא — יעד, תקציב, לוח זמנים", "Claude will plan a full trip for you — destination, budget, schedule"))
 
     with st.form("trip_form"):
         c1, c2 = st.columns(2)
         with c1:
-            tp_dest = st.text_input("יעד *", placeholder="טוקיו, יפן")
-            tp_origin = st.text_input("מוצא", value="תל אביב")
-            tp_from = st.date_input("תאריך יציאה", value=None)
-            tp_to = st.date_input("תאריך חזרה", value=None)
+            tp_dest = st.text_input(_t("יעד *", "Destination *"), placeholder=_t("טוקיו, יפן", "Tokyo, Japan"))
+            tp_origin = st.text_input(_t("מוצא", "Origin"), value=_t("תל אביב", "Tel Aviv"))
+            tp_from = st.date_input(_t("תאריך יציאה", "Departure date"), value=None)
+            tp_to = st.date_input(_t("תאריך חזרה", "Return date"), value=None)
         with c2:
-            tp_budget = st.number_input("תקציב כולל ($)", value=3000, step=500)
-            tp_travelers = st.number_input("מספר נוסעים", value=2, min_value=1, max_value=10)
-            tp_style = st.selectbox("סגנון", ["תקציבי", "מאוזן", "לוקסוס"])
-            tp_prefs = st.text_area("העדפות מיוחדות", placeholder="אוכל טבעוני, הימנע מטיסות לילה, אוהב טבע...")
+            tp_budget = st.number_input(_t("תקציב כולל ($)", "Total budget ($)"), value=3000, step=500)
+            tp_travelers = st.number_input(_t("מספר נוסעים", "Number of travelers"), value=2, min_value=1, max_value=10)
+            tp_style = st.selectbox(_t("סגנון", "Style"), [_t("תקציבי", "Budget"), _t("מאוזן", "Balanced"), _t("לוקסוס", "Luxury")])
+            tp_prefs = st.text_area(_t("העדפות מיוחדות", "Special preferences"), placeholder=_t("אוכל טבעוני, הימנע מטיסות לילה, אוהב טבע...", "Vegan food, avoid night flights, love nature..."))
 
-        tp_submit = st.form_submit_button("🗺️ תכנן טיול!", use_container_width=True)
+        tp_submit = st.form_submit_button(_t("🗺️ תכנן טיול!", "🗺️ Plan Trip!"), use_container_width=True)
 
     if tp_submit and tp_dest:
         # Quick estimate first
         est = trip_planner.quick_budget_estimate(tp_dest, 7, tp_travelers, tp_style)
         st.info(
-            f"**הערכה מהירה:** ~${est['estimated_total']:,} | "
-            f"${est['per_day']:,}/יום | ${est['per_person']:,}/אדם"
+            f"**{_t('הערכה מהירה', 'Quick estimate')}:** ~${est['estimated_total']:,} | "
+            f"${est['per_day']:,}/{_t('יום', 'day')} | ${est['per_person']:,}/{_t('אדם', 'person')}"
         )
 
-        with st.spinner("Claude מתכנן את הטיול שלך... (30-60 שניות)"):
+        with st.spinner(_t("Claude מתכנן את הטיול שלך... (30-60 שניות)", "Claude planning your trip... (30-60 seconds)")):
             plan = trip_planner.plan_trip(
                 destination=tp_dest,
                 origin=tp_origin,
@@ -2380,32 +2397,32 @@ elif page == "🗺️ תכנן טיול":
         elif "error" in plan:
             st.error(plan["error"])
         else:
-            st.success(plan.get("summary", "התכנית מוכנה!"))
+            st.success(plan.get("summary", _t("התכנית מוכנה!", "Plan is ready!")))
 
             # Budget breakdown
             if "budget_breakdown" in plan:
-                st.subheader("💰 פירוט תקציב")
+                st.subheader(_t("💰 פירוט תקציב", "💰 Budget Breakdown"))
                 bd = plan["budget_breakdown"]
                 cols = st.columns(len(bd))
-                labels = {"flights": "✈️ טיסות", "hotel": "🏨 מלון", "food": "🍽️ אוכל",
-                          "activities": "🎭 פעילויות", "transport": "🚌 תחבורה", "other": "📦 אחר"}
+                labels = {"flights": _t("✈️ טיסות", "✈️ Flights"), "hotel": _t("🏨 מלון", "🏨 Hotel"), "food": _t("🍽️ אוכל", "🍽️ Food"),
+                          "activities": _t("🎭 פעילויות", "🎭 Activities"), "transport": _t("🚌 תחבורה", "🚌 Transport"), "other": _t("📦 אחר", "📦 Other")}
                 for col, (k, v) in zip(cols, bd.items()):
                     col.metric(labels.get(k, k), f"${v:,}")
 
             total = plan.get("total_estimated", 0)
             if total:
-                st.metric("סה״כ משוער", f"${total:,}")
+                st.metric(_t("סה״כ משוער", "Total estimate"), f"${total:,}")
 
             # Daily plan
             if "daily_plan" in plan:
-                st.subheader("📅 תכנית יומית")
+                st.subheader(_t("📅 תכנית יומית", "📅 Daily Plan"))
                 for day in plan["daily_plan"]:
                     with st.expander(
-                        f"יום {day.get('day','')} — {day.get('title','')} "
+                        f"{_t('יום', 'Day')} {day.get('day','')} — {day.get('title','')} "
                         f"(${day.get('estimated_cost', 0):,})"
                     ):
                         if day.get("activities"):
-                            st.markdown("**פעילויות:** " + " | ".join(day["activities"]))
+                            st.markdown(f"**{_t('פעילויות', 'Activities')}:** " + " | ".join(day["activities"]))
                         meals = day.get("meals", {})
                         if any(meals.values()):
                             st.markdown(
@@ -2414,18 +2431,18 @@ elif page == "🗺️ תכנן טיול":
                                 f"🍽️ {meals.get('dinner','')}"
                             )
                         if day.get("accommodation"):
-                            st.markdown(f"🛏️ **לינה:** {day['accommodation']}")
+                            st.markdown(f"🛏️ **{_t('לינה', 'Accommodation')}:** {day['accommodation']}")
                         if day.get("tips"):
                             st.info(f"💡 {day['tips']}")
 
             # Best deals & advice
             if plan.get("best_deals"):
-                st.subheader("🔥 הדילים הכי טובים")
+                st.subheader(_t("🔥 הדילים הכי טובים", "🔥 Best Deals"))
                 for deal in plan["best_deals"]:
                     st.markdown(f"• {deal}")
 
             if plan.get("booking_advice"):
-                st.subheader("📌 מתי להזמין")
+                st.subheader(_t("📌 מתי להזמין", "📌 When to Book"))
                 st.info(plan["booking_advice"])
 
             if plan.get("warnings"):
@@ -2437,14 +2454,14 @@ elif page == "🗺️ תכנן טיול":
 # PAGE: Exchange Rates
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "💱 שערי חליפין":
-    st.title("💱 שערי חליפין")
-    st.caption("עקוב אחרי שערי חליפין וקבל התראה כשהשקל חזק")
+    st.title(_t("💱 שערי חליפין", "💱 Exchange Rates"))
+    st.caption(_t("עקוב אחרי שערי חליפין וקבל התראה כשהשקל חזק", "Track exchange rates and get an alert when the shekel is strong"))
 
     fx.ensure_table()
 
     # Current rates
-    st.subheader("📊 שערים נוכחיים")
-    if st.button("🔄 רענן שערים"):
+    st.subheader(_t("📊 שערים נוכחיים", "📊 Current Rates"))
+    if st.button(_t("🔄 רענן שערים", "🔄 Refresh Rates")):
         rates = fx.fetch_rates("USD")
         if rates:
             with db.get_db() as conn:
@@ -2452,9 +2469,9 @@ elif page == "💱 שערי חליפין":
                     if target in rates:
                         rate_val = rates[target]
                         fx.save_rate(base, target, rate_val)
-            st.success("עודכן!")
+            st.success(_t("עודכן!", "Updated!"))
         else:
-            st.error("לא ניתן לטעון שערים")
+            st.error(_t("לא ניתן לטעון שערים", "Cannot load rates"))
 
     cols = st.columns(len(fx.POPULAR_PAIRS))
     for col, (base, target, label) in zip(cols, fx.POPULAR_PAIRS):
@@ -2470,21 +2487,21 @@ elif page == "💱 שערי חליפין":
     st.divider()
 
     # Rate alert
-    st.subheader("🔔 הוסף התראת שער")
+    st.subheader(_t("🔔 הוסף התראת שער", "🔔 Add Rate Alert"))
     with st.form("rate_alert_form"):
         ra_c1, ra_c2, ra_c3, ra_c4 = st.columns(4)
         with ra_c1:
-            ra_base = st.text_input("מטבע בסיס", value="USD")
+            ra_base = st.text_input(_t("מטבע בסיס", "Base currency"), value="USD")
         with ra_c2:
-            ra_target = st.text_input("מטבע יעד", value="ILS")
+            ra_target = st.text_input(_t("מטבע יעד", "Target currency"), value="ILS")
         with ra_c3:
-            ra_threshold = st.number_input("ספסף", value=3.50, step=0.01, format="%.4f")
+            ra_threshold = st.number_input(_t("ספסף", "Threshold"), value=3.50, step=0.01, format="%.4f")
         with ra_c4:
-            ra_dir = st.selectbox("כיוון", ["below", "above"],
-                                  format_func=lambda x: "מתחת ל" if x == "below" else "מעל ל")
-        if st.form_submit_button("➕ הוסף התראה"):
+            ra_dir = st.selectbox(_t("כיוון", "Direction"), ["below", "above"],
+                                  format_func=lambda x: _t("מתחת ל", "Below") if x == "below" else _t("מעל ל", "Above"))
+        if st.form_submit_button(_t("➕ הוסף התראה", "➕ Add Alert")):
             fx.add_rate_alert(ra_base, ra_target, ra_threshold, ra_dir)
-            st.success(f"✅ התראה נוספה: {ra_base}/{ra_target} {ra_dir} {ra_threshold}")
+            st.success(f"✅ {_t('התראה נוספה', 'Alert added')}: {ra_base}/{ra_target} {ra_dir} {ra_threshold}")
 
     # Rate history chart for USD/ILS
     hist = fx.get_rate_history("USD", "ILS", limit=30)
@@ -2510,19 +2527,19 @@ elif page == "💱 שערי חליפין":
 # PAGE: Export
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "📥 ייצוא נתונים":
-    st.title("📥 ייצוא נתונים")
+    st.title(_t("📥 ייצוא נתונים", "📥 Export Data"))
 
     items = db.get_all_watch_items(enabled_only=False)
     if not items:
-        st.info("אין נתונים לייצוא.")
+        st.info(_t("אין נתונים לייצוא.", "No data to export."))
     else:
-        st.subheader("📊 ייצוא Excel — כל הפריטים")
-        st.caption("קובץ Excel מעוצב עם גרפים ו-color coding לפי מחיר")
-        if st.button("📊 הורד Excel", use_container_width=True):
-            with st.spinner("יוצר קובץ Excel..."):
+        st.subheader(_t("📊 ייצוא Excel — כל הפריטים", "📊 Export Excel — All Items"))
+        st.caption(_t("קובץ Excel מעוצב עם גרפים ו-color coding לפי מחיר", "Formatted Excel file with charts and color coding by price"))
+        if st.button(_t("📊 הורד Excel", "📊 Download Excel"), use_container_width=True):
+            with st.spinner(_t("יוצר קובץ Excel...", "Creating Excel file...")):
                 xlsx_bytes = exporters.export_excel()
             st.download_button(
-                label="⬇️ הורד Noded.xlsx",
+                label=_t("⬇️ הורד Noded.xlsx", "⬇️ Download Noded.xlsx"),
                 data=xlsx_bytes,
                 file_name=f"Noded_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -2530,14 +2547,14 @@ elif page == "📥 ייצוא נתונים":
             )
 
         st.divider()
-        st.subheader("📄 ייצוא CSV — פריט יחיד")
+        st.subheader(_t("📄 ייצוא CSV — פריט יחיד", "📄 Export CSV — Single Item"))
         item_names = {f"{i['name']} ({i['destination']})": i for i in items}
-        sel = st.selectbox("בחר פריט", list(item_names.keys()))
+        sel = st.selectbox(_t("בחר פריט", "Select item"), list(item_names.keys()))
         item = item_names[sel]
 
         csv_str = exporters.export_csv(item["id"])
         st.download_button(
-            label="⬇️ הורד CSV",
+            label=_t("⬇️ הורד CSV", "⬇️ Download CSV"),
             data=csv_str.encode("utf-8-sig"),
             file_name=f"{item['name']}_{datetime.now().strftime('%Y%m%d')}.csv",
             mime="text/csv",
@@ -2549,27 +2566,27 @@ elif page == "📥 ייצוא נתונים":
 # PAGE: Multi-City Route Optimizer
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🌍 מסלול מרובה ערים":
-    st.title("🌍 מטב מסלול מרובה ערים")
-    st.caption("מה הסדר הזול ביותר לביקור בכמה ערים? Claude מחשב את כל הקומבינציות.")
+    st.title(_t("🌍 מטב מסלול מרובה ערים", "🌍 Multi-City Route Optimizer"))
+    st.caption(_t("מה הסדר הזול ביותר לביקור בכמה ערים? Claude מחשב את כל הקומבינציות.", "What is the cheapest order to visit multiple cities? Claude computes all combinations."))
 
     with st.form("multicity_form"):
         c1, c2 = st.columns(2)
         with c1:
-            mc_origin = st.text_input("עיר מוצא", value="תל אביב (TLV)")
+            mc_origin = st.text_input(_t("עיר מוצא", "Origin city"), value=_t("תל אביב (TLV)", "Tel Aviv (TLV)"))
             mc_cities_raw = st.text_area(
-                "ערים לביקור (שורה לכל עיר)",
-                placeholder="טוקיו\nבנגקוק\nבאלי\nסינגפור",
+                _t("ערים לביקור (שורה לכל עיר)", "Cities to visit (one per line)"),
+                placeholder=_t("טוקיו\nבנגקוק\nבאלי\nסינגפור", "Tokyo\nBangkok\nBali\nSingapore"),
                 height=120,
             )
-            mc_start = st.date_input("תאריך יציאה")
+            mc_start = st.date_input(_t("תאריך יציאה", "Departure date"))
         with c2:
-            mc_budget = st.number_input("תקציב כולל ($)", value=5000, step=500)
+            mc_budget = st.number_input(_t("תקציב כולל ($)", "Total budget ($)"), value=5000, step=500)
             mc_days_raw = st.text_area(
-                "ימים בכל עיר (שורה לכל עיר, לפי סדר למעלה)",
+                _t("ימים בכל עיר (שורה לכל עיר, לפי סדר למעלה)", "Days per city (one per line, same order as above)"),
                 placeholder="3\n4\n4\n3",
                 height=120,
             )
-        mc_submit = st.form_submit_button("🔍 מצא מסלול זול ביותר", use_container_width=True)
+        mc_submit = st.form_submit_button(_t("🔍 מצא מסלול זול ביותר", "🔍 Find Cheapest Route"), use_container_width=True)
 
     if mc_submit and mc_cities_raw.strip():
         cities = [c.strip() for c in mc_cities_raw.strip().splitlines() if c.strip()]
@@ -2581,9 +2598,9 @@ elif page == "🌍 מסלול מרובה ערים":
             except (IndexError, ValueError):
                 days_per_city[city] = 3
 
-        st.info(f"מחשב {len(cities)} ערים: {' → '.join(cities)}")
+        st.info(f"{_t('מחשב', 'Computing')} {len(cities)} {_t('ערים', 'cities')}: {' → '.join(cities)}")
 
-        with st.spinner("Claude מחשב את כל הקומבינציות האפשריות..."):
+        with st.spinner(_t("Claude מחשב את כל הקומבינציות האפשריות...", "Claude computing all possible combinations...")):
             result = cost_calculator.optimize_multi_city(
                 cities=cities,
                 origin=mc_origin,
@@ -2600,10 +2617,10 @@ elif page == "🌍 מסלול מרובה ערים":
             opt_price = result.get("optimal_price", 0)
             savings = result.get("savings_vs_worst", 0)
 
-            st.success(f"✅ הסדר האופטימלי חוסך **${savings:,}** לעומת הגרוע ביותר!")
+            st.success(f"✅ {_t('הסדר האופטימלי חוסך', 'The optimal order saves')} **${savings:,}** {_t('לעומת הגרוע ביותר!', 'vs the worst order!')}")
 
             st.markdown(
-                f"### 🏆 הסדר המומלץ: "
+                f"### 🏆 {_t('הסדר המומלץ', 'Recommended order')}: "
                 + " → ".join(f"**{c}**" for c in optimal)
                 + f"  |  ${opt_price:,}"
             )
@@ -2611,7 +2628,7 @@ elif page == "🌍 מסלול מרובה ערים":
             # Compare all orders
             comparisons = result.get("direct_comparison", [])
             if comparisons:
-                st.subheader("📊 השוואת סדרים")
+                st.subheader(_t("📊 השוואת סדרים", "📊 Order Comparison"))
                 for i, comp in enumerate(comparisons):
                     color = "#00ff88" if i == 0 else "#667eea"
                     order_str = " → ".join(comp.get("order", []))
@@ -2631,17 +2648,17 @@ elif page == "🌍 מסלול מרובה ערים":
             oj = result.get("open_jaw_option", {})
             if oj and oj.get("price"):
                 st.divider()
-                st.subheader("✈️ אפשרות Open-Jaw")
+                st.subheader(_t("✈️ אפשרות Open-Jaw", "✈️ Open-Jaw Option"))
                 c1, c2 = st.columns(2)
                 c1.info(f"**{oj.get('description','')}**\n\n${oj.get('price',0):,}")
                 if oj.get("saves", 0) > 0:
-                    c2.success(f"חוסך **${oj['saves']:,}** לעומת Round-Trip")
+                    c2.success(f"{_t('חוסך', 'Saves')} **${oj['saves']:,}** {_t('לעומת Round-Trip', 'vs Round-Trip')}")
 
             # Flight legs
             legs = result.get("flight_legs", [])
             if legs:
                 st.divider()
-                st.subheader("🗓️ רגלי הטיסה")
+                st.subheader(_t("🗓️ רגלי הטיסה", "🗓️ Flight Legs"))
                 cols = st.columns(len(legs))
                 for col, leg in zip(cols, legs):
                     col.metric(
@@ -2653,12 +2670,12 @@ elif page == "🌍 מסלול מרובה ערים":
             # Strategy
             if result.get("booking_strategy"):
                 st.divider()
-                st.info(f"📌 **אסטרטגיית הזמנה:** {result['booking_strategy']}")
+                st.info(f"📌 **{_t('אסטרטגיית הזמנה', 'Booking strategy')}:** {result['booking_strategy']}")
 
             # Tips
             tips = result.get("tips", [])
             if tips:
-                st.subheader("💡 טיפים")
+                st.subheader(_t("💡 טיפים", "💡 Tips"))
                 for tip in tips:
                     st.markdown(f"• {tip}")
 
@@ -2670,26 +2687,26 @@ elif page == "🌍 מסלול מרובה ערים":
 # PAGE: Stopover Finder
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🔁 עצירות חינם":
-    st.title("🔁 מצא עצירות חינם (Stopovers)")
-    st.caption("Emirates → דובאי, Icelandair → רייקיאוויק, Turkish → איסטנבול. שני יעדים במחיר אחד!")
+    st.title(_t("🔁 מצא עצירות חינם (Stopovers)", "🔁 Find Free Stopovers"))
+    st.caption(_t("Emirates → דובאי, Icelandair → רייקיאוויק, Turkish → איסטנבול. שני יעדים במחיר אחד!", "Emirates → Dubai, Icelandair → Reykjavik, Turkish → Istanbul. Two destinations for the price of one!"))
 
     with st.form("stopover_form"):
         c1, c2, c3 = st.columns(3)
         with c1:
-            so_origin = st.text_input("מוצא", value="TLV")
+            so_origin = st.text_input(_t("מוצא", "Origin"), value="TLV")
         with c2:
-            so_dest = st.text_input("יעד סופי *", placeholder="טוקיו, ניו-יורק...")
+            so_dest = st.text_input(_t("יעד סופי *", "Final destination *"), placeholder=_t("טוקיו, ניו-יורק...", "Tokyo, New York..."))
         with c3:
-            so_days = st.slider("מקסימום ימי עצירה", 1, 7, 3)
+            so_days = st.slider(_t("מקסימום ימי עצירה", "Max stopover days"), 1, 7, 3)
         c4, c5 = st.columns(2)
         with c4:
-            so_out = st.date_input("תאריך יציאה")
+            so_out = st.date_input(_t("תאריך יציאה", "Departure date"))
         with c5:
-            so_ret = st.date_input("תאריך חזרה (אופציונלי)", value=None)
-        so_submit = st.form_submit_button("🔍 מצא stopovers", use_container_width=True)
+            so_ret = st.date_input(_t("תאריך חזרה (אופציונלי)", "Return date (optional)"), value=None)
+        so_submit = st.form_submit_button(_t("🔍 מצא stopovers", "🔍 Find stopovers"), use_container_width=True)
 
     if so_submit and so_dest:
-        with st.spinner("מחפש stopovers אטרקטיביים..."):
+        with st.spinner(_t("מחפש stopovers אטרקטיביים...", "Searching attractive stopovers...")):
             options = stopover_finder.find_stopovers(
                 origin=so_origin,
                 destination=so_dest,
@@ -2699,22 +2716,22 @@ elif page == "🔁 עצירות חינם":
             )
 
         if not options or "error" in (options[0] if options else {}):
-            st.warning("לא נמצאו stopovers. נסה יעד אחר.")
+            st.warning(_t("לא נמצאו stopovers. נסה יעד אחר.", "No stopovers found. Try a different destination."))
         else:
-            st.success(f"נמצאו {len(options)} אפשרויות stopover!")
+            st.success(f"{_t('נמצאו', 'Found')} {len(options)} {_t('אפשרויות stopover!', 'stopover options!')}")
 
             for opt in options:
                 score = stopover_finder.get_stopover_value_score(opt)
                 is_free = opt.get("is_free_stopover", False)
                 color = "#00ff88" if is_free else "#667eea"
-                badge = "🆓 FREE STOPOVER" if is_free else "💰 תוספת מחיר"
+                badge = "🆓 FREE STOPOVER" if is_free else _t("💰 תוספת מחיר", "💰 Extra cost")
                 savings = opt.get("savings_vs_direct", 0) or 0
                 extra = opt.get("extra_cost_vs_direct", 0) or 0
 
                 price_delta = savings if savings > 0 else -extra
                 delta_text = (
-                    f"חוסך **${savings:,}**" if savings > 0
-                    else (f"תוספת ${extra:,}" if extra > 0 else "אותו מחיר")
+                    f"{_t('חוסך', 'Saves')} **${savings:,}**" if savings > 0
+                    else (f"{_t('תוספת', 'Extra')} ${extra:,}" if extra > 0 else _t("אותו מחיר", "Same price"))
                 )
 
                 with st.container():
@@ -2731,28 +2748,28 @@ elif page == "🔁 עצירות חינם":
                         st.markdown(f"**{badge}** | {delta_text} | {so_origin}→{opt.get('stopover_code','')}→{so_dest}")
                     with hc2:
                         st.metric(
-                            "מחיר עם Stopover",
+                            _t("מחיר עם Stopover", "Price with Stopover"),
                             f"${opt.get('price_with_stopover',0):,}",
-                            f"vs ישיר ${opt.get('price_direct',0):,}",
+                            f"vs {_t('ישיר', 'direct')} ${opt.get('price_direct',0):,}",
                         )
                     with hc3:
-                        st.metric("ניקוד ערך", f"{score:.1f}/10")
+                        st.metric(_t("ניקוד ערך", "Value score"), f"{score:.1f}/10")
                     st.markdown("</div>", unsafe_allow_html=True)
 
                 highlights = opt.get("stopover_highlights", [])
                 if highlights:
-                    st.markdown("**🌟 מה לעשות ב" + opt.get('stopover_city','') + ":** " + " | ".join(highlights))
+                    st.markdown(f"**🌟 {_t('מה לעשות ב', 'What to do in')}" + opt.get('stopover_city','') + ":** " + " | ".join(highlights))
 
                 cols_info = st.columns(3)
-                cols_info[0].caption(f"⏱ {opt.get('stopover_days_min',0)}-{opt.get('stopover_days_max',3)} ימי עצירה")
-                cols_info[1].caption(f"👥 מתאים ל: {opt.get('best_for','')}")
-                visa_icon = "❌ נדרשת ויזה" if opt.get("visa_needed") else "✅ ללא ויזה"
+                cols_info[0].caption(f"⏱ {opt.get('stopover_days_min',0)}-{opt.get('stopover_days_max',3)} {_t('ימי עצירה', 'stopover days')}")
+                cols_info[1].caption(f"👥 {_t('מתאים ל', 'Best for')}: {opt.get('best_for','')}")
+                visa_icon = _t("❌ נדרשת ויזה", "❌ Visa required") if opt.get("visa_needed") else _t("✅ ללא ויזה", "✅ Visa-free")
                 cols_info[2].caption(visa_icon)
 
                 if opt.get("tip"):
                     st.info(f"💡 {opt['tip']}")
                 if opt.get("booking_url"):
-                    st.link_button(f"🔗 הזמן עכשיו", opt["booking_url"])
+                    st.link_button(_t("🔗 הזמן עכשיו", "🔗 Book Now"), opt["booking_url"])
                 st.divider()
 
 
@@ -2760,31 +2777,31 @@ elif page == "🔁 עצירות חינם":
 # PAGE: True Cost Calculator
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "💰 עלות אמיתית":
-    st.title("💰 מחשבון עלות אמיתית")
-    st.caption("Ryanair ב-€49 עם מטען = לפעמים יקר יותר מ-El Al. תראה את המחיר האמיתי.")
+    st.title(_t("💰 מחשבון עלות אמיתית", "💰 True Cost Calculator"))
+    st.caption(_t("Ryanair ב-€49 עם מטען = לפעמים יקר יותר מ-El Al. תראה את המחיר האמיתי.", "Ryanair at €49 with luggage = sometimes more expensive than El Al. See the true price."))
 
-    tab1, tab2 = st.tabs(["🧳 עלות אמיתית", "💳 נקודות vs מזומן"])
+    tab1, tab2 = st.tabs([_t("🧳 עלות אמיתית", "🧳 True Cost"), _t("💳 נקודות vs מזומן", "💳 Points vs Cash")])
 
     with tab1:
         with st.form("truecost_form"):
             c1, c2 = st.columns(2)
             with c1:
-                tc_price = st.number_input("מחיר בסיס ($)", value=200, step=10)
-                tc_airline = st.selectbox("חברת תעופה", [
+                tc_price = st.number_input(_t("מחיר בסיס ($)", "Base price ($)"), value=200, step=10)
+                tc_airline = st.selectbox(_t("חברת תעופה", "Airline"), [
                     "El Al", "Israir", "Arkia", "Ryanair", "Wizz Air",
-                    "easyJet", "Lufthansa", "KLM", "TurkishAirlines", "אחר",
+                    "easyJet", "Lufthansa", "KLM", "TurkishAirlines", _t("אחר", "Other"),
                 ])
-                tc_bags = st.number_input("מספר מזוודות", value=1, min_value=0, max_value=5)
-                tc_bag_weight = st.selectbox("משקל מזוודה", ["10kg", "15kg", "20kg", "23kg", "32kg"])
+                tc_bags = st.number_input(_t("מספר מזוודות", "Number of bags"), value=1, min_value=0, max_value=5)
+                tc_bag_weight = st.selectbox(_t("משקל מזוודה", "Bag weight"), ["10kg", "15kg", "20kg", "23kg", "32kg"])
             with c2:
-                tc_meals = st.checkbox("צריך לקנות ארוחות?", value=False)
-                tc_insurance = st.checkbox("ביטוח נסיעות", value=True)
-                tc_nights = st.number_input("מספר לילות", value=7, min_value=1)
-                tc_travelers = st.number_input("מספר נוסעים", value=2, min_value=1)
-                tc_origin_airport = st.selectbox("שדה תעופה מוצא", ["TLV", "אחר"])
-                tc_transport = st.selectbox("הגעה לנמל תעופה", ["taxi", "bus", "shuttle", "train"])
+                tc_meals = st.checkbox(_t("צריך לקנות ארוחות?", "Need to buy meals?"), value=False)
+                tc_insurance = st.checkbox(_t("ביטוח נסיעות", "Travel insurance"), value=True)
+                tc_nights = st.number_input(_t("מספר לילות", "Number of nights"), value=7, min_value=1)
+                tc_travelers = st.number_input(_t("מספר נוסעים", "Number of travelers"), value=2, min_value=1)
+                tc_origin_airport = st.selectbox(_t("שדה תעופה מוצא", "Departure airport"), ["TLV", _t("אחר", "Other")])
+                tc_transport = st.selectbox(_t("הגעה לנמל תעופה", "Transport to airport"), ["taxi", "bus", "shuttle", "train"])
 
-            tc_submit = st.form_submit_button("💰 חשב עלות אמיתית", use_container_width=True)
+            tc_submit = st.form_submit_button(_t("💰 חשב עלות אמיתית", "💰 Calculate True Cost"), use_container_width=True)
 
         if tc_submit:
             result = cost_calculator.calculate_true_cost(
@@ -2806,26 +2823,26 @@ elif page == "💰 עלות אמיתית":
 
             # Summary
             col1, col2, col3 = st.columns(3)
-            col1.metric("💰 עלות אמיתית", f"${total:,.0f}")
-            col2.metric("👤 לאדם", f"${result['per_person']:,.0f}")
-            col3.metric("🙈 עמלות נסתרות", f"${hidden:,.0f}", f"{hidden_pct:.0f}% מהסכום")
+            col1.metric(_t("💰 עלות אמיתית", "💰 True cost"), f"${total:,.0f}")
+            col2.metric(_t("👤 לאדם", "👤 Per person"), f"${result['per_person']:,.0f}")
+            col3.metric(_t("🙈 עמלות נסתרות", "🙈 Hidden fees"), f"${hidden:,.0f}", f"{hidden_pct:.0f}% {_t('מהסכום', 'of total')}")
 
             if hidden_pct > 30:
-                st.warning(f"⚠️ {hidden_pct:.0f}% מהמחיר הוא עמלות נסתרות! מחיר הבסיס מטעה.")
+                st.warning(f"⚠️ {hidden_pct:.0f}% {_t('מהמחיר הוא עמלות נסתרות! מחיר הבסיס מטעה.', 'of the price is hidden fees! The base price is misleading.')}")
             elif hidden_pct > 15:
-                st.info(f"ℹ️ {hidden_pct:.0f}% עמלות נוספות על מחיר הבסיס.")
+                st.info(f"ℹ️ {hidden_pct:.0f}% {_t('עמלות נוספות על מחיר הבסיס.', 'additional fees on top of the base price.')}")
             else:
-                st.success(f"✅ מחיר הבסיס מייצג היטב — רק {hidden_pct:.0f}% תוספות.")
+                st.success(f"✅ {_t('מחיר הבסיס מייצג היטב — רק', 'Base price is representative — only')} {hidden_pct:.0f}% {_t('תוספות.', 'extras.')}")
 
             # Breakdown chart
             labels = {
-                "base_flight": "✈️ טיסה",
-                "baggage": "🧳 מטען",
-                "meals": "🍽️ ארוחות",
-                "transport_origin": "🚗 הסעה לנמל",
-                "transport_destination": "🚕 הסעה ביעד",
-                "insurance": "🛡️ ביטוח",
-                "seat_selection": "💺 בחירת מושב",
+                "base_flight": _t("✈️ טיסה", "✈️ Flight"),
+                "baggage": _t("🧳 מטען", "🧳 Luggage"),
+                "meals": _t("🍽️ ארוחות", "🍽️ Meals"),
+                "transport_origin": _t("🚗 הסעה לנמל", "🚗 Transfer to airport"),
+                "transport_destination": _t("🚕 הסעה ביעד", "🚕 Transfer at destination"),
+                "insurance": _t("🛡️ ביטוח", "🛡️ Insurance"),
+                "seat_selection": _t("💺 בחירת מושב", "💺 Seat selection"),
             }
             fig = go.Figure(go.Bar(
                 x=[labels.get(k, k) for k, v in bd.items() if v > 0],
@@ -2843,16 +2860,16 @@ elif page == "💰 עלות אמיתית":
             st.plotly_chart(fig, use_container_width=True)
 
     with tab2:
-        st.subheader("💳 האם לממש נקודות?")
+        st.subheader(_t("💳 האם לממש נקודות?", "💳 Should I Redeem Points?"))
         with st.form("points_form"):
             p1, p2, p3 = st.columns(3)
             with p1:
-                pt_program = st.selectbox("תוכנית נאמנות", list(cost_calculator.POINTS_VALUES.keys()))
+                pt_program = st.selectbox(_t("תוכנית נאמנות", "Loyalty program"), list(cost_calculator.POINTS_VALUES.keys()))
             with p2:
-                pt_points = st.number_input("כמות נקודות", value=50000, step=1000)
+                pt_points = st.number_input(_t("כמות נקודות", "Number of points"), value=50000, step=1000)
             with p3:
-                pt_cash = st.number_input("מחיר במזומן ($)", value=500, step=50)
-            pt_submit = st.form_submit_button("🔍 חשב", use_container_width=True)
+                pt_cash = st.number_input(_t("מחיר במזומן ($)", "Cash price ($)"), value=500, step=50)
+            pt_submit = st.form_submit_button(_t("🔍 חשב", "🔍 Calculate"), use_container_width=True)
 
         if pt_submit:
             res = cost_calculator.calculate_points_value(
@@ -2861,11 +2878,11 @@ elif page == "💰 עלות אמיתית":
                 redemption_cash_value=pt_cash,
             )
             col1, col2, col3 = st.columns(3)
-            col1.metric("ערך הנקודות", f"${res['cash_value_usd']:,.0f}")
-            col2.metric("מחיר מזומן", f"${res['redemption_value_usd']:,.0f}")
+            col1.metric(_t("ערך הנקודות", "Points value"), f"${res['cash_value_usd']:,.0f}")
+            col2.metric(_t("מחיר מזומן", "Cash price"), f"${res['redemption_value_usd']:,.0f}")
             ratio = res["ratio_pct"]
             delta_val = res["cash_value_usd"] - res["redemption_value_usd"]
-            col3.metric("יחס", f"{ratio:.0f}%", f"{delta_val:+.0f}$")
+            col3.metric(_t("יחס", "Ratio"), f"{ratio:.0f}%", f"{delta_val:+.0f}$")
 
             if ratio >= 120:
                 st.success(f"🔥 {res['recommendation']}")
@@ -2891,7 +2908,7 @@ elif page == "💰 עלות אמיתית":
                     ],
                     "threshold": {"line": {"color": "#fff", "width": 2}, "value": 100},
                 },
-                title={"text": "ערך הנקודות vs מזומן"},
+                title={"text": _t("ערך הנקודות vs מזומן", "Points value vs Cash")},
             ))
             fig.update_layout(
                 paper_bgcolor="rgba(0,0,0,0)", font=dict(color="#ccc"), height=250,
@@ -2900,14 +2917,14 @@ elif page == "💰 עלות אמיתית":
             st.plotly_chart(fig, use_container_width=True)
 
         st.divider()
-        st.subheader("🔍 מצא את המימוש הכי טוב לנקודות שלך")
+        st.subheader(_t("🔍 מצא את המימוש הכי טוב לנקודות שלך", "🔍 Find the Best Redemption for Your Points"))
         with st.form("best_redeem_form"):
-            br_program = st.selectbox("תוכנית", list(cost_calculator.POINTS_VALUES.keys()), key="br_prog")
-            br_points = st.number_input("נקודות", value=100000, step=5000, key="br_pts")
-            br_submit = st.form_submit_button("🤖 מצא הזדמנויות מימוש", use_container_width=True)
+            br_program = st.selectbox(_t("תוכנית", "Program"), list(cost_calculator.POINTS_VALUES.keys()), key="br_prog")
+            br_points = st.number_input(_t("נקודות", "Points"), value=100000, step=5000, key="br_pts")
+            br_submit = st.form_submit_button(_t("🤖 מצא הזדמנויות מימוש", "🤖 Find Redemption Opportunities"), use_container_width=True)
 
         if br_submit:
-            with st.spinner("Claude מחפש את הדרכים הכי משתלמות..."):
+            with st.spinner(_t("Claude מחפש את הדרכים הכי משתלמות...", "Claude finding the most valuable redemptions...")):
                 res = cost_calculator.find_best_redemption(br_points, br_program)
 
             options = res.get("options", [])
@@ -2919,7 +2936,7 @@ elif page == "💰 עלות אמיתית":
                         f"<div style='background:rgba(255,255,255,0.06);padding:12px;"
                         f"border-radius:8px;margin:6px 0;border-left:3px solid {color}'>"
                         f"<b>{opt.get('redemption_type','')}: {opt.get('description','')}</b><br>"
-                        f"💰 ערך: <span style='color:{color}'>{cpp:.1f}¢/נקודה</span> | "
+                        f"💰 {_t('ערך', 'Value')}: <span style='color:{color}'>{cpp:.1f}¢/{_t('נקודה', 'point')}</span> | "
                         f"${opt.get('total_value_usd',0):,} | {opt.get('difficulty','')}<br>"
                         f"📋 {opt.get('how_to','')}"
                         + (f"<br>💡 {opt['tip']}" if opt.get('tip') else "")
@@ -2934,8 +2951,8 @@ elif page == "💰 עלות אמיתית":
 # PAGE: Deal Insights & Patterns
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "📊 תובנות ודפוסים":
-    st.title("📊 תובנות ודפוסים מהדאטה שלך")
-    st.caption("מה ה-DB לימד אותנו — מתי יוצאים דילים, לאיזה יעדים, ומה הזמן הכי טוב לסרוק.")
+    st.title(_t("📊 תובנות ודפוסים מהדאטה שלך", "📊 Insights & Patterns from Your Data"))
+    st.caption(_t("מה ה-DB לימד אותנו — מתי יוצאים דילים, לאיזה יעדים, ומה הזמן הכי טוב לסרוק.", "What the DB taught us — when deals appear, to which destinations, and the best time to scan."))
 
     patterns = deal_insights.get_deal_patterns()
 
@@ -2945,22 +2962,22 @@ elif page == "📊 תובנות ודפוסים":
 
     # Header metrics
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("סה״כ דילים נצפו", patterns["total_deals"])
-    col2.metric("ניקוד ממוצע", f"{patterns['avg_score']:.1f}/10")
+    col1.metric(_t("סה״כ דילים נצפו", "Total deals seen"), patterns["total_deals"])
+    col2.metric(_t("ניקוד ממוצע", "Average score"), f"{patterns['avg_score']:.1f}/10")
     if patterns.get("best_day"):
-        col3.metric("יום הדילים הכי טוב", patterns["best_day"]["name"])
+        col3.metric(_t("יום הדילים הכי טוב", "Best deals day"), patterns["best_day"]["name"])
     if patterns.get("best_hour") is not None:
-        col4.metric("שעה הכי טובה לסרוק", f"{patterns['best_hour']:02d}:00")
+        col4.metric(_t("שעה הכי טובה לסרוק", "Best hour to scan"), f"{patterns['best_hour']:02d}:00")
 
     st.divider()
 
-    tab1, tab2, tab3 = st.tabs(["📅 תזמון", "✈️ יעדים וחברות", "🤖 ניתוח AI"])
+    tab1, tab2, tab3 = st.tabs([_t("📅 תזמון", "📅 Timing"), _t("✈️ יעדים וחברות", "✈️ Destinations & Airlines"), _t("🤖 ניתוח AI", "🤖 AI Analysis")])
 
     with tab1:
         # Day of week chart
         day_scores = patterns.get("day_scores", {})
         if day_scores:
-            st.subheader("📅 איכות דילים לפי יום בשבוע")
+            st.subheader(_t("📅 איכות דילים לפי יום בשבוע", "📅 Deal quality by day of week"))
             fig = go.Figure(go.Bar(
                 x=list(day_scores.keys()),
                 y=list(day_scores.values()),
@@ -2981,18 +2998,18 @@ elif page == "📊 תובנות ודפוסים":
             if patterns.get("best_day") and patterns.get("worst_day"):
                 c1, c2 = st.columns(2)
                 c1.success(
-                    f"✅ **הכי טוב:** יום {patterns['best_day']['name']} "
-                    f"(ניקוד {patterns['best_day']['avg_score']})"
+                    f"✅ **{_t('הכי טוב', 'Best')}:** {_t('יום', 'Day')} {patterns['best_day']['name']} "
+                    f"({_t('ניקוד', 'Score')} {patterns['best_day']['avg_score']})"
                 )
                 c2.error(
-                    f"❌ **הכי גרוע:** יום {patterns['worst_day']['name']} "
-                    f"(ניקוד {patterns['worst_day']['avg_score']})"
+                    f"❌ **{_t('הכי גרוע', 'Worst')}:** {_t('יום', 'Day')} {patterns['worst_day']['name']} "
+                    f"({_t('ניקוד', 'Score')} {patterns['worst_day']['avg_score']})"
                 )
 
         # Hour chart
         hour_scores = patterns.get("hour_scores", {})
         if hour_scores:
-            st.subheader("⏰ איכות דילים לפי שעה")
+            st.subheader(_t("⏰ איכות דילים לפי שעה", "⏰ Deal quality by hour"))
             fig2 = go.Figure(go.Scatter(
                 x=list(hour_scores.keys()),
                 y=list(hour_scores.values()),
@@ -3066,33 +3083,33 @@ elif page == "📊 תובנות ודפוסים":
                 st.error(ai["error"])
             else:
                 if ai.get("key_patterns"):
-                    st.subheader("🔍 דפוסים מרכזיים")
+                    st.subheader(_t("🔍 דפוסים מרכזיים", "🔍 Key Patterns"))
                     for p in ai["key_patterns"]:
                         st.markdown(f"• {p}")
 
                 if ai.get("strategy"):
-                    st.subheader("🎯 אסטרטגיה מומלצת")
+                    st.subheader(_t("🎯 אסטרטגיה מומלצת", "🎯 Recommended Strategy"))
                     st.info(ai["strategy"])
 
                 if ai.get("add_to_watchlist"):
-                    st.subheader("📌 כדאי להוסיף לרשימת המעקב")
+                    st.subheader(_t("📌 כדאי להוסיף לרשימת המעקב", "📌 Add to Watchlist"))
                     cols = st.columns(len(ai["add_to_watchlist"]))
                     for col, dest in zip(cols, ai["add_to_watchlist"]):
                         col.success(f"✈️ {dest}")
 
                 if ai.get("action_items"):
-                    st.subheader("✅ פעולות מומלצות")
+                    st.subheader(_t("✅ פעולות מומלצות", "✅ Recommended Actions"))
                     for act in ai["action_items"]:
                         st.markdown(f"• {act}")
 
                 if ai.get("savings_potential"):
-                    st.metric("💰 פוטנציאל חיסכון", ai["savings_potential"])
+                    st.metric(_t("💰 פוטנציאל חיסכון", "💰 Savings Potential"), ai["savings_potential"])
 
         # Recent top deals from DB
         recent = patterns.get("recent_top", [])
         if recent:
             st.divider()
-            st.subheader("🏆 הדילים הכי טובים שנצפו")
+            st.subheader(_t("🏆 הדילים הכי טובים שנצפו", "🏆 Best Deals Seen"))
             for d in recent:
                 score = d.get("score", 0)
                 score_bar = "🟩" * int(score / 2) + "⬜" * (5 - int(score / 2))
@@ -3109,27 +3126,27 @@ elif page == "📊 תובנות ודפוסים":
 # PAGE: Telegram Bot
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🤖 בוט טלגרם":
-    st.title("🤖 הגדרת בוט Telegram")
-    st.caption("קבל התראות חכמות ישירות ל-Telegram — דילים, ירידות מחיר, שביתות, דילים שפגים.")
+    st.title(_t("🤖 הגדרת בוט Telegram", "🤖 Telegram Bot Setup"))
+    st.caption(_t("קבל התראות חכמות ישירות ל-Telegram — דילים, ירידות מחיר, שביתות, דילים שפגים.", "Get smart alerts directly to Telegram — deals, price drops, strikes, expiring deals."))
 
     # Current status
     tg_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     tg_chat = os.environ.get("TELEGRAM_CHAT_ID", "")
 
     if tg_token and tg_chat:
-        st.success(f"✅ בוט מחובר | Chat ID: {tg_chat}")
+        st.success(f"✅ {_t('בוט מחובר', 'Bot connected')} | Chat ID: {tg_chat}")
         bot_info = telegram_bot.get_bot_info(tg_token)
         if bot_info.get("ok"):
             bname = bot_info["result"].get("username", "")
             st.caption(f"Bot: @{bname}")
     else:
-        st.warning("⚠️ בוט לא מוגדר — הגדר token ו-chat_id למטה")
+        st.warning(_t("⚠️ בוט לא מוגדר — הגדר token ו-chat_id למטה", "⚠️ Bot not configured — set token and chat_id below"))
 
     st.divider()
 
     # Setup guide
-    with st.expander("📖 איך מגדירים בוט Telegram? (3 שלבים)", expanded=not bool(tg_token)):
-        st.markdown("""
+    with st.expander(_t("📖 איך מגדירים בוט Telegram? (3 שלבים)", "📖 How to set up a Telegram bot? (3 steps)"), expanded=not bool(tg_token)):
+        st.markdown(_t("""
 **שלב 1 — צור בוט:**
 1. פתח Telegram וחפש `@BotFather`
 2. שלח `/newbot`
@@ -3144,7 +3161,22 @@ elif page == "🤖 בוט טלגרם":
 1. הכנס Token ו-Chat ID למטה
 2. לחץ "בדוק חיבור"
 3. אם הכל תקין — תקבל הודעת אישור ב-Telegram!
-        """)
+        """, """
+**Step 1 — Create a bot:**
+1. Open Telegram and search for `@BotFather`
+2. Send `/newbot`
+3. Choose a name and username for the bot
+4. Receive the **Bot Token** (looks like: `123456:ABC-DEF...`)
+
+**Step 2 — Find your Chat ID:**
+1. Send a message to the bot you created
+2. Click "Get Chat ID" below — the system will find it automatically
+
+**Step 3 — Save and test:**
+1. Enter Token and Chat ID below
+2. Click "Test Connection"
+3. If everything works — you'll receive a confirmation message on Telegram!
+        """))
 
     st.divider()
 
@@ -3162,106 +3194,106 @@ elif page == "🤖 בוט טלגרם":
             placeholder="-100123456789",
         )
         c1, c2 = st.columns(2)
-        save_btn = c1.form_submit_button("💾 שמור", use_container_width=True)
-        test_btn = c2.form_submit_button("📨 בדוק חיבור", use_container_width=True)
+        save_btn = c1.form_submit_button(_t("💾 שמור", "💾 Save"), use_container_width=True)
+        test_btn = c2.form_submit_button(_t("📨 בדוק חיבור", "📨 Test Connection"), use_container_width=True)
 
     if save_btn and new_token and new_chat:
         _save_env("TELEGRAM_BOT_TOKEN", new_token)
         _save_env("TELEGRAM_CHAT_ID", new_chat)
-        st.success("✅ נשמר! הפעל מחדש את האפליקציה להפעלת השינויים.")
+        st.success(_t("✅ נשמר! הפעל מחדש את האפליקציה להפעלת השינויים.", "✅ Saved! Restart the app to apply changes."))
 
     if test_btn and new_token and new_chat:
-        with st.spinner("שולח הודעת בדיקה..."):
+        with st.spinner(_t("שולח הודעת בדיקה...", "Sending test message...")):
             res = telegram_bot.test_connection(new_token, new_chat)
         if res.get("ok"):
-            st.success("✅ הודעת בדיקה נשלחה! בדוק את Telegram.")
+            st.success(_t("✅ הודעת בדיקה נשלחה! בדוק את Telegram.", "✅ Test message sent! Check Telegram."))
         else:
-            st.error(f"❌ שגיאה: {res.get('error', 'לא ידוע')}")
+            st.error(f"❌ {_t('שגיאה', 'Error')}: {res.get('error', _t('לא ידוע', 'Unknown'))}")
 
     st.divider()
 
     # Auto-detect chat ID
     if tg_token:
-        st.subheader("🔍 זיהוי אוטומטי של Chat ID")
-        st.caption("שלח הודעה לבוט שלך ב-Telegram, ואז לחץ כאן למציאת ה-ID שלך.")
-        if st.button("🔍 קבל Chat ID", use_container_width=True):
+        st.subheader(_t("🔍 זיהוי אוטומטי של Chat ID", "🔍 Auto-Detect Chat ID"))
+        st.caption(_t("שלח הודעה לבוט שלך ב-Telegram, ואז לחץ כאן למציאת ה-ID שלך.", "Send a message to your bot on Telegram, then click here to find your ID."))
+        if st.button(_t("🔍 קבל Chat ID", "🔍 Get Chat ID"), use_container_width=True):
             updates = telegram_bot.get_updates(tg_token)
             found_id = telegram_bot.extract_chat_id(updates)
             if found_id:
-                st.success(f"✅ Chat ID שלך: **{found_id}**")
+                st.success(f"✅ {_t('Chat ID שלך', 'Your Chat ID')}: **{found_id}**")
                 st.code(found_id)
             else:
-                st.warning("לא נמצאו הודעות. ודא ששלחת הודעה לבוט תחילה.")
+                st.warning(_t("לא נמצאו הודעות. ודא ששלחת הודעה לבוט תחילה.", "No messages found. Make sure you sent a message to the bot first."))
 
     st.divider()
 
     # Alert settings
-    st.subheader("⚙️ הגדרות התראות")
-    st.caption("בחר אילו התראות לקבל ב-Telegram")
+    st.subheader(_t("⚙️ הגדרות התראות", "⚙️ Alert Settings"))
+    st.caption(_t("בחר אילו התראות לקבל ב-Telegram", "Choose which alerts to receive on Telegram"))
 
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown("**✈️ מחירים**")
-        st.checkbox("ירידת מחיר בטיסות", value=True, key="tg_price_drop")
-        st.checkbox("מחיר נמוך היסטורי", value=True, key="tg_price_low")
-        st.checkbox("עלייה חדה במחיר", value=False, key="tg_price_rise")
+        st.markdown(_t("**✈️ מחירים**", "**✈️ Prices**"))
+        st.checkbox(_t("ירידת מחיר בטיסות", "Flight price drop"), value=True, key="tg_price_drop")
+        st.checkbox(_t("מחיר נמוך היסטורי", "Historical low price"), value=True, key="tg_price_low")
+        st.checkbox(_t("עלייה חדה במחיר", "Sharp price rise"), value=False, key="tg_price_rise")
     with col2:
-        st.markdown("**🔥 דילים**")
-        st.checkbox("דיל חדש (ציד דילים)", value=True, key="tg_new_deal")
-        st.checkbox("דיל עומד לפוג", value=True, key="tg_expiry")
-        st.checkbox("שגיאת מחיר", value=True, key="tg_error_fare")
+        st.markdown(_t("**🔥 דילים**", "**🔥 Deals**"))
+        st.checkbox(_t("דיל חדש (ציד דילים)", "New deal (deal hunter)"), value=True, key="tg_new_deal")
+        st.checkbox(_t("דיל עומד לפוג", "Deal about to expire"), value=True, key="tg_expiry")
+        st.checkbox(_t("שגיאת מחיר", "Error fare"), value=True, key="tg_error_fare")
 
     st.divider()
 
     # Send test deal
-    st.subheader("📨 שלח התראה ידנית")
+    st.subheader(_t("📨 שלח התראה ידנית", "📨 Send Manual Alert"))
     with st.form("tg_manual_form"):
-        msg_text = st.text_area("הודעה", placeholder="כתוב הודעה לשלוח לבוט...", height=80)
-        manual_submit = st.form_submit_button("📨 שלח עכשיו")
+        msg_text = st.text_area(_t("הודעה", "Message"), placeholder=_t("כתוב הודעה לשלוח לבוט...", "Write a message to send to the bot..."), height=80)
+        manual_submit = st.form_submit_button(_t("📨 שלח עכשיו", "📨 Send Now"))
 
     if manual_submit and msg_text and tg_token and tg_chat:
         res = telegram_bot.send_message(tg_token, tg_chat, msg_text)
         if res.get("ok"):
-            st.success("✅ נשלח!")
+            st.success(_t("✅ נשלח!", "✅ Sent!"))
         else:
-            st.error(f"❌ {res.get('error','שגיאה')}")
+            st.error(f"❌ {res.get('error', _t('שגיאה', 'Error'))}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Kiwi Flight Search
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🔍 Kiwi טיסות":
-    st.title("🔍 חיפוש טיסות Kiwi / Tequila")
-    st.caption("מחירים אמיתיים, virtual interlining, מסלולים יצירתיים שGoogle Flights מפספס.")
+    st.title(_t("🔍 חיפוש טיסות Kiwi / Tequila", "🔍 Kiwi / Tequila Flight Search"))
+    st.caption(_t("מחירים אמיתיים, virtual interlining, מסלולים יצירתיים שGoogle Flights מפספס.", "Real prices, virtual interlining, creative routes that Google Flights misses."))
 
     kiwi_key = os.environ.get("KIWI_API_KEY", "")
     if kiwi_key:
-        st.success("✅ Kiwi API Key מוגדר — מחירים אמיתיים")
+        st.success(_t("✅ Kiwi API Key מוגדר — מחירים אמיתיים", "✅ Kiwi API Key configured — real prices"))
     else:
-        st.info("ℹ️ ללא API Key — משתמש ב-Claude web search (פחות מדויק). הוסף KIWI_API_KEY ל-.env לתוצאות מדויקות.")
+        st.info(_t("ℹ️ ללא API Key — משתמש ב-Claude web search (פחות מדויק). הוסף KIWI_API_KEY ל-.env לתוצאות מדויקות.", "ℹ️ No API Key — using Claude web search (less accurate). Add KIWI_API_KEY to .env for precise results."))
 
     st.divider()
 
     with st.form("kiwi_search_form"):
         c1, c2 = st.columns(2)
-        k_origin = c1.text_input("מוצא (IATA)", value="TLV", max_chars=3).upper()
-        k_dest = c2.text_input("יעד (IATA)", value="", placeholder="NYC / BKK / LON", max_chars=3).upper()
+        k_origin = c1.text_input(_t("מוצא (IATA)", "Origin (IATA)"), value="TLV", max_chars=3).upper()
+        k_dest = c2.text_input(_t("יעד (IATA)", "Destination (IATA)"), value="", placeholder="NYC / BKK / LON", max_chars=3).upper()
 
         c3, c4 = st.columns(2)
-        k_date_out = c3.date_input("תאריך יציאה")
-        k_date_back = c4.date_input("תאריך חזרה (אופציונלי)", value=None)
+        k_date_out = c3.date_input(_t("תאריך יציאה", "Departure date"))
+        k_date_back = c4.date_input(_t("תאריך חזרה (אופציונלי)", "Return date (optional)"), value=None)
 
         c5, c6, c7 = st.columns(3)
-        k_adults = c5.number_input("נוסעים", min_value=1, max_value=9, value=1)
-        k_stops = c6.number_input("עצירות מקס", min_value=0, max_value=3, value=2)
-        k_currency = c7.selectbox("מטבע", ["USD", "EUR", "ILS"], index=0)
+        k_adults = c5.number_input(_t("נוסעים", "Passengers"), min_value=1, max_value=9, value=1)
+        k_stops = c6.number_input(_t("עצירות מקס", "Max stops"), min_value=0, max_value=3, value=2)
+        k_currency = c7.selectbox(_t("מטבע", "Currency"), ["USD", "EUR", "ILS"], index=0)
 
-        k_price_max = st.number_input("מחיר מקסימלי (0 = ללא הגבלה)", min_value=0, value=0)
+        k_price_max = st.number_input(_t("מחיר מקסימלי (0 = ללא הגבלה)", "Max price (0 = no limit)"), min_value=0, value=0)
 
-        k_submit = st.form_submit_button("🔍 חפש טיסות", use_container_width=True)
+        k_submit = st.form_submit_button(_t("🔍 חפש טיסות", "🔍 Search Flights"), use_container_width=True)
 
     if k_submit and k_dest:
-        with st.spinner("מחפש טיסות..."):
+        with st.spinner(_t("מחפש טיסות...", "Searching flights...")):
             flights = kiwi_client.search_flights(
                 origin=k_origin,
                 destination=k_dest,
@@ -3276,11 +3308,11 @@ elif page == "🔍 Kiwi טיסות":
             )
 
         if not flights:
-            st.warning("לא נמצאו טיסות.")
+            st.warning(_t("לא נמצאו טיסות.", "No flights found."))
         elif "error" in (flights[0] if flights else {}):
-            st.error(f"שגיאה: {flights[0]['error']}")
+            st.error(f"{_t('שגיאה', 'Error')}: {flights[0]['error']}")
         else:
-            st.success(f"✅ נמצאו {len(flights)} טיסות")
+            st.success(f"✅ {_t('נמצאו', 'Found')} {len(flights)} {_t('טיסות', 'flights')}")
             for f in flights:
                 price = f.get("price", 0)
                 airline = f.get("airline", "")
@@ -3288,35 +3320,35 @@ elif page == "🔍 Kiwi טיסות":
                 dep = f.get("departure", "")
                 arr = f.get("arrival", "")
                 dur = f.get("duration_hours", 0)
-                stop_txt = "✈️ ישיר" if stops == 0 else f"{stops} עצירות"
+                stop_txt = _t("✈️ ישיר", "✈️ Direct") if stops == 0 else f"{stops} {_t('עצירות', 'stops')}"
                 deep_link = f.get("deep_link", "")
 
                 with st.container():
                     cols = st.columns([1, 2, 2, 1, 1])
-                    cols[0].metric("מחיר", f"${price:,.0f}")
+                    cols[0].metric(_t("מחיר", "Price"), f"${price:,.0f}")
                     cols[1].write(f"**{airline}** | {stop_txt}")
                     cols[2].write(f"🛫 {dep[:16]}\n🛬 {arr[:16]}")
-                    cols[3].write(f"⏱ {dur}ש׳")
+                    cols[3].write(f"⏱ {dur}{_t('ש׳', 'h')}")
                     if deep_link:
-                        cols[4].markdown(f"[הזמן]({deep_link})")
+                        cols[4].markdown(f"[{_t('הזמן', 'Book')}]({deep_link})")
                     st.divider()
 
     st.divider()
-    st.subheader("📅 חודש זול — מתי הכי זול לטוס?")
+    st.subheader(_t("📅 חודש זול — מתי הכי זול לטוס?", "📅 Cheapest Month — When is the cheapest to fly?"))
     with st.form("kiwi_month_form"):
         cm1, cm2 = st.columns(2)
-        m_origin = cm1.text_input("מוצא", value="TLV", max_chars=3).upper()
-        m_dest = cm2.text_input("יעד", placeholder="NYC", max_chars=3).upper()
-        m_month = st.text_input("חודש (YYYY-MM)", placeholder="2025-08")
-        m_submit = st.form_submit_button("📅 מצא ימים זולים")
+        m_origin = cm1.text_input(_t("מוצא", "Origin"), value="TLV", max_chars=3).upper()
+        m_dest = cm2.text_input(_t("יעד", "Destination"), placeholder="NYC", max_chars=3).upper()
+        m_month = st.text_input(_t("חודש (YYYY-MM)", "Month (YYYY-MM)"), placeholder="2025-08")
+        m_submit = st.form_submit_button(_t("📅 מצא ימים זולים", "📅 Find Cheap Days"))
 
     if m_submit and m_dest:
-        with st.spinner("סורק את כל החודש..."):
+        with st.spinner(_t("סורק את כל החודש...", "Scanning the entire month...")):
             results = kiwi_client.get_cheapest_month(m_origin, m_dest, m_month)
         if results and "error" not in (results[0] if results else {}):
-            st.write(f"**{len(results)} אפשרויות — ממוין לפי מחיר:**")
+            st.write(f"**{len(results)} {_t('אפשרויות — ממוין לפי מחיר', 'options — sorted by price')}:**")
             for r in results[:10]:
-                st.write(f"📅 {r.get('departure','')[:10]} — **${r.get('price',0):,.0f}** | {r.get('airline','')} | {r.get('stops',0)} עצירות")
+                st.write(f"📅 {r.get('departure','')[:10]} — **${r.get('price',0):,.0f}** | {r.get('airline','')} | {r.get('stops',0)} {_t('עצירות', 'stops')}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -3324,9 +3356,9 @@ elif page == "🔍 Kiwi טיסות":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🕵️ Hidden City":
     st.title("🕵️ Hidden City Ticketing")
-    st.caption("מוצא כרטיסים זולים יותר דרך יעד ביניים — חוסך 20-50%.")
+    st.caption(_t("מוצא כרטיסים זולים יותר דרך יעד ביניים — חוסך 20-50%.", "Find cheaper tickets via an intermediate destination — saves 20-50%."))
 
-    with st.expander("⚠️ חשוב לדעת לפני השימוש", expanded=True):
+    with st.expander(_t("⚠️ חשוב לדעת לפני השימוש", "⚠️ Important to know before using"), expanded=True):
         st.warning(hidden_city.get_risks_explanation())
 
     st.divider()
@@ -3334,18 +3366,18 @@ elif page == "🕵️ Hidden City":
     tab1, tab2 = st.tabs(["🕵️ Hidden City", "🔄 Throwaway Ticketing"])
 
     with tab1:
-        st.subheader("מצא הזדמנויות Hidden City")
+        st.subheader(_t("מצא הזדמנויות Hidden City", "Find Hidden City Opportunities"))
         with st.form("hc_form"):
             hc1, hc2 = st.columns(2)
-            hc_origin = hc1.text_input("מוצא", value="TLV", max_chars=3).upper()
-            hc_real_dest = hc2.text_input("יעד אמיתי", placeholder="LHR / AMS / JFK", max_chars=3).upper()
+            hc_origin = hc1.text_input(_t("מוצא", "Origin"), value="TLV", max_chars=3).upper()
+            hc_real_dest = hc2.text_input(_t("יעד אמיתי", "Real destination"), placeholder="LHR / AMS / JFK", max_chars=3).upper()
             hc3, hc4 = st.columns(2)
-            hc_date_out = hc3.date_input("תאריך יציאה", key="hc_out")
-            hc_date_ret = hc4.date_input("תאריך חזרה (אופציונלי)", value=None, key="hc_ret")
-            hc_submit = st.form_submit_button("🔍 חפש הזדמנויות", use_container_width=True)
+            hc_date_out = hc3.date_input(_t("תאריך יציאה", "Departure date"), key="hc_out")
+            hc_date_ret = hc4.date_input(_t("תאריך חזרה (אופציונלי)", "Return date (optional)"), value=None, key="hc_ret")
+            hc_submit = st.form_submit_button(_t("🔍 חפש הזדמנויות", "🔍 Search Opportunities"), use_container_width=True)
 
         if hc_submit and hc_real_dest:
-            with st.spinner("מחפש hidden city deals... (עשוי לקחת כ-30 שניות)"):
+            with st.spinner(_t("מחפש hidden city deals... (עשוי לקחת כ-30 שניות)", "Searching hidden city deals... (may take ~30 seconds)")):
                 deals = hidden_city.find_hidden_city_deals(
                     origin=hc_origin,
                     real_destination=hc_real_dest,
@@ -3354,38 +3386,38 @@ elif page == "🕵️ Hidden City":
                 )
 
             if not deals:
-                st.info("לא נמצאו הזדמנויות hidden city לנתיב זה.")
+                st.info(_t("לא נמצאו הזדמנויות hidden city לנתיב זה.", "No hidden city opportunities found for this route."))
             elif "error" in (deals[0] if deals else {}):
-                st.error(f"שגיאה: {deals[0]['error']}")
+                st.error(f"{_t('שגיאה', 'Error')}: {deals[0]['error']}")
             else:
-                st.success(f"✅ נמצאו {len(deals)} הזדמנויות!")
+                st.success(f"✅ {_t('נמצאו', 'Found')} {len(deals)} {_t('הזדמנויות', 'opportunities')}!")
                 for d in deals:
                     savings = d.get("savings", 0)
                     savings_pct = d.get("savings_pct", 0)
                     color = "🟢" if savings_pct > 25 else "🟡"
-                    with st.expander(f"{color} {d.get('route','')} — חיסכון ${savings:,.0f} ({savings_pct:.0f}%)", expanded=savings_pct > 20):
+                    with st.expander(f"{color} {d.get('route','')} — {_t('חיסכון', 'Saving')} ${savings:,.0f} ({savings_pct:.0f}%)", expanded=savings_pct > 20):
                         c1, c2, c3 = st.columns(3)
-                        c1.metric("מחיר hidden", f"${d.get('price_hidden',0):,.0f}")
-                        c2.metric("מחיר ישיר", f"${d.get('price_direct',0):,.0f}")
-                        c3.metric("חיסכון", f"${savings:,.0f}")
-                        st.write(f"**חברה:** {d.get('airline','')}")
-                        st.write(f"**למה עובד:** {d.get('why_works','')}")
-                        st.write(f"**סיכון:** {d.get('risk_level','')}")
+                        c1.metric(_t("מחיר hidden", "Hidden price"), f"${d.get('price_hidden',0):,.0f}")
+                        c2.metric(_t("מחיר ישיר", "Direct price"), f"${d.get('price_direct',0):,.0f}")
+                        c3.metric(_t("חיסכון", "Saving"), f"${savings:,.0f}")
+                        st.write(f"**{_t('חברה', 'Airline')}:** {d.get('airline','')}")
+                        st.write(f"**{_t('למה עובד', 'Why it works')}:** {d.get('why_works','')}")
+                        st.write(f"**{_t('סיכון', 'Risk')}:** {d.get('risk_level','')}")
                         st.warning(f"⚠️ {d.get('warning','')}")
                         if d.get("deep_link"):
-                            st.markdown(f"[הזמן כ-{d.get('book_as_if_going_to','')}]({d.get('deep_link','')})")
+                            st.markdown(f"[{_t('הזמן כ-', 'Book as going to ')}{d.get('book_as_if_going_to','')}]({d.get('deep_link','')})")
 
     with tab2:
-        st.subheader("🔄 Throwaway Ticketing — הלוך-חזור זול מ-One Way?")
+        st.subheader(_t("🔄 Throwaway Ticketing — הלוך-חזור זול מ-One Way?", "🔄 Throwaway Ticketing — Round-trip cheaper than One Way?"))
         with st.form("ta_form"):
             ta1, ta2 = st.columns(2)
-            ta_origin = ta1.text_input("מוצא", value="TLV", max_chars=3).upper()
-            ta_dest = ta2.text_input("יעד", placeholder="NYC", max_chars=3).upper()
-            ta_date = st.date_input("תאריך יציאה", key="ta_date")
-            ta_submit = st.form_submit_button("🔍 בדוק", use_container_width=True)
+            ta_origin = ta1.text_input(_t("מוצא", "Origin"), value="TLV", max_chars=3).upper()
+            ta_dest = ta2.text_input(_t("יעד", "Destination"), placeholder="NYC", max_chars=3).upper()
+            ta_date = st.date_input(_t("תאריך יציאה", "Departure date"), key="ta_date")
+            ta_submit = st.form_submit_button(_t("🔍 בדוק", "🔍 Check"), use_container_width=True)
 
         if ta_submit and ta_dest:
-            with st.spinner("משווה מחירים..."):
+            with st.spinner(_t("משווה מחירים...", "Comparing prices...")):
                 result = hidden_city.find_throwaway_ticketing(
                     ta_origin, ta_dest, str(ta_date)
                 )
@@ -3395,7 +3427,7 @@ elif page == "🕵️ Hidden City":
                 c1.metric("One Way", f"${result.get('oneway_price',0):,.0f}")
                 c2.metric("Round Trip", f"${result.get('roundtrip_price',0):,.0f}")
                 saves = result.get("throwaway_saves", 0)
-                c3.metric("חיסכון", f"${saves:,.0f}", delta=f"{saves:+.0f}" if saves else None)
+                c3.metric(_t("חיסכון", "Saving"), f"${saves:,.0f}", delta=f"{saves:+.0f}" if saves else None)
 
                 if result.get("throwaway_worthwhile"):
                     st.success(f"✅ {result.get('recommendation','')}")
@@ -3410,54 +3442,54 @@ elif page == "🕵️ Hidden City":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "📡 RSS & Reddit":
     st.title("📡 RSS & Reddit Real-Time Scanner")
-    st.caption("סורק Secret Flying, TheFlightDeal, Fly4Free, FlyerTalk ו-Reddit בזמן אמת.")
+    st.caption(_t("סורק Secret Flying, TheFlightDeal, Fly4Free, FlyerTalk ו-Reddit בזמן אמת.", "Scans Secret Flying, TheFlightDeal, Fly4Free, FlyerTalk and Reddit in real time."))
 
     col_scan1, col_scan2 = st.columns(2)
-    if col_scan1.button("🔄 סרוק RSS עכשיו", use_container_width=True):
-        with st.spinner("סורק RSS feeds..."):
+    if col_scan1.button(_t("🔄 סרוק RSS עכשיו", "🔄 Scan RSS Now"), use_container_width=True):
+        with st.spinner(_t("סורק RSS feeds...", "Scanning RSS feeds...")):
             new_deals = rss_scanner.scan_rss_feeds()
-        st.success(f"✅ נמצאו {len(new_deals)} דילים חדשים")
+        st.success(f"✅ {_t('נמצאו', 'Found')} {len(new_deals)} {_t('דילים חדשים', 'new deals')}")
         st.session_state["rss_scanned"] = True
 
-    if col_scan2.button("🔴 חפש ב-Reddit", use_container_width=True):
-        with st.spinner("מחפש ב-Reddit... (עשוי לקחת 30 שניות)"):
+    if col_scan2.button(_t("🔴 חפש ב-Reddit", "🔴 Search Reddit"), use_container_width=True):
+        with st.spinner(_t("מחפש ב-Reddit... (עשוי לקחת 30 שניות)", "Searching Reddit... (may take 30 seconds)")):
             reddit_deals = rss_scanner.scan_reddit_deals()
         if reddit_deals and "error" not in (reddit_deals[0] if reddit_deals else {}):
-            st.success(f"✅ נמצאו {len(reddit_deals)} דילים מ-Reddit")
+            st.success(f"✅ {_t('נמצאו', 'Found')} {len(reddit_deals)} {_t('דילים מ-Reddit', 'deals from Reddit')}")
         else:
-            st.warning("לא נמצאו דילים חדשים ב-Reddit.")
+            st.warning(_t("לא נמצאו דילים חדשים ב-Reddit.", "No new deals found on Reddit."))
 
     st.divider()
 
-    min_score = st.slider("ציון מינימלי", 0.0, 10.0, 5.0, 0.5)
+    min_score = st.slider(_t("ציון מינימלי", "Minimum score"), 0.0, 10.0, 5.0, 0.5)
     deals = rss_scanner.get_recent_rss_deals(limit=50, min_score=min_score)
 
     if not deals:
-        st.info("אין דילים במסד הנתונים. לחץ 'סרוק RSS עכשיו' להתחלה.")
+        st.info(_t("אין דילים במסד הנתונים. לחץ 'סרוק RSS עכשיו' להתחלה.", "No deals in database. Click 'Scan RSS Now' to start."))
     else:
-        st.write(f"**{len(deals)} דילים (ציון ≥ {min_score}):**")
+        st.write(f"**{len(deals)} {_t('דילים', 'deals')} ({_t('ציון', 'score')} ≥ {min_score}):**")
 
         unseen = rss_scanner.get_unseen_deals(min_score=6.0)
         if unseen:
-            st.markdown("### 🔥 חדשים — לא נצפו")
+            st.markdown(f"### 🔥 {_t('חדשים — לא נצפו', 'New — Unseen')}")
             for d in unseen[:5]:
                 score = d.get("score", 0)
                 color = "🔴" if score >= 8 else "🟠" if score >= 6 else "🟡"
                 with st.expander(f"{color} [{score:.1f}] {d.get('title','')[:80]}", expanded=score >= 8):
                     st.write(d.get("description", "")[:300])
                     c1, c2, c3 = st.columns(3)
-                    c1.write(f"**מקור:** {d.get('source','')}")
+                    c1.write(f"**{_t('מקור', 'Source')}:** {d.get('source','')}")
                     if d.get("price"):
-                        c2.metric("מחיר", f"${d['price']:.0f}")
-                    c3.write(f"**ציון:** {score:.1f}/10")
+                        c2.metric(_t("מחיר", "Price"), f"${d['price']:.0f}")
+                    c3.write(f"**{_t('ציון', 'Score')}:** {score:.1f}/10")
                     if d.get("url"):
-                        st.markdown(f"[🔗 לדיל המלא]({d['url']})")
-                    if st.button(f"✓ סמן כנצפה", key=f"seen_{d['id']}"):
+                        st.markdown(f"[🔗 {_t('לדיל המלא', 'Full deal')}]({d['url']})")
+                    if st.button(_t("✓ סמן כנצפה", "✓ Mark as seen"), key=f"seen_{d['id']}"):
                         rss_scanner.mark_seen(d["id"])
                         st.rerun()
             st.divider()
 
-        st.markdown("### 📋 כל הדילים")
+        st.markdown(f"### 📋 {_t('כל הדילים', 'All Deals')}")
         for d in deals:
             score = d.get("score", 0)
             icon = "🔴" if score >= 8 else "🟠" if score >= 6 else "🟡"
@@ -3468,7 +3500,7 @@ elif page == "📡 RSS & Reddit":
             with st.expander(f"{icon} {title}{price_txt} [{source}]"):
                 st.write(d.get("description", "")[:400])
                 if d.get("url"):
-                    st.markdown(f"[🔗 לדיל]({d['url']})")
+                    st.markdown(f"[🔗 {_t('לדיל', 'Deal')}]({d['url']})")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -3476,29 +3508,29 @@ elif page == "📡 RSS & Reddit":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "⚡ Auto-Book":
     st.title("⚡ Auto-Book Engine")
-    st.caption("הגדר כלל: 'אם TLV→BKK < $350 — שלח התראה ופתח browser'")
+    st.caption(_t("הגדר כלל: 'אם TLV→BKK < $350 — שלח התראה ופתח browser'", "Set a rule: 'If TLV→BKK < $350 — send alert and open browser'"))
 
-    tab_rules, tab_log, tab_passenger = st.tabs(["📋 כללים", "📜 לוג", "👤 פרטי נוסע"])
+    tab_rules, tab_log, tab_passenger = st.tabs([_t("📋 כללים", "📋 Rules"), _t("📜 לוג", "📜 Log"), _t("👤 פרטי נוסע", "👤 Passenger Details")])
 
     with tab_rules:
-        st.subheader("➕ הוסף כלל חדש")
+        st.subheader(_t("➕ הוסף כלל חדש", "➕ Add New Rule"))
         auto_book.ensure_auto_book_table()
 
         with st.form("ab_add_rule"):
             ab1, ab2 = st.columns(2)
-            ab_name = ab1.text_input("שם הכלל", placeholder="TLV-NYC זול")
-            ab_mode = ab2.selectbox("מצב", ["notify", "open_browser", "auto_fill"],
-                                     format_func=lambda x: {"notify": "📲 התראה בלבד", "open_browser": "🌐 פתח browser", "auto_fill": "🤖 מלא אוטומטית"}[x])
+            ab_name = ab1.text_input(_t("שם הכלל", "Rule name"), placeholder=_t("TLV-NYC זול", "Cheap TLV-NYC"))
+            ab_mode = ab2.selectbox(_t("מצב", "Mode"), ["notify", "open_browser", "auto_fill"],
+                                     format_func=lambda x: {"notify": _t("📲 התראה בלבד", "📲 Alert only"), "open_browser": _t("🌐 פתח browser", "🌐 Open browser"), "auto_fill": _t("🤖 מלא אוטומטית", "🤖 Auto-fill")}[x])
             ab3, ab4, ab5 = st.columns(3)
-            ab_origin = ab3.text_input("מוצא", value="TLV", max_chars=3).upper()
-            ab_dest = ab4.text_input("יעד", placeholder="NYC", max_chars=3).upper()
-            ab_max_price = ab5.number_input("מחיר מקסימלי ($)", min_value=50, value=400)
+            ab_origin = ab3.text_input(_t("מוצא", "Origin"), value="TLV", max_chars=3).upper()
+            ab_dest = ab4.text_input(_t("יעד", "Destination"), placeholder="NYC", max_chars=3).upper()
+            ab_max_price = ab5.number_input(_t("מחיר מקסימלי ($)", "Max price ($)"), min_value=50, value=400)
 
             ab6, ab7 = st.columns(2)
-            ab_date_from = ab6.text_input("תאריך מ- (YYYY-MM-DD)", placeholder="2025-06-01")
-            ab_date_to = ab7.text_input("תאריך עד (YYYY-MM-DD)", placeholder="2025-09-01")
+            ab_date_from = ab6.text_input(_t("תאריך מ- (YYYY-MM-DD)", "Date from (YYYY-MM-DD)"), placeholder="2025-06-01")
+            ab_date_to = ab7.text_input(_t("תאריך עד (YYYY-MM-DD)", "Date to (YYYY-MM-DD)"), placeholder="2025-09-01")
 
-            ab_submit = st.form_submit_button("➕ הוסף כלל", use_container_width=True)
+            ab_submit = st.form_submit_button(_t("➕ הוסף כלל", "➕ Add Rule"), use_container_width=True)
 
         if ab_submit and ab_name and ab_dest:
             rule_id = auto_book.add_rule(
@@ -3506,14 +3538,14 @@ elif page == "⚡ Auto-Book":
                 max_price=ab_max_price, date_from=ab_date_from,
                 date_to=ab_date_to, mode=ab_mode,
             )
-            st.success(f"✅ כלל #{rule_id} נוסף!")
+            st.success(f"✅ {_t('כלל', 'Rule')} #{rule_id} {_t('נוסף', 'added')}!")
             st.rerun()
 
         st.divider()
-        st.subheader("📋 כללים פעילים")
+        st.subheader(_t("📋 כללים פעילים", "📋 Active Rules"))
         rules = auto_book.get_rules(enabled_only=False)
         if not rules:
-            st.info("אין כללים. הוסף כלל למעלה.")
+            st.info(_t("אין כללים. הוסף כלל למעלה.", "No rules. Add a rule above."))
         else:
             for rule in rules:
                 enabled = bool(rule.get("enabled", 1))
@@ -3521,25 +3553,25 @@ elif page == "⚡ Auto-Book":
                 triggered = rule.get("trigger_count", 0)
                 with st.expander(f"{icon} {rule['name']} — {rule['origin']}→{rule['destination']} < ${rule['max_price']}"):
                     c1, c2, c3 = st.columns(3)
-                    c1.write(f"**מצב:** {rule.get('mode','notify')}")
-                    c2.metric("הופעל", f"{triggered}x")
-                    c3.write(f"**נוצר:** {rule.get('created_at','')[:10]}")
+                    c1.write(f"**{_t('מצב', 'Mode')}:** {rule.get('mode','notify')}")
+                    c2.metric(_t("הופעל", "Triggered"), f"{triggered}x")
+                    c3.write(f"**{_t('נוצר', 'Created')}:** {rule.get('created_at','')[:10]}")
                     if rule.get("triggered_at"):
-                        st.write(f"**הופעל לאחרונה:** {rule['triggered_at'][:16]}")
+                        st.write(f"**{_t('הופעל לאחרונה', 'Last triggered')}:** {rule['triggered_at'][:16]}")
 
                     btn1, btn2 = st.columns(2)
-                    if btn1.button("🔄 הפעל/כבה", key=f"toggle_{rule['id']}"):
+                    if btn1.button(_t("🔄 הפעל/כבה", "🔄 Enable/Disable"), key=f"toggle_{rule['id']}"):
                         auto_book.toggle_rule(rule["id"], not enabled)
                         st.rerun()
-                    if btn2.button("🗑 מחק", key=f"del_rule_{rule['id']}"):
+                    if btn2.button(_t("🗑 מחק", "🗑 Delete"), key=f"del_rule_{rule['id']}"):
                         auto_book.delete_rule(rule["id"])
                         st.rerun()
 
     with tab_log:
-        st.subheader("📜 לוג הזמנות")
+        st.subheader(_t("📜 לוג הזמנות", "📜 Booking Log"))
         log = auto_book.get_booking_log(limit=20)
         if not log:
-            st.info("אין רשומות בלוג עדיין.")
+            st.info(_t("אין רשומות בלוג עדיין.", "No log entries yet."))
         else:
             for entry in log:
                 st.write(f"**{entry.get('rule_name','')}** | {entry.get('action','')} | {entry.get('booked_at','')[:16]}")
@@ -3552,20 +3584,20 @@ elif page == "⚡ Auto-Book":
                 st.divider()
 
     with tab_passenger:
-        st.subheader("👤 פרטי נוסע לאוטו-מילוי")
-        st.caption("פרטים אלו ישמשו למילוי אוטומטי בטפסי הזמנה (auto_fill mode)")
+        st.subheader(_t("👤 פרטי נוסע לאוטו-מילוי", "👤 Passenger Details for Auto-fill"))
+        st.caption(_t("פרטים אלו ישמשו למילוי אוטומטי בטפסי הזמנה (auto_fill mode)", "These details will be used for auto-filling booking forms (auto_fill mode)"))
 
         with st.form("passenger_form"):
             p1, p2 = st.columns(2)
-            p_first = p1.text_input("שם פרטי", value=os.environ.get("PASSENGER_FIRST_NAME", ""))
-            p_last = p2.text_input("שם משפחה", value=os.environ.get("PASSENGER_LAST_NAME", ""))
+            p_first = p1.text_input(_t("שם פרטי", "First name"), value=os.environ.get("PASSENGER_FIRST_NAME", ""))
+            p_last = p2.text_input(_t("שם משפחה", "Last name"), value=os.environ.get("PASSENGER_LAST_NAME", ""))
             p3, p4 = st.columns(2)
-            p_email = p3.text_input("אימייל", value=os.environ.get("PASSENGER_EMAIL", ""))
-            p_phone = p4.text_input("טלפון", value=os.environ.get("PASSENGER_PHONE", ""))
+            p_email = p3.text_input(_t("אימייל", "Email"), value=os.environ.get("PASSENGER_EMAIL", ""))
+            p_phone = p4.text_input(_t("טלפון", "Phone"), value=os.environ.get("PASSENGER_PHONE", ""))
             p5, p6 = st.columns(2)
-            p_passport = p5.text_input("מספר דרכון", value=os.environ.get("PASSENGER_PASSPORT", ""), type="password")
-            p_dob = p6.text_input("תאריך לידה (YYYY-MM-DD)", value=os.environ.get("PASSENGER_DOB", ""))
-            p_submit = st.form_submit_button("💾 שמור", use_container_width=True)
+            p_passport = p5.text_input(_t("מספר דרכון", "Passport number"), value=os.environ.get("PASSENGER_PASSPORT", ""), type="password")
+            p_dob = p6.text_input(_t("תאריך לידה (YYYY-MM-DD)", "Date of birth (YYYY-MM-DD)"), value=os.environ.get("PASSENGER_DOB", ""))
+            p_submit = st.form_submit_button(_t("💾 שמור", "💾 Save"), use_container_width=True)
 
         if p_submit:
             auto_book.save_passenger_config({
@@ -3573,28 +3605,29 @@ elif page == "⚡ Auto-Book":
                 "email": p_email, "phone": p_phone,
                 "passport": p_passport, "dob": p_dob,
             })
-            st.success("✅ נשמר ב-.env")
+            st.success(_t("✅ נשמר ב-.env", "✅ Saved to .env"))
 
         playwright_ok = auto_book.check_playwright_installed()
         if playwright_ok:
-            st.success("✅ Playwright מותקן — auto_fill mode זמין")
+            st.success(_t("✅ Playwright מותקן — auto_fill mode זמין", "✅ Playwright installed — auto_fill mode available"))
         else:
-            st.warning("⚠️ Playwright לא מותקן. הרץ: `pip install playwright && playwright install chromium`")
+            st.warning(_t("⚠️ Playwright לא מותקן. הרץ: `pip install playwright && playwright install chromium`", "⚠️ Playwright not installed. Run: `pip install playwright && playwright install chromium`"))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Price DNA
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🧬 Price DNA":
-    st.title("🧬 Price DNA — פרופיל מחירים אישי")
-    st.caption("מנתח את כל ההיסטוריה שלך ובונה פרופיל: מתי זול, מתי יקר, מה התבנית.")
+    st.title(_t("🧬 Price DNA — פרופיל מחירים אישי", "🧬 Price DNA — Personal Price Profile"))
+    st.caption(_t("מנתח את כל ההיסטוריה שלך ובונה פרופיל: מתי זול, מתי יקר, מה התבנית.", "Analyzes your entire history and builds a profile: when it's cheap, when it's expensive, what the pattern is."))
 
     watch_items = db.get_watch_items()
-    options = ["כל ההיסטוריה"] + [f"{w['name'] or w['origin']+'→'+w['destination']} (#{w['id']})" for w in watch_items]
+    _all_history_label = _t("כל ההיסטוריה", "All History")
+    options = [_all_history_label] + [f"{w['name'] or w['origin']+'→'+w['destination']} (#{w['id']})" for w in watch_items]
 
-    selected = st.selectbox("בחר מסלול לניתוח", options)
+    selected = st.selectbox(_t("בחר מסלול לניתוח", "Select route to analyze"), options)
     watch_id = None
-    if selected != "כל ההיסטוריה":
+    if selected != _all_history_label:
         import re as _re
         m = _re.search(r'#(\d+)', selected)
         if m:
@@ -3602,8 +3635,8 @@ elif page == "🧬 Price DNA":
 
     col_a, col_b = st.columns(2)
     with col_a:
-        if st.button("🧬 נתח DNA (סטטיסטי)", use_container_width=True):
-            with st.spinner("מנתח היסטוריה..."):
+        if st.button(_t("🧬 נתח DNA (סטטיסטי)", "🧬 Analyze DNA (Statistical)"), use_container_width=True):
+            with st.spinner(_t("מנתח היסטוריה...", "Analyzing history...")):
                 dna = price_dna.generate_price_dna(watch_id)
             if "error" in dna:
                 st.warning(dna["error"])
@@ -3611,8 +3644,8 @@ elif page == "🧬 Price DNA":
                 st.session_state["price_dna_result"] = dna
 
     with col_b:
-        if st.button("🤖 AI Price DNA (עמוק יותר)", use_container_width=True):
-            with st.spinner("Claude מנתח DNA... (30-60 שניות)"):
+        if st.button(_t("🤖 AI Price DNA (עמוק יותר)", "🤖 AI Price DNA (Deeper)"), use_container_width=True):
+            with st.spinner(_t("Claude מנתח DNA... (30-60 שניות)", "Claude analyzing DNA... (30-60 seconds)")):
                 ai_result = price_dna.get_ai_price_dna(watch_id)
             if "error" in ai_result:
                 st.error(ai_result["error"])
@@ -3630,30 +3663,30 @@ elif page == "🧬 Price DNA":
         avg = price_range.get("avg", 0)
         vs_avg = dna_data.get("price_now_vs_avg", 0)
 
-        st.subheader("📊 סטטיסטיקות מחיר")
+        st.subheader(_t("📊 סטטיסטיקות מחיר", "📊 Price Statistics"))
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("מינימום", f"${price_range.get('min',0):,.0f}")
-        m2.metric("מקסימום", f"${price_range.get('max',0):,.0f}")
-        m3.metric("ממוצע", f"${avg:,.0f}")
+        m1.metric(_t("מינימום", "Minimum"), f"${price_range.get('min',0):,.0f}")
+        m2.metric(_t("מקסימום", "Maximum"), f"${price_range.get('max',0):,.0f}")
+        m3.metric(_t("ממוצע", "Average"), f"${avg:,.0f}")
         delta_color = "inverse" if vs_avg > 0 else "normal"
-        m4.metric("מחיר עכשיו vs ממוצע", f"{vs_avg:+.1f}%")
+        m4.metric(_t("מחיר עכשיו vs ממוצע", "Price now vs average"), f"{vs_avg:+.1f}%")
 
         col1, col2, col3 = st.columns(3)
-        col1.info(f"📅 **חודש זול:** {dna_data.get('best_month','?')}")
-        col2.warning(f"📅 **חודש יקר:** {dna_data.get('worst_month','?')}")
-        col3.success(f"📆 **יום זול:** {dna_data.get('best_day_of_week','?')}")
+        col1.info(f"📅 **{_t('חודש זול', 'Cheapest month')}:** {dna_data.get('best_month','?')}")
+        col2.warning(f"📅 **{_t('חודש יקר', 'Most expensive month')}:** {dna_data.get('worst_month','?')}")
+        col3.success(f"📆 **{_t('יום זול', 'Cheapest day')}:** {dna_data.get('best_day_of_week','?')}")
 
         trend = dna_data.get("trend", "stable")
         vol = dna_data.get("volatility_pct", 0)
         trend_icon = "📈" if trend == "rising" else "📉" if trend == "falling" else "➡️"
-        st.write(f"{trend_icon} **טרנד:** {trend} | **תנודתיות:** {vol:.1f}%")
+        st.write(f"{trend_icon} **{_t('טרנד', 'Trend')}:** {trend} | **{_t('תנודתיות', 'Volatility')}:** {vol:.1f}%")
 
         savings = dna_data.get("potential_savings", 0)
         savings_pct = dna_data.get("potential_savings_pct", 0)
-        st.success(f"💰 **חיסכון פוטנציאלי:** ${savings:,.0f} ({savings_pct:.1f}%)")
+        st.success(f"💰 **{_t('חיסכון פוטנציאלי', 'Potential savings')}:** ${savings:,.0f} ({savings_pct:.1f}%)")
 
         if dna_data.get("month_avg"):
-            st.subheader("📅 ממוצע חודשי")
+            st.subheader(_t("📅 ממוצע חודשי", "📅 Monthly Average"))
             month_data = dna_data["month_avg"]
             fig = go.Figure(go.Bar(
                 x=list(month_data.keys()),
@@ -3673,39 +3706,39 @@ elif page == "🧬 Price DNA":
         confidence = ai_dna.get("confidence", "")
 
         if "קנה" in verdict or "🟢" in emoji:
-            st.success(f"{emoji} **{verdict}** | ביטחון: {confidence}")
+            st.success(f"{emoji} **{verdict}** | {_t('ביטחון', 'Confidence')}: {confidence}")
         elif "המתן" in verdict or "🔴" in emoji:
-            st.error(f"{emoji} **{verdict}** | ביטחון: {confidence}")
+            st.error(f"{emoji} **{verdict}** | {_t('ביטחון', 'Confidence')}: {confidence}")
         else:
-            st.warning(f"{emoji} **{verdict}** | ביטחון: {confidence}")
+            st.warning(f"{emoji} **{verdict}** | {_t('ביטחון', 'Confidence')}: {confidence}")
 
-        st.write(f"**דפוס מרכזי:** {ai_dna.get('main_pattern','')}")
-        st.write(f"**מתי לקנות:** {ai_dna.get('best_booking_window','')}")
-        st.write(f"**תחזית 2 חודשים:** {ai_dna.get('forecast_2months','')}")
-        st.write(f"**טיפ חיסכון:** {ai_dna.get('savings_tip','')}")
+        st.write(f"**{_t('דפוס מרכזי', 'Main pattern')}:** {ai_dna.get('main_pattern','')}")
+        st.write(f"**{_t('מתי לקנות', 'When to buy')}:** {ai_dna.get('best_booking_window','')}")
+        st.write(f"**{_t('תחזית 2 חודשים', '2-month forecast')}:** {ai_dna.get('forecast_2months','')}")
+        st.write(f"**{_t('טיפ חיסכון', 'Savings tip')}:** {ai_dna.get('savings_tip','')}")
 
         actions = ai_dna.get("actions", [])
         if actions:
-            st.write("**פעולות מומלצות:**")
+            st.write(f"**{_t('פעולות מומלצות', 'Recommended actions')}:**")
             for action in actions:
                 st.write(f"• {action}")
 
     if watch_id:
         st.divider()
-        st.subheader("🎯 Sweet Spot אישי")
-        if st.button("מצא Sweet Spot"):
+        st.subheader(_t("🎯 Sweet Spot אישי", "🎯 Personal Sweet Spot"))
+        if st.button(_t("מצא Sweet Spot", "Find Sweet Spot")):
             spot = price_dna.find_personal_sweet_spot(watch_id)
             if spot and "error" not in spot:
                 if "sweet_spot" in spot:
                     st.success(f"✅ **Sweet Spot:** {spot['sweet_spot']}")
                     col1, col2 = st.columns(2)
-                    col1.metric("מחיר מינימלי", f"${spot.get('min_price',0):,.0f}")
-                    col2.metric("תאריך", spot.get("min_price_date",""))
+                    col1.metric(_t("מחיר מינימלי", "Minimum price"), f"${spot.get('min_price',0):,.0f}")
+                    col2.metric(_t("תאריך", "Date"), spot.get("min_price_date",""))
                     if spot.get("is_past_sweet_spot"):
-                        st.warning("⚠️ עברת את ה-sweet spot — קנה כמה שקודם!")
+                        st.warning(_t("⚠️ עברת את ה-sweet spot — קנה כמה שקודם!", "⚠️ You've passed the sweet spot — buy as soon as possible!"))
                 elif "best_period" in spot:
-                    st.info(f"**תקופה מומלצת:** {spot.get('best_period','')}")
-                    st.write(f"**מחיר באותה תקופה:** ${spot.get('best_period_price',0):,.0f}")
+                    st.info(f"**{_t('תקופה מומלצת', 'Recommended period')}:** {spot.get('best_period','')}")
+                    st.write(f"**{_t('מחיר באותה תקופה', 'Price in that period')}:** ${spot.get('best_period_price',0):,.0f}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -3713,22 +3746,22 @@ elif page == "🧬 Price DNA":
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🗺️ Positioning":
     st.title("🗺️ Positioning Flight Optimizer")
-    st.caption("האם כדאי לטוס תחילה לאמסטרדם/לונדון ומשם לכיוון היעד? לפעמים שווה 40% פחות!")
+    st.caption(_t("האם כדאי לטוס תחילה לאמסטרדם/לונדון ומשם לכיוון היעד? לפעמים שווה 40% פחות!", "Is it worth flying first to Amsterdam/London and then to your destination? Sometimes saves 40%!"))
 
     st.divider()
 
     with st.form("pos_form"):
         p1, p2 = st.columns(2)
-        pos_dest = p1.text_input("יעד סופי (IATA)", placeholder="JFK / BKK / LAX").upper()
-        pos_date = p2.date_input("תאריך יציאה")
+        pos_dest = p1.text_input(_t("יעד סופי (IATA)", "Final destination (IATA)"), placeholder="JFK / BKK / LAX").upper()
+        pos_date = p2.date_input(_t("תאריך יציאה", "Departure date"))
         p3, p4 = st.columns(2)
-        pos_ret = p3.date_input("תאריך חזרה (אופציונלי)", value=None)
-        pos_travelers = p4.number_input("נוסעים", min_value=1, max_value=9, value=1)
-        pos_budget = st.number_input("תקציב ($, 0 = ללא הגבלה)", min_value=0, value=0)
-        pos_submit = st.form_submit_button("🔍 מצא הזדמנויות Positioning", use_container_width=True)
+        pos_ret = p3.date_input(_t("תאריך חזרה (אופציונלי)", "Return date (optional)"), value=None)
+        pos_travelers = p4.number_input(_t("נוסעים", "Passengers"), min_value=1, max_value=9, value=1)
+        pos_budget = st.number_input(_t("תקציב ($, 0 = ללא הגבלה)", "Budget ($, 0 = no limit)"), min_value=0, value=0)
+        pos_submit = st.form_submit_button(_t("🔍 מצא הזדמנויות Positioning", "🔍 Find Positioning Opportunities"), use_container_width=True)
 
     if pos_submit and pos_dest:
-        with st.spinner("מחפש הזדמנויות positioning... (עשוי לקחת 30-60 שניות)"):
+        with st.spinner(_t("מחפש הזדמנויות positioning... (עשוי לקחת 30-60 שניות)", "Searching positioning opportunities... (may take 30-60 seconds)")):
             opps = positioning.find_positioning_opportunities(
                 destination=pos_dest,
                 travel_date=str(pos_date),
@@ -3738,11 +3771,11 @@ elif page == "🗺️ Positioning":
             )
 
         if not opps:
-            st.info("לא נמצאו הזדמנויות positioning לנתיב זה.")
+            st.info(_t("לא נמצאו הזדמנויות positioning לנתיב זה.", "No positioning opportunities found for this route."))
         elif "error" in (opps[0] if opps else {}):
-            st.error(f"שגיאה: {opps[0]['error']}")
+            st.error(f"{_t('שגיאה', 'Error')}: {opps[0]['error']}")
         else:
-            st.success(f"✅ נמצאו {len(opps)} הזדמנויות!")
+            st.success(f"✅ {_t('נמצאו', 'Found')} {len(opps)} {_t('הזדמנויות', 'opportunities')}!")
             for opp in opps:
                 savings = opp.get("savings", 0)
                 savings_pct = opp.get("savings_pct", 0)
@@ -3751,52 +3784,52 @@ elif page == "🗺️ Positioning":
                 color = "🟢" if savings_pct > 20 else "🟡"
                 worth_it = opp.get("worth_it", False)
 
-                with st.expander(f"{color} דרך {hub_city} ({hub}) — חיסכון ${savings:,.0f} ({savings_pct:.0f}%)", expanded=worth_it):
+                with st.expander(f"{color} {_t('דרך', 'Via')} {hub_city} ({hub}) — {_t('חיסכון', 'Saving')} ${savings:,.0f} ({savings_pct:.0f}%)", expanded=worth_it):
                     c1, c2, c3 = st.columns(3)
                     c1.metric("TLV→" + hub, f"${opp.get('tlv_to_hub_price',0):,.0f}")
                     c2.metric(hub + "→" + pos_dest, f"${opp.get('hub_to_dest_price',0):,.0f}")
-                    c3.metric("סה״כ vs ישיר", f"${opp.get('total_positioning',0):,.0f} vs ${opp.get('direct_tlv_to_dest',0):,.0f}")
+                    c3.metric(_t("סה״כ vs ישיר", "Total vs Direct"), f"${opp.get('total_positioning',0):,.0f} vs ${opp.get('direct_tlv_to_dest',0):,.0f}")
 
-                    st.write(f"**חברת positioning:** {opp.get('positioning_airline','')}")
-                    st.write(f"**זמן נסיעה נוסף:** {opp.get('extra_travel_time_hours',0)} שעות")
+                    st.write(f"**{_t('חברת positioning', 'Positioning airline')}:** {opp.get('positioning_airline','')}")
+                    st.write(f"**{_t('זמן נסיעה נוסף', 'Extra travel time')}:** {opp.get('extra_travel_time_hours',0)} {_t('שעות', 'hours')}")
                     if opp.get("overnight_needed"):
-                        st.info("🌙 דורש לינה בעיר הביניים")
-                    st.write(f"**למה משתלם:** {opp.get('why','')}")
-                    st.write(f"**טיפים:** {opp.get('tips','')}")
+                        st.info(_t("🌙 דורש לינה בעיר הביניים", "🌙 Requires overnight stay in the connecting city"))
+                    st.write(f"**{_t('למה משתלם', 'Why it works')}:** {opp.get('why','')}")
+                    st.write(f"**{_t('טיפים', 'Tips')}:** {opp.get('tips','')}")
 
                     if worth_it and opp.get("overnight_needed"):
-                        if st.button(f"🌙 ניתוח לינה ב-{hub_city}", key=f"overnight_{hub}"):
-                            with st.spinner("מנתח אפשרות לינה..."):
+                        if st.button(f"🌙 {_t('ניתוח לינה ב-', 'Overnight analysis in ')}{hub_city}", key=f"overnight_{hub}"):
+                            with st.spinner(_t("מנתח אפשרות לינה...", "Analyzing overnight option...")):
                                 ov_analysis = positioning.analyze_overnight_positioning(hub, pos_dest, str(pos_date))
                             if ov_analysis and "error" not in ov_analysis:
-                                st.write(f"**עלות לינה:** ${ov_analysis.get('accommodation_price',0):,.0f} ({ov_analysis.get('accommodation_type','')})")
-                                st.write(f"**שווה להוסיף לינה?** {'✅ כן' if ov_analysis.get('worth_adding_night') else '❌ לא'}")
+                                st.write(f"**{_t('עלות לינה', 'Accommodation cost')}:** ${ov_analysis.get('accommodation_price',0):,.0f} ({ov_analysis.get('accommodation_type','')})")
+                                st.write(f"**{_t('שווה להוסיף לינה?', 'Worth adding overnight?')}** {_t('✅ כן', '✅ Yes') if ov_analysis.get('worth_adding_night') else _t('❌ לא', '❌ No')}")
                                 activities = ov_analysis.get("top_activities", [])
                                 if activities:
-                                    st.write("**מה לעשות בלילה אחד:**")
+                                    st.write(f"**{_t('מה לעשות בלילה אחד', 'What to do in one night')}:**")
                                     for act in activities:
                                         st.write(f"• {act}")
 
     st.divider()
-    st.subheader("✈️ נתיבי Positioning הזולים ביותר מ-TLV")
-    if st.button("🔍 מצא נתיבי positioning זולים", use_container_width=True):
-        with st.spinner("בודק מחירים..."):
+    st.subheader(_t("✈️ נתיבי Positioning הזולים ביותר מ-TLV", "✈️ Cheapest Positioning Routes from TLV"))
+    if st.button(_t("🔍 מצא נתיבי positioning זולים", "🔍 Find cheap positioning routes"), use_container_width=True):
+        with st.spinner(_t("בודק מחירים...", "Checking prices...")):
             cheap_routes = positioning.get_cheapest_tlv_positioning_routes()
         if cheap_routes and "error" not in (cheap_routes[0] if cheap_routes else {}):
             for r in cheap_routes[:10]:
-                st.write(f"✈️ **{r.get('city','')} ({r.get('airport','')})** — מ-${r.get('price_from',0)} | {r.get('airline','')} | {r.get('why_good_positioning','')}")
+                st.write(f"✈️ **{r.get('city','')} ({r.get('airport','')})** — {_t('מ-', 'from $')}{r.get('price_from',0)} | {r.get('airline','')} | {r.get('why_good_positioning','')}")
 
     st.divider()
-    st.subheader("🧮 מחשבון ROI")
+    st.subheader(_t("🧮 מחשבון ROI", "🧮 ROI Calculator"))
     with st.form("roi_form"):
         r1, r2, r3 = st.columns(3)
         roi_tlv_hub = r1.number_input("TLV→Hub ($)", min_value=0, value=80)
         roi_hub_dest = r2.number_input("Hub→Dest ($)", min_value=0, value=350)
-        roi_direct = r3.number_input("ישיר מ-TLV ($)", min_value=0, value=600)
+        roi_direct = r3.number_input(_t("ישיר מ-TLV ($)", "Direct from TLV ($)"), min_value=0, value=600)
         r4, r5 = st.columns(2)
-        roi_extra_time = r4.number_input("זמן נוסף (שעות)", min_value=0.0, value=6.0)
-        roi_hourly = r5.number_input("שווי שעה שלך ($)", min_value=0, value=20)
-        roi_calc = st.form_submit_button("🧮 חשב ROI")
+        roi_extra_time = r4.number_input(_t("זמן נוסף (שעות)", "Extra time (hours)"), min_value=0.0, value=6.0)
+        roi_hourly = r5.number_input(_t("שווי שעה שלך ($)", "Your hourly rate ($)"), min_value=0, value=20)
+        roi_calc = st.form_submit_button(_t("🧮 חשב ROI", "🧮 Calculate ROI"))
 
     if roi_calc:
         roi = positioning.calculate_positioning_roi(
@@ -3808,19 +3841,19 @@ elif page == "🗺️ Positioning":
         )
         st.write(roi.get("verdict", ""))
         c1, c2, c3 = st.columns(3)
-        c1.metric("חיסכון גולמי", f"${roi.get('gross_savings',0):,.0f} ({roi.get('gross_savings_pct',0):.1f}%)")
-        c2.metric("עלות זמן", f"${roi.get('time_cost',0):,.0f}")
-        c3.metric("חיסכון נטו", f"${roi.get('net_savings',0):,.0f}")
+        c1.metric(_t("חיסכון גולמי", "Gross savings"), f"${roi.get('gross_savings',0):,.0f} ({roi.get('gross_savings_pct',0):.1f}%)")
+        c2.metric(_t("עלות זמן", "Time cost"), f"${roi.get('time_cost',0):,.0f}")
+        c3.metric(_t("חיסכון נטו", "Net savings"), f"${roi.get('net_savings',0):,.0f}")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: WhatsApp Bot
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "💬 WhatsApp Bot":
-    st.title("💬 WhatsApp Bot — חיפוש טיסות בוואטסאפ")
-    st.caption("שלח 'TLV NYC 15/06' בוואטסאפ וקבל מחירים תוך שניות.")
+    st.title(_t("💬 WhatsApp Bot — חיפוש טיסות בוואטסאפ", "💬 WhatsApp Bot — Flight Search via WhatsApp"))
+    st.caption(_t("שלח 'TLV NYC 15/06' בוואטסאפ וקבל מחירים תוך שניות.", "Send 'TLV NYC 15/06' on WhatsApp and get prices within seconds."))
 
-    tab_setup, tab_test, tab_stats = st.tabs(["⚙️ הגדרות Twilio", "🧪 בדיקה", "📊 סטטיסטיקות"])
+    tab_setup, tab_test, tab_stats = st.tabs([_t("⚙️ הגדרות Twilio", "⚙️ Twilio Settings"), _t("🧪 בדיקה", "🧪 Testing"), _t("📊 סטטיסטיקות", "📊 Statistics")])
 
     with tab_setup:
         twilio_sid = os.environ.get("TWILIO_ACCOUNT_SID", "")
@@ -3828,12 +3861,12 @@ elif page == "💬 WhatsApp Bot":
         twilio_from = os.environ.get("TWILIO_WHATSAPP_FROM", "whatsapp:+14155238886")
 
         if twilio_sid and twilio_token:
-            st.success("✅ Twilio מחובר")
+            st.success(_t("✅ Twilio מחובר", "✅ Twilio connected"))
         else:
-            st.warning("⚠️ Twilio לא מוגדר")
+            st.warning(_t("⚠️ Twilio לא מוגדר", "⚠️ Twilio not configured"))
 
-        with st.expander("📖 איך מגדירים Twilio WhatsApp Sandbox?", expanded=not bool(twilio_sid)):
-            st.markdown("""
+        with st.expander(_t("📖 איך מגדירים Twilio WhatsApp Sandbox?", "📖 How to set up Twilio WhatsApp Sandbox?"), expanded=not bool(twilio_sid)):
+            st.markdown(_t("""
 **שלב 1 — צור חשבון Twilio:**
 1. עבור ל-twilio.com והרשם (חינם)
 2. קבל **Account SID** ו-**Auth Token** מלוח הבקרה
@@ -3852,56 +3885,75 @@ elif page == "💬 WhatsApp Bot":
 - `דיל` — דילים חמים
 - `מחירים` — רשימת מעקב
 - `עזרה` — עזרה
-            """)
+            """, """
+**Step 1 — Create a Twilio account:**
+1. Go to twilio.com and sign up (free)
+2. Get **Account SID** and **Auth Token** from the dashboard
+
+**Step 2 — Enable WhatsApp Sandbox:**
+1. In Twilio Console → Messaging → Try it Out → Send a WhatsApp message
+2. Follow the instructions to connect the Sandbox
+3. Save the Sandbox number (usually +14155238886)
+
+**Step 3 — Set up Webhook:**
+1. Run the app with ngrok: `ngrok http 8501`
+2. Set the webhook URL to: `https://YOUR_NGROK/whatsapp_webhook`
+
+**WhatsApp commands:**
+- `TLV NYC 15/06` — Search flight
+- `deal` — Hot deals
+- `prices` — Watchlist
+- `help` — Help
+            """))
 
         with st.form("wa_config_form"):
             new_sid = st.text_input("Account SID", value=twilio_sid, type="password")
             new_auth = st.text_input("Auth Token", value=twilio_token, type="password")
             new_from = st.text_input("WhatsApp From Number", value=twilio_from)
-            wa_save = st.form_submit_button("💾 שמור", use_container_width=True)
+            wa_save = st.form_submit_button(_t("💾 שמור", "💾 Save"), use_container_width=True)
 
         if wa_save and new_sid and new_auth:
             _save_env("TWILIO_ACCOUNT_SID", new_sid)
             _save_env("TWILIO_AUTH_TOKEN", new_auth)
             _save_env("TWILIO_WHATSAPP_FROM", new_from)
-            st.success("✅ נשמר! הפעל מחדש.")
+            st.success(_t("✅ נשמר! הפעל מחדש.", "✅ Saved! Restart the app."))
 
     with tab_test:
-        st.subheader("🧪 בדיקת הבוט")
-        test_msg = st.text_input("שלח הודעה לבוט", placeholder="TLV NYC 15/06 / דיל / עזרה")
-        if st.button("📨 שלח") and test_msg:
+        st.subheader(_t("🧪 בדיקת הבוט", "🧪 Bot Testing"))
+        test_msg = st.text_input(_t("שלח הודעה לבוט", "Send a message to the bot"), placeholder="TLV NYC 15/06 / deal / help")
+        if st.button(_t("📨 שלח", "📨 Send")) and test_msg:
             reply = whatsapp_bot.process_incoming_message("test_user", test_msg)
-            st.text_area("תגובת הבוט:", value=reply, height=200)
+            st.text_area(_t("תגובת הבוט:", "Bot reply:"), value=reply, height=200)
 
         st.divider()
-        st.subheader("🔄 הרץ סדרת בדיקות")
-        if st.button("הרץ בדיקות אוטומטיות"):
+        st.subheader(_t("🔄 הרץ סדרת בדיקות", "🔄 Run Test Suite"))
+        if st.button(_t("הרץ בדיקות אוטומטיות", "Run automatic tests")):
             results = whatsapp_bot.test_bot()
             for r in results:
                 with st.expander(f"📩 Input: {r['input']}"):
                     st.write(r["reply"])
 
         st.divider()
-        st.subheader("📤 שלח הודעה אמיתית")
+        st.subheader(_t("📤 שלח הודעה אמיתית", "📤 Send Real Message"))
         with st.form("wa_send_form"):
-            wa_to = st.text_input("לאן לשלוח", placeholder="+972501234567")
-            wa_msg = st.text_area("הודעה", placeholder="שלום! זה Noded...", height=80)
-            wa_send = st.form_submit_button("📤 שלח WhatsApp")
+            wa_to = st.text_input(_t("לאן לשלוח", "Send to"), placeholder="+972501234567")
+            wa_msg = st.text_area(_t("הודעה", "Message"), placeholder="Hello! This is Noded...", height=80)
+            wa_send = st.form_submit_button(_t("📤 שלח WhatsApp", "📤 Send WhatsApp"))
 
         if wa_send and wa_to and wa_msg:
             if os.environ.get("TWILIO_ACCOUNT_SID"):
                 result = whatsapp_bot.send_whatsapp_message(wa_to, wa_msg)
                 if "error" not in result:
-                    st.success("✅ נשלח!")
+                    st.success(_t("✅ נשלח!", "✅ Sent!"))
                 else:
                     st.error(f"❌ {result['error']}")
             else:
-                st.error("❌ הגדר Twilio קודם")
+                st.error(_t("❌ הגדר Twilio קודם", "❌ Configure Twilio first"))
 
     with tab_stats:
         stats = whatsapp_bot.get_stats()
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("סה״כ הודעות", stats.get("total_messages", 0))
-        m2.metric("משתמשים", stats.get("unique_users", 0))
-        m3.metric("היום", stats.get("messages_today", 0))
-        m4.metric("חיפושי טיסות", stats.get("flight_searches", 0))
+        m1.metric(_t("סה״כ הודעות", "Total messages"), stats.get("total_messages", 0))
+        m2.metric(_t("משתמשים", "Users"), stats.get("unique_users", 0))
+        m3.metric(_t("היום", "Today"), stats.get("messages_today", 0))
+        m4.metric(_t("חיפושי טיסות", "Flight searches"), stats.get("flight_searches", 0))
