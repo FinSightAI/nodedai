@@ -82,7 +82,10 @@ def _save_env(key: str, value: str):
 
 # ── Custom CSS (injected after lang is known) ──────────────────────────────────
 def _inject_css(rtl: bool):
-    sidebar_position = """
+    d = "rtl" if rtl else "ltr"
+    ta = "right" if rtl else "left"
+
+    sidebar_rtl = """
       section[data-testid="stSidebar"] {
         right: 0 !important;
         left: unset !important;
@@ -92,48 +95,88 @@ def _inject_css(rtl: bool):
         border-right: none !important;
       }
       .main .block-container {
-        padding-right: calc(var(--sidebar-width, 22rem) + 2rem) !important;
+        padding-right: calc(22rem + 2rem) !important;
         padding-left: 2rem !important;
       }
-    """ if rtl else ""
-
-    dir_css = "rtl" if rtl else "ltr"
-    text_align = "right" if rtl else "left"
+    """ if rtl else """
+      .main .block-container {
+        padding-left: calc(22rem + 2rem) !important;
+        padding-right: 2rem !important;
+      }
+    """
 
     st.markdown(f"""
 <style>
-  /* Direction */
-  body, .main, [data-testid="stAppViewContainer"] {{
-    direction: {dir_css};
-    text-align: {text_align};
+  /* ── Global direction ── */
+  html, body {{
+    direction: {d} !important;
   }}
-  [data-testid="stSidebar"] {{
-    direction: {dir_css};
-    text-align: {text_align};
+
+  /* Every Streamlit container */
+  [data-testid="stAppViewContainer"],
+  [data-testid="stAppViewBlockContainer"],
+  [data-testid="stVerticalBlock"],
+  [data-testid="stHorizontalBlock"],
+  [data-testid="block-container"],
+  .main, .main > div,
+  .element-container,
+  .stMarkdown, .stText,
+  .stTextInput > div,
+  .stSelectbox > div,
+  .stRadio > div,
+  .stCheckbox,
+  .stNumberInput,
+  .stDateInput,
+  .stTextArea > div,
+  .stExpander,
+  .stTabs,
+  .stForm,
+  div[data-testid="column"],
+  div[data-baseweb="tab-list"],
+  div[data-baseweb="tab-panel"],
+  div[data-baseweb="select"],
+  div[data-baseweb="input"],
+  div[data-baseweb="textarea"],
+  p, label, span, li, td, th {{
+    direction: {d} !important;
+    text-align: {ta} !important;
+  }}
+
+  /* Sidebar */
+  [data-testid="stSidebar"],
+  [data-testid="stSidebar"] * {{
+    direction: {d} !important;
+    text-align: {ta} !important;
   }}
 
   /* Sidebar position */
-  {sidebar_position}
+  {sidebar_rtl}
 
-  /* Background */
+  /* Input placeholders */
+  input, textarea {{
+    direction: {d} !important;
+    text-align: {ta} !important;
+  }}
+
+  /* ── Background ── */
   [data-testid="stAppViewContainer"] {{
-    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e) !important;
   }}
   [data-testid="stSidebar"] {{
-    background: rgba(15,12,41,0.95);
+    background: rgba(15,12,41,0.95) !important;
   }}
 
-  /* Cards */
+  /* ── Cards ── */
   .metric-card {{
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 12px;
     padding: 16px 20px;
-    text-align: center;
+    text-align: center !important;
   }}
   .alert-box {{
-    background: rgba(255, 75, 75, 0.15);
-    border: 1px solid rgba(255, 75, 75, 0.5);
+    background: rgba(255,75,75,0.15);
+    border: 1px solid rgba(255,75,75,0.5);
     border-radius: 10px;
     padding: 12px 16px;
     margin-bottom: 8px;
