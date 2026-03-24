@@ -244,7 +244,7 @@ def price_chart(watch_id: int, name: str):
     fig.add_trace(go.Scatter(
         x=dates, y=prices,
         mode="lines+markers",
-        name="מחיר",
+        name=_t("מחיר", "Price"),
         line=dict(color="#667eea", width=2.5),
         marker=dict(size=7, color="#764ba2"),
         fill="tozeroy",
@@ -268,7 +268,7 @@ def price_chart(watch_id: int, name: str):
         margin=dict(l=10, r=10, t=40, b=10),
         xaxis=dict(showgrid=False, tickfont=dict(size=9)),
         yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.08)",
-                   title=f"מחיר ({currency})"),
+                   title=_t(f"מחיר ({currency})", f"Price ({currency})")),
         showlegend=False,
     )
     return fig
@@ -830,7 +830,7 @@ elif page == "🎲 הפתיעני":
                         if highlights:
                             st.markdown(" | ".join(f"✨ {h}" for h in highlights[:3]))
                         if dest.get("best_time_to_book"):
-                            st.caption(f"📅 מתי להזמין: {dest['best_time_to_book']}")
+                            st.caption(f"📅 {_t('מתי להזמין', 'Best time to book')}: {dest['best_time_to_book']}")
                     with c2:
                         st.metric(_t("סה״כ לאדם", "Total per person"), f"${dest.get('total_price', 0):,}")
                         st.caption(f"✈️ {_t('טיסה', 'Flight')}: ${dest.get('flight_price', 0):,}")
@@ -1209,9 +1209,9 @@ elif page == "🛠️ כלים חכמים":
                         textposition="outside",
                     ))
                     fig.add_hline(y=1.0, line_dash="dot", line_color="#00ff88",
-                                  annotation_text="מחיר מיטבי")
+                                  annotation_text=_t("מחיר מיטבי", "Optimal price"))
                     fig.update_layout(
-                        title=dict(text="📉 מחיר יחסי לפי זמן הזמנה (1.0 = הכי זול)", font=dict(color="white", size=13)),
+                        title=dict(text=_t("📉 מחיר יחסי לפי זמן הזמנה (1.0 = הכי זול)", "📉 Relative price by booking time (1.0 = cheapest)"), font=dict(color="white", size=13)),
                         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.03)",
                         font=dict(color="#ccc"), height=300,
                         margin=dict(l=10, r=10, t=40, b=10),
@@ -1284,7 +1284,7 @@ elif page == "🔍 השוואת אתרים":
                     f"<div style='background:{color};width:{bar_pct*100:.0f}%;height:100%;border-radius:4px'></div>"
                     f"</div>"
                     f"<small style='color:#aaa'>{r.get('airline','')} | "
-                    + ("✈️ ישיר" if r.get('stops') == 0 else f"{r.get('stops',0)} עצירות")
+                    + (_t("✈️ ישיר", "✈️ Direct") if r.get('stops') == 0 else _t(f"{r.get('stops',0)} עצירות", f"{r.get('stops',0)} stop(s)"))
                     + f" | {r.get('duration_hours',0):.1f}h | {r.get('notes','')[:60]}</small>"
                     f"</div>",
                     unsafe_allow_html=True,
@@ -1343,7 +1343,7 @@ elif page == "📰 סנטימנט & חדשות":
                     f"<div class='metric-card'>"
                     f"<div style='font-size:2em'>{fmt['impact_icon']}</div>"
                     f"<b>{_t('מחירים עולים', 'Prices rising') if fmt['price_impact']=='rising' else _t('מחירים יורדים', 'Prices falling') if fmt['price_impact']=='falling' else _t('יציב', 'Stable')}</b><br>"
-                    f"<span style='color:#00ff88'>{fmt['impact_pct']:+.0f}%</span> צפוי"
+                    f"<span style='color:#00ff88'>{fmt['impact_pct']:+.0f}%</span> {_t('צפוי', 'expected')}"
                     f"</div>",
                     unsafe_allow_html=True,
                 )
@@ -1660,8 +1660,8 @@ You can configure multiple channels simultaneously.
 """))
 
     # ntfy.sh ──────────────────────────────────────────────────────────────────
-    with st.expander("📱 **ntfy.sh** — פוש לנייד (חינמי, מומלץ!)", expanded=True):
-        st.markdown("""
+    with st.expander(_t("📱 **ntfy.sh** — פוש לנייד (חינמי, מומלץ!)", "📱 **ntfy.sh** — Push to mobile (free, recommended!)"), expanded=True):
+        st.markdown(_t("""
 **הכי קל להגדיר — ללא חשבון:**
 
 1. הורד את אפליקציית **ntfy** לנייד:
@@ -1670,7 +1670,16 @@ You can configure multiple channels simultaneously.
 2. פתח את האפליקציה → Subscribe to topic
 3. הזן שם נושא ייחודי (לדוגמה: `megatraveller-שמך123`)
 4. הכנס את אותו נושא כאן 👇
-""")
+""", """
+**Easiest to set up — no account needed:**
+
+1. Download the **ntfy** app on your phone:
+   - [iOS (App Store)](https://apps.apple.com/us/app/ntfy/id1625396347)
+   - [Android (Google Play)](https://play.google.com/store/apps/details?id=io.heckel.ntfy)
+2. Open the app → Subscribe to topic
+3. Enter a unique topic name (e.g. `noded-yourname123`)
+4. Enter that same topic below 👇
+"""))
 
         ntfy_topic = os.environ.get("NTFY_TOPIC", "")
         col1, col2 = st.columns([3, 1])
@@ -1690,8 +1699,8 @@ You can configure multiple channels simultaneously.
             st.success(f"{_t('מוגדר', 'Configured')}: ntfy.sh/{ntfy_topic}")
 
     # Telegram ─────────────────────────────────────────────────────────────────
-    with st.expander("✈️ **Telegram** — הודעות לטלגרם"):
-        st.markdown("""
+    with st.expander(_t("✈️ **Telegram** — הודעות לטלגרם", "✈️ **Telegram** — Telegram messages")):
+        st.markdown(_t("""
 **הגדרת בוט Telegram:**
 
 1. פתח טלגרם → חפש **@BotFather**
@@ -1700,7 +1709,16 @@ You can configure multiple channels simultaneously.
 4. גש לכתובת:
    `https://api.telegram.org/bot<TOKEN>/getUpdates`
    מצא את `"chat":{"id":...}` — זה ה-**Chat ID**
-""")
+""", """
+**Setting up a Telegram bot:**
+
+1. Open Telegram → search for **@BotFather**
+2. Send `/newbot` → choose a name → get your **Token**
+3. Open the bot you created → send it any message
+4. Go to:
+   `https://api.telegram.org/bot<TOKEN>/getUpdates`
+   Find `"chat":{"id":...}` — that's your **Chat ID**
+"""))
 
         tg_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
         tg_chat = os.environ.get("TELEGRAM_CHAT_ID", "")
@@ -1725,8 +1743,8 @@ You can configure multiple channels simultaneously.
 
     # ── Amadeus API ────────────────────────────────────────────────────────────
     st.divider()
-    st.subheader("✈️ Amadeus API — מחירים רשמיים")
-    st.markdown("""
+    st.subheader(_t("✈️ Amadeus API — מחירים רשמיים", "✈️ Amadeus API — Official prices"))
+    st.markdown(_t("""
 **API רשמי של חברות תעופה ומלונות — מדויק פי 10 מחיפוש רגיל.**
 
 **הרשמה חינמית (2,000 קריאות/חודש):**
@@ -1734,7 +1752,15 @@ You can configure multiple channels simultaneously.
 2. לחץ **Register** → צור חשבון חינמי
 3. לחץ **Create new app** → קבל **Client ID** ו-**Client Secret**
 4. הכנס כאן 👇
-""")
+""", """
+**Official airline & hotel API — 10x more accurate than regular search.**
+
+**Free registration (2,000 calls/month):**
+1. Go to [developers.amadeus.com](https://developers.amadeus.com)
+2. Click **Register** → create a free account
+3. Click **Create new app** → get your **Client ID** and **Client Secret**
+4. Enter them below 👇
+"""))
 
     am_id = os.environ.get("AMADEUS_CLIENT_ID", "")
     am_secret = os.environ.get("AMADEUS_CLIENT_SECRET", "")
@@ -1864,7 +1890,7 @@ elif page == "📊 היסטוריית מחירים":
             stats = db.get_price_stats(item["id"])
             last = db.get_last_price(item["id"])
             if not stats or not last:
-                col.info(f"{item['name']}: אין נתונים")
+                col.info(f"{item['name']}: {_t('אין נתונים', 'No data')}")
                 continue
 
             trend = stats.get("trend", "stable")
@@ -2104,7 +2130,8 @@ elif page == "🎯 כללי התראה":
                 if "min_deal_quality" in conditions:
                     cond_summary.append(f"{_t('איכות', 'Quality')} ≥ {conditions['min_deal_quality']}")
                 if "days_of_week" in conditions:
-                    day_names = {6:"א׳",0:"ב׳",1:"ג׳",2:"ד׳",3:"ה׳",4:"ו׳",5:"ש׳"}
+                    day_names = ({6:"א׳",0:"ב׳",1:"ג׳",2:"ד׳",3:"ה׳",4:"ו׳",5:"ש׳"} if _lang=="he"
+                                 else {6:"Sun",0:"Mon",1:"Tue",2:"Wed",3:"Thu",4:"Fri",5:"Sat"})
                     cond_summary.append(_t("ימים", "Days") + ": " + ", ".join(day_names.get(d,"?") for d in conditions["days_of_week"]))
                 if "airlines_include" in conditions:
                     cond_summary.append(_t("חברות", "Airlines") + ": " + ", ".join(conditions["airlines_include"]))
@@ -2127,7 +2154,8 @@ elif page == "🎯 כללי התראה":
 
             # Item name lookup
             item_names_by_id = {i["id"]: i["name"] for i in items}
-            day_names = {6: "א׳", 0: "ב׳", 1: "ג׳", 2: "ד׳", 3: "ה׳", 4: "ו׳", 5: "ש׳"}
+            day_names = ({6: "א׳", 0: "ב׳", 1: "ג׳", 2: "ד׳", 3: "ה׳", 4: "ו׳", 5: "ש׳"} if _lang=="he"
+                         else {6: "Sun", 0: "Mon", 1: "Tue", 2: "Wed", 3: "Thu", 4: "Fri", 5: "Sat"})
             quality_labels = {"average": _t("⚠️ סביר", "⚠️ Fair"), "good": _t("✅ טוב", "✅ Good"), "excellent": _t("🔥 מעולה", "🔥 Excellent")}
 
             for rule in all_rules:
@@ -2515,7 +2543,7 @@ elif page == "💱 שערי חליפין":
             fill="tozeroy", fillcolor="rgba(102,126,234,0.1)",
         ))
         fig.update_layout(
-            title="USD/ILS — היסטוריה",
+            title=_t("USD/ILS — היסטוריה", "USD/ILS — History"),
             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(255,255,255,0.03)",
             font=dict(color="#ccc"), height=250,
             margin=dict(l=10, r=10, t=40, b=10),
@@ -3029,7 +3057,7 @@ elif page == "📊 תובנות ודפוסים":
         # Top destinations
         top_dest = patterns.get("top_destinations", [])
         if top_dest:
-            st.subheader("✈️ יעדים עם הכי הרבה דילים")
+            st.subheader(_t("✈️ יעדים עם הכי הרבה דילים", "✈️ Top destinations by deal count"))
             fig3 = go.Figure(go.Bar(
                 x=[d["destination"] for d in top_dest],
                 y=[d["cnt"] for d in top_dest],
@@ -3047,12 +3075,12 @@ elif page == "📊 תובנות ודפוסים":
         # Deal types
         deal_types = patterns.get("deal_types", {})
         if deal_types:
-            st.subheader("🏷️ סוגי דילים")
+            st.subheader(_t("🏷️ סוגי דילים", "🏷️ Deal types"))
             type_labels = {
-                "error_fare": "💎 שגיאת מחיר",
-                "flash_sale": "⚡ מכירת פלאש",
-                "promo": "🏷️ מבצע",
-                "regular_cheap": "💰 זול",
+                "error_fare": _t("💎 שגיאת מחיר", "💎 Error fare"),
+                "flash_sale": _t("⚡ מכירת פלאש", "⚡ Flash sale"),
+                "promo": _t("🏷️ מבצע", "🏷️ Promo"),
+                "regular_cheap": _t("💰 זול", "💰 Cheap"),
             }
             fig4 = go.Figure(go.Pie(
                 labels=[type_labels.get(k, k) for k in deal_types],
@@ -3069,14 +3097,14 @@ elif page == "📊 תובנות ודפוסים":
         # Top airlines
         top_air = patterns.get("top_airlines", [])
         if top_air:
-            st.subheader("✈️ חברות תעופה")
+            st.subheader(_t("✈️ חברות תעופה", "✈️ Airlines"))
             for a in top_air:
-                st.markdown(f"• **{a['airline']}** — {a['cnt']} דילים | ממוצע ${a.get('avg_price',0):.0f}")
+                st.markdown(f"• **{a['airline']}** — {a['cnt']} {_t('דילים', 'deals')} | {_t('ממוצע', 'avg')} ${a.get('avg_price',0):.0f}")
 
     with tab3:
-        st.subheader("🤖 ניתוח AI — מה ה-DB מלמד אותנו?")
-        if st.button("🤖 ניתח עם Claude", use_container_width=True):
-            with st.spinner("Claude מנתח את הדאטה שלך..."):
+        st.subheader(_t("🤖 ניתוח AI — מה ה-DB מלמד אותנו?", "🤖 AI Analysis — What does your data tell us?"))
+        if st.button(_t("🤖 ניתח עם Claude", "🤖 Analyze with Claude"), use_container_width=True):
+            with st.spinner(_t("Claude מנתח את הדאטה שלך...", "Claude is analyzing your data...")):
                 ai = deal_insights.get_ai_insights()
 
             if "error" in ai:
