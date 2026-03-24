@@ -23,6 +23,8 @@ try:
 except Exception:
     pass
 
+import translations as i18n
+
 import database as db
 import agent
 import monitor
@@ -78,41 +80,76 @@ def _save_env(key: str, value: str):
     env_path.write_text("\n".join(lines) + "\n")
     os.environ[key] = value
 
-# ── Custom CSS ─────────────────────────────────────────────────────────────────
-st.markdown("""
+# ── Custom CSS (injected after lang is known) ──────────────────────────────────
+def _inject_css(rtl: bool):
+    sidebar_position = """
+      section[data-testid="stSidebar"] {
+        right: 0 !important;
+        left: unset !important;
+      }
+      section[data-testid="stSidebar"] > div:first-child {
+        border-left: 1px solid rgba(255,255,255,0.08) !important;
+        border-right: none !important;
+      }
+      .main .block-container {
+        padding-right: calc(var(--sidebar-width, 22rem) + 2rem) !important;
+        padding-left: 2rem !important;
+      }
+    """ if rtl else ""
+
+    dir_css = "rtl" if rtl else "ltr"
+    text_align = "right" if rtl else "left"
+
+    st.markdown(f"""
 <style>
-  [data-testid="stAppViewContainer"] {
+  /* Direction */
+  body, .main, [data-testid="stAppViewContainer"] {{
+    direction: {dir_css};
+    text-align: {text_align};
+  }}
+  [data-testid="stSidebar"] {{
+    direction: {dir_css};
+    text-align: {text_align};
+  }}
+
+  /* Sidebar position */
+  {sidebar_position}
+
+  /* Background */
+  [data-testid="stAppViewContainer"] {{
     background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-  }
-  [data-testid="stSidebar"] {
+  }}
+  [data-testid="stSidebar"] {{
     background: rgba(15,12,41,0.95);
-  }
-  .metric-card {
+  }}
+
+  /* Cards */
+  .metric-card {{
     background: rgba(255,255,255,0.05);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 12px;
     padding: 16px 20px;
     text-align: center;
-  }
-  .alert-box {
+  }}
+  .alert-box {{
     background: rgba(255, 75, 75, 0.15);
     border: 1px solid rgba(255, 75, 75, 0.5);
     border-radius: 10px;
     padding: 12px 16px;
     margin-bottom: 8px;
-  }
-  .deal-excellent { color: #00ff88; font-weight: bold; }
-  .deal-good      { color: #88ff44; }
-  .deal-average   { color: #ffcc00; }
-  .deal-poor      { color: #ff4444; }
-  h1, h2, h3 { color: white !important; }
-  .stButton button {
+  }}
+  .deal-excellent {{ color: #00ff88; font-weight: bold; }}
+  .deal-good      {{ color: #88ff44; }}
+  .deal-average   {{ color: #ffcc00; }}
+  .deal-poor      {{ color: #ff4444; }}
+  h1, h2, h3 {{ color: white !important; }}
+  .stButton button {{
     background: linear-gradient(90deg, #667eea, #764ba2);
     color: white;
     border: none;
     border-radius: 8px;
     font-weight: 600;
-  }
+  }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -123,6 +160,12 @@ if "alerts_log" not in st.session_state:
     st.session_state.alerts_log = []
 if "checking" not in st.session_state:
     st.session_state.checking = False
+if "lang" not in st.session_state:
+    st.session_state.lang = "he"
+
+# Convenience shortcut
+_lang = st.session_state.lang
+_rtl = _lang == "he"
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
@@ -185,59 +228,47 @@ def price_chart(watch_id: int, name: str):
 
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## ✈️ Noded")
-    st.markdown("*סוכן מחירי נסיעות חכם*")
-    st.divider()
-
-    page = st.radio(
-        "ניווט",
-        [
-            "🏠 לוח בקרה",
-            "➕ הוסף מעקב",
-            "🌟 הזדמנויות AI",
-            "🔥 ציד דילים",
-            "🎲 הפתיעני",
-            "🛠️ כלים חכמים",
-            "📊 היסטוריית מחירים",
-            "🎯 כללי התראה",
-            "🔍 השוואת אתרים",
-            "📰 סנטימנט & חדשות",
-            "⏰ דילים שפגים",
-            "🛂 בדיקת ויזה",
-            "📅 תאריכים גמישים",
-            "📈 חיזוי מחיר",
-            "🗺️ תכנן טיול",
-            "🌍 מסלול מרובה ערים",
-            "🔁 עצירות חינם",
-            "💰 עלות אמיתית",
-            "💳 נקודות vs מזומן",
-            "📊 תובנות ודפוסים",
-            "🤖 בוט טלגרם",
-            "🔍 Kiwi טיסות",
-            "🕵️ Hidden City",
-            "📡 RSS & Reddit",
-            "⚡ Auto-Book",
-            "🧬 Price DNA",
-            "🗺️ Positioning",
-            "💬 WhatsApp Bot",
-            "💱 שערי חליפין",
-            "📥 ייצוא נתונים",
-            "⚙️ הגדרות",
-        ],
+    # Language selector (top of sidebar)
+    lang_choice = st.radio(
+        i18n.t("lang_label", _lang),
+        ["🇮🇱 עברית", "🇺🇸 English"],
+        index=0 if _lang == "he" else 1,
+        horizontal=True,
         label_visibility="collapsed",
     )
+    new_lang = "he" if "עברית" in lang_choice else "en"
+    if new_lang != st.session_state.lang:
+        st.session_state.lang = new_lang
+        st.rerun()
+
+    st.markdown(f"## ✈️ Noded")
+    st.markdown(f"*{i18n.t('tagline', _lang)}*")
+    st.divider()
+
+    # Page navigation in current language
+    _pages = i18n.get_pages(_lang)
+    page_display = st.radio(
+        i18n.t("nav_label", _lang),
+        _pages,
+        label_visibility="collapsed",
+    )
+    # Normalize to Hebrew page name for routing (all page== checks use Hebrew)
+    if _lang == "en":
+        page = i18n.EN_TO_HE_PAGE.get(page_display, page_display)
+    else:
+        page = page_display
 
     st.divider()
 
     # Monitor toggle
     if not st.session_state.monitor_running:
-        if st.button("▶ הפעל ניטור אוטומטי", use_container_width=True):
+        if st.button(i18n.t("start_monitor", _lang), use_container_width=True):
             monitor.start_background_monitor(interval=3600)
             st.session_state.monitor_running = True
             st.rerun()
     else:
-        st.success("🟢 ניטור פעיל")
-        if st.button("⏹ עצור ניטור", use_container_width=True):
+        st.success(i18n.t("monitor_active", _lang))
+        if st.button(i18n.t("stop_monitor", _lang), use_container_width=True):
             monitor.stop_background_monitor()
             st.session_state.monitor_running = False
             st.rerun()
@@ -247,10 +278,13 @@ with st.sidebar:
     # API key status
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if api_key and api_key.startswith("sk-"):
-        st.success("🔑 API Key מוגדר")
+        st.success(i18n.t("api_key_ok", _lang))
     else:
-        st.error("❌ חסר ANTHROPIC_API_KEY")
-        st.caption("הוסף ל-.env")
+        st.error(i18n.t("api_key_missing", _lang))
+        st.caption(i18n.t("api_key_hint", _lang))
+
+# ── Inject CSS (after lang is determined) ──────────────────────────────────────
+_inject_css(_rtl)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
