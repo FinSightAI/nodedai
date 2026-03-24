@@ -6,6 +6,7 @@ import csv
 import io
 from datetime import datetime
 from pathlib import Path
+from typing import Optional, List
 
 import openpyxl
 from openpyxl.styles import (
@@ -19,7 +20,7 @@ import database as db
 
 # ── Excel ──────────────────────────────────────────────────────────────────────
 
-def export_excel(watch_ids: list[int] | None = None) -> bytes:
+def export_excel(watch_ids: Optional[List[int]] = None) -> bytes:
     """
     Export price history to a styled Excel file.
     Returns bytes to stream to user.

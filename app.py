@@ -15,6 +15,14 @@ from streamlit_autorefresh import st_autorefresh
 
 load_dotenv(Path(__file__).parent / ".env")
 
+# Load Streamlit Cloud secrets into env vars
+try:
+    for _k, _v in st.secrets.items():
+        if isinstance(_v, str) and _k not in os.environ:
+            os.environ[_k] = _v
+except Exception:
+    pass
+
 import database as db
 import agent
 import monitor

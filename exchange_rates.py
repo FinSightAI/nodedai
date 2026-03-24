@@ -7,6 +7,7 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 import httpx
 
 DB_PATH = Path(__file__).parent / "prices.db"
@@ -63,7 +64,7 @@ def fetch_rates(base: str = "USD") -> dict[str, float]:
         return {}
 
 
-def get_rate(base: str, target: str) -> float | None:
+def get_rate(base: str, target: str) -> Optional[float]:
     """Get current rate between two currencies."""
     rates = fetch_rates(base)
     return rates.get(target)
