@@ -1,0 +1,15 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets
+.env
+.streamlit/secrets.toml
+
+# Database (local only)
+prices.db
+
+# OS
+.DS_Store
