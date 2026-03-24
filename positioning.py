@@ -1,3 +1,4 @@
+import os
 """
 Positioning Flight Optimizer — האם כדאי לטוס מנמל תעופה אחר?
 לפעמים TLV→AMS→NYC זול מ-TLV→NYC ישיר, אפילו כשמחשבים כרטיס ל-AMS.
@@ -67,7 +68,10 @@ def find_positioning_opportunities(
     מוצא הזדמנויות positioning:
     האם כדאי לטוס תחילה לאמסטרדם/לונדון ומשם לטוס לyyyy?
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     hubs_str = "\n".join(
         f"- {a['code']} ({a['city']}, {a['country']}) — "
@@ -161,7 +165,10 @@ def analyze_overnight_positioning(
     """
     מנתח האם שווה ללון בעיר הביניים — אולי לבקר שם גם?
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     hub_info = next((a for a in POSITIONING_AIRPORTS if a["code"] == hub), {})
     hub_city = hub_info.get("city", hub)
@@ -214,7 +221,10 @@ def get_cheapest_tlv_positioning_routes(month: str = "") -> list:
     """
     מה הנתיבי positioning הזולים ביותר מ-TLV — לאן כדאי לטוס כ-positioning?
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     airports_str = ", ".join(
         f"{a['code']} ({a['city']})"

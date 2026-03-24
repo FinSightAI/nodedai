@@ -17,12 +17,13 @@ import amadeus_client
 _client: Optional[anthropic.Anthropic] = None
 
 
-def get_client() -> anthropic.Anthropic:
+def get_client() -> Optional[anthropic.Anthropic]:
     global _client
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return None
     if _client is None:
-        _client = anthropic.Anthropic(
-            api_key=os.environ.get("ANTHROPIC_API_KEY")
-        )
+        _client = anthropic.Anthropic(api_key=api_key)
     return _client
 
 
@@ -151,6 +152,8 @@ def _claude_web_search(item: dict) -> dict:
     Returns a dict with price info or error.
     """
     client = get_client()
+    if client is None:
+        return {"found": False, "error": "no_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
     prompt = build_search_prompt(item)
     try:
         response = client.messages.create(
@@ -235,6 +238,8 @@ def analyze_deal(item: dict, price_history: list) -> str:
     Use Claude to analyze whether this is a good deal based on price history.
     """
     client = get_client()
+    if client is None:
+        return "ANTHROPIC_API_KEY not configured"
 
     if len(price_history) < 2:
         return "Not enough history to analyze"
@@ -275,6 +280,8 @@ def smart_search_opportunities(destinations: list[str]) -> list[dict]:
     Returns a list of opportunity dicts.
     """
     client = get_client()
+    if client is None:
+        return []
 
     dest_str = ", ".join(destinations)
     prompt = f"""Find 3 excellent travel opportunities right now to one of these destinations: {dest_str}

@@ -1,3 +1,4 @@
+import os
 """
 Deal Insights & Pattern Learning — למד מהיסטוריית הדילים.
 מנתח את ה-DB ומוצא דפוסים: מתי יוצאים דילים, לאיזה יעדים, באיזה שעות.
@@ -160,7 +161,10 @@ def get_ai_insights() -> dict:
     if stats["total_deals"] == 0:
         return {"error": "No data to analyze" if _lang == "en" else "אין נתונים לניתוח"}
 
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     # Prepare compact summary for Claude
     summary = {

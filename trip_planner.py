@@ -1,3 +1,4 @@
+import os
 """
 AI Trip Planner — תכנון טיול מלא עם Claude.
 תקציב, יעד, ימים → תכנית מפורטת עם מחירים.
@@ -95,8 +96,11 @@ def plan_trip(
         preferences=preferences or ("None" if _lang == "en" else "אין"),
     )
 
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
     try:
-        client = anthropic.Anthropic()
+        client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
             model="claude-opus-4-6",
             max_tokens=4096,

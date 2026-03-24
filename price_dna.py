@@ -1,3 +1,4 @@
+import os
 """
 Personal Price DNA — הדפוסים האישיים שלך במחירי טיסות.
 מנתח את כל ההיסטוריה שלך ובונה פרופיל: מתי זול, מתי יקר, מה התבנית.
@@ -147,7 +148,10 @@ def get_ai_price_dna(watch_id: int = None) -> dict:
     if "error" in dna:
         return dna
 
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     prompt = f"""נתח את ה-DNA המחירי הזה ותן המלצות אישיות:
 

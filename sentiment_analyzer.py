@@ -1,3 +1,4 @@
+import os
 """
 Price Sentiment Analyzer v2 — scans live news for events that affect flight prices:
 strikes, elections, wars, weather, local holidays, sporting events, etc.
@@ -56,7 +57,10 @@ def analyze_sentiment(
     """
     Analyze news sentiment for a route and return price impact prediction.
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     prompt = SENTIMENT_PROMPT.format(

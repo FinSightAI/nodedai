@@ -1,3 +1,4 @@
+import os
 """
 Smart Search Engine — חיפוש חכם מורכב.
   • Split ticketing — שני כרטיסים חד-כיווניים במקום הלוך-חזור
@@ -35,7 +36,10 @@ def surprise_me(
     "הפתיעני" — מצא את הדסטינציה הכי שווה לתקציב ולתאריכים.
     Returns top 5 destinations with deal info.
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     from_date = from_date or datetime.now().strftime("%Y-%m-%d")
     to_date = to_date or (
@@ -100,7 +104,10 @@ def check_split_ticket(
     """
     Check if two one-way tickets are cheaper than a round trip.
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     prompt = f"""השווה: הלוך-חזור vs. שני כרטיסים חד-כיווניים.
 
@@ -156,7 +163,10 @@ def check_nearby_airports(
     Check prices from all Israeli airports for a given destination.
     Returns comparison list sorted by price.
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     airports_str = ", ".join(f"{code} ({name})" for code, name in IL_AIRPORTS)
     prompt = f"""השווה מחירי טיסות מכל שדות התעופה בישראל ל-{destination}.
@@ -204,7 +214,10 @@ def find_cheapest_day_of_week(
     month: str,
 ) -> dict:
     """Find which day of the week is cheapest to fly this route."""
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     prompt = f"""באיזה יום בשבוע הכי זול לטוס מ-{origin} ל-{destination} בחודש {month}?
 
@@ -251,7 +264,10 @@ def compare_package_vs_separate(
     travelers: int = 2,
 ) -> dict:
     """Compare package deal vs. booking flight + hotel separately."""
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     prompt = f"""השווה: חבילה מאורגנת vs. הזמנה עצמאית.
 
@@ -303,7 +319,10 @@ def find_last_minute_deals(
     max_price: float = 300,
 ) -> list[dict]:
     """Find last-minute deals departing in the next X days."""
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     from_date = datetime.now().strftime("%Y-%m-%d")
     to_date = (datetime.now() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
@@ -356,7 +375,10 @@ def best_time_to_book(
     Analyze historical booking patterns and find the optimal booking window:
     how many weeks before departure gives the cheapest price.
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     prompt = f"""נתח: מתי הכי כדאי לקנות כרטיס טיסה למסלול הבא?
 

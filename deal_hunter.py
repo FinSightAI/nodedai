@@ -1,3 +1,4 @@
+import os
 """
 Proactive Deal Hunter — ציד עסקאות אקטיבי.
 סורק אתרי דילים, מכירות פלאש, טיסות שגיאה, ומחזיר את הזהב.
@@ -83,7 +84,10 @@ def hunt_deals(sources: Optional[list] = None) -> list[dict]:
     Uses Claude with web_fetch to scan deal sites.
     """
     ensure_deals_table()
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     if sources is None:
         sources = list(DEAL_SOURCES.values())[:4]  # Top 4 by default

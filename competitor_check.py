@@ -1,3 +1,4 @@
+import os
 """
 Competitor Price Comparison — finds the same flight/hotel on 5 booking sites simultaneously.
 """
@@ -28,7 +29,10 @@ def compare_prices(
     Search for the same trip on multiple booking sites.
     Returns list of results sorted by price (cheapest first).
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     trip_type = ("Round-trip flight" if _lang == "en" else "טיסה הלוך-חזור") if date_return else ("One-way flight" if _lang == "en" else "טיסה חד-כיוונית")
     if category == "hotel":

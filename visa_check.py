@@ -1,3 +1,4 @@
+import os
 """
 Visa Requirements Checker — checks entry requirements for Israeli passport holders.
 """
@@ -47,7 +48,10 @@ def check_visa(destination: str, passport: str = "Israeli") -> dict:
     """
     Check visa requirements for the given destination for Israeli passport holders.
     """
-    client = anthropic.Anthropic()
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
+    client = anthropic.Anthropic(api_key=api_key)
 
     prompt = VISA_PROMPT.format(destination=destination)
 

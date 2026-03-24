@@ -1,3 +1,4 @@
+import os
 """
 AI price prediction — האם המחיר יעלה או ירד?
 Claude מנתח היסטוריה, עונתיות ומגמות שוק.
@@ -72,8 +73,11 @@ def predict_price(item: dict, history: list[dict]) -> Optional[dict]:
         current=current,
     )
 
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
     try:
-        client = anthropic.Anthropic()
+        client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
             model="claude-opus-4-6",
             max_tokens=1024,
