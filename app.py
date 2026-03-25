@@ -296,6 +296,14 @@ def _inject_css(rtl: bool):
     border-radius: 12px !important;
     border: 1px solid rgba(255,255,255,0.07) !important;
   }}
+
+  /* ── Hide Streamlit chrome ── */
+  #MainMenu {{ visibility: hidden !important; }}
+  [data-testid="stToolbar"] {{ display: none !important; }}
+  [data-testid="stDecoration"] {{ display: none !important; }}
+  [data-testid="stStatusWidget"] {{ display: none !important; }}
+  footer {{ visibility: hidden !important; }}
+  .stDeployButton {{ display: none !important; }}
 </style>
 """, unsafe_allow_html=True)
 
