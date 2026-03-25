@@ -10,6 +10,7 @@ from pathlib import Path
 
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 from streamlit_autorefresh import st_autorefresh
 
@@ -220,6 +221,28 @@ def _t(he: str, en: str = "") -> str:
     return en if (_lang == "en" and en) else he
 
 
+def _browser_notify(title: str, body: str):
+    """Trigger a browser Web Notification via a zero-height HTML component."""
+    safe_title = title.replace("`", "'").replace("\n", " ")
+    safe_body = body.replace("`", "'").replace("\n", " ")
+    components.html(
+        f"""<script>
+(function(){{
+  var t = `{safe_title}`;
+  var b = `{safe_body}`;
+  if (Notification.permission === "granted") {{
+    new Notification(t, {{body: b, icon: "✈️"}});
+  }} else if (Notification.permission !== "denied") {{
+    Notification.requestPermission().then(function(p) {{
+      if (p === "granted") new Notification(t, {{body: b, icon: "✈️"}});
+    }});
+  }}
+}})();
+</script>""",
+        height=0,
+    )
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
 CAT_EMOJI = {"flight": "✈️", "hotel": "🏨", "apartment": "🏠", "package": "📦"}
 DEAL_COLOR = {
@@ -278,6 +301,39 @@ def price_chart(watch_id: int, name: str):
     return fig
 
 
+def sparkline(watch_id: int):
+    """Tiny 7-day trend chart for watch cards."""
+    history = db.get_price_history(watch_id, limit=7)
+    if len(history) < 2:
+        return None
+    history = list(reversed(history))
+    prices = [r["price"] for r in history]
+    first, last_p = prices[0], prices[-1]
+    if last_p < first:
+        color = "#00ff88"
+    elif last_p > first:
+        color = "#ff4444"
+    else:
+        color = "#aaaaaa"
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=list(range(len(prices))),
+        y=prices,
+        mode="lines",
+        line=dict(color=color, width=1.5),
+        showlegend=False,
+    ))
+    fig.update_layout(
+        height=60,
+        margin=dict(l=0, r=0, t=0, b=0),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+    )
+    return fig
+
+
 # ── Sidebar ────────────────────────────────────────────────────────────────────
 with st.sidebar:
     # Language selector (top of sidebar)
@@ -299,9 +355,15 @@ with st.sidebar:
 
     # Page navigation in current language
     _pages = i18n.get_pages(_lang)
+    _nav_default = 0
+    if "nav_page" in st.session_state:
+        _target = st.session_state.pop("nav_page")
+        if _target in _pages:
+            _nav_default = _pages.index(_target)
     page_display = st.radio(
         i18n.t("nav_label", _lang),
         _pages,
+        index=_nav_default,
         label_visibility="collapsed",
     )
     # Normalize to Hebrew page name for routing (all page== checks use Hebrew)
@@ -324,6 +386,10 @@ with st.sidebar:
             monitor.stop_background_monitor()
             st.session_state.monitor_running = False
             st.rerun()
+
+    if st.button("🔔 " + _t("הפעל התראות דפדפן", "Enable Browser Notifications"), key="enable_notif"):
+        components.html("<script>Notification.requestPermission();</script>", height=0)
+        st.success(_t("✅ בקשת הרשאה נשלחה", "✅ Permission requested"))
 
     st.divider()
 
@@ -371,7 +437,19 @@ if page == "🏠 לוח בקרה":
     st.divider()
 
     if not items:
-        st.info(_t("אין פריטים עדיין. לחץ **'➕ הוסף מעקב'** בתפריט השמאלי.", "No items yet. Click **'➕ Add Watch'** in the sidebar."))
+        st.markdown(f"## {_t('ברוכים הבאים ל-Noded! 🎉', 'Welcome to Noded! 🎉')}")
+        st.markdown(_t("כמה צעדים פשוטים כדי להתחיל:", "Just a few steps to get started:"))
+        ow1, ow2, ow3 = st.columns(3)
+        with ow1:
+            st.info(f"**{_t('שלב 1', 'Step 1')}**\n\n✈️ {_t('הוסף מעקב', 'Add a watch')}\n\n{_t('הגדר יעד, תאריכים ומחיר מקסימלי.', 'Set destination, dates and max price.')}")
+        with ow2:
+            st.info(f"**{_t('שלב 2', 'Step 2')}**\n\n🤖 {_t('AI מחפש מחירים', 'AI searches prices')}\n\n{_t('הסוכן בודק עבורך בזמן אמת.', 'The agent checks prices for you in real time.')}")
+        with ow3:
+            st.info(f"**{_t('שלב 3', 'Step 3')}**\n\n🔔 {_t('קבל התראות', 'Get alerts')}\n\n{_t('תקבל עדכון כשהמחיר יורד.', 'Get notified when the price drops.')}")
+        st.write("")
+        if st.button(f"➕ {_t('הוסף מעקב ראשון', 'Add First Watch')}", type="primary", use_container_width=True):
+            st.session_state["nav_page"] = _t("➕ הוסף מעקב", "➕ Add Watch")
+            st.rerun()
     else:
         # ── Items grid ─────────────────────────────────────────────────────────
         for item in items:
@@ -395,6 +473,10 @@ if page == "🏠 לוח בקרה":
                         st.markdown(f"**{_t('תאריכים', 'Dates')}:** {item['date_from']} → {item.get('date_to', '')}")
 
                     st.divider()
+
+                    spark = sparkline(item["id"])
+                    if spark:
+                        st.plotly_chart(spark, use_container_width=True, key=f"spark_{item['id']}", config={"displayModeBar": False})
 
                     if last:
                         price_color = "#00ff88" if (lowest and last["price"] == lowest["price"]) else "#ffffff"
@@ -441,6 +523,10 @@ if page == "🏠 לוח בקרה":
                                     if alert_data["alert"]:
                                         for a in alert_data["alerts"]:
                                             st.warning(f"🔔 {a['message']}")
+                                            _browser_notify(
+                                                f"✈️ Noded — {item['name']}",
+                                                a["message"],
+                                            )
                                     st.success(f"✅ {fmt_price(price, result.get('currency',''))}")
                                     st.rerun()
                                 else:
