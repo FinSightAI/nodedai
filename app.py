@@ -90,11 +90,19 @@ def _inject_css(rtl: bool):
       section[data-testid="stSidebar"] {
         right: 0 !important;
         left: unset !important;
-        transition: transform 0.3s ease-in-out !important;
+        transition: transform 0.3s ease-in-out, width 0.3s ease-in-out !important;
+        overflow: hidden !important;
       }
       section[data-testid="stSidebar"] > div:first-child {
         border-left: 1px solid rgba(102,126,234,0.2) !important;
         border-right: none !important;
+        overflow: hidden !important;
+      }
+      /* Collapsed state: ensure sidebar is fully off-screen to the right */
+      [data-testid="stSidebarCollapsedControl"] ~ section[data-testid="stSidebar"],
+      section[data-testid="stSidebar"][class*="collapsed"],
+      section[data-testid="stSidebar"][aria-expanded="false"] {
+        transform: translateX(110%) !important;
       }
     """ if rtl else ""
 
@@ -303,8 +311,8 @@ def _inject_css(rtl: bool):
         components.html("""
 <script>
 (function() {
-  if (window.__sidebarRtlFixed) return;
-  window.__sidebarRtlFixed = true;
+  if (window.parent.__sidebarRtlFixed) return;
+  window.parent.__sidebarRtlFixed = true;
 
   function attachObserver() {
     var doc = window.parent.document;
@@ -312,25 +320,41 @@ def _inject_css(rtl: bool):
     if (!sidebar) { setTimeout(attachObserver, 300); return; }
 
     var _skip = false;
-    var obs = new MutationObserver(function() {
+
+    function fixTransform() {
       if (_skip) return;
       var t = sidebar.style.transform || '';
-      // Streamlit collapses by setting translateX(-Npx or -N%). Flip to positive.
+      if (!t) return;
+      // Flip any negative translateX to positive (collapse to right, not left)
       var fixed = t.replace(/translateX\(\s*(-[\d.]+\s*(?:px|rem|%|vw)?)\s*\)/,
         function(_, v) { return 'translateX(' + v.replace('-', '') + ')'; }
       );
       if (fixed !== t) {
         _skip = true;
         sidebar.style.transform = fixed;
-        _skip = false;
+        // Also ensure overflow hidden so content doesn't bleed
+        sidebar.style.overflow = 'hidden';
+        setTimeout(function(){ _skip = false; }, 50);
       }
-    });
-    obs.observe(sidebar, { attributes: true, attributeFilter: ['style'] });
+    }
+
+    var obs = new MutationObserver(fixTransform);
+    obs.observe(sidebar, { attributes: true, attributeFilter: ['style', 'class'] });
+
+    // Also watch the inner container
+    var inner = sidebar.querySelector('[data-testid="stSidebarContent"], div');
+    if (inner) {
+      obs.observe(inner, { attributes: true, attributeFilter: ['style'] });
+    }
+
+    fixTransform(); // run once immediately
   }
 
-  if (document.readyState === 'complete') { attachObserver(); }
-  else { window.addEventListener('load', attachObserver); }
-  setTimeout(attachObserver, 800);
+  function init() { attachObserver(); }
+  if (document.readyState === 'complete') { init(); }
+  else { window.addEventListener('load', init); }
+  setTimeout(init, 500);
+  setTimeout(init, 1500);
 })();
 </script>
 """, height=0)
