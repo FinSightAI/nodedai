@@ -90,6 +90,7 @@ def _inject_css(rtl: bool):
       section[data-testid="stSidebar"] {
         right: 0 !important;
         left: unset !important;
+        transition: transform 0.3s ease-in-out !important;
       }
       section[data-testid="stSidebar"] > div:first-child {
         border-left: 1px solid rgba(102,126,234,0.2) !important;
@@ -296,6 +297,43 @@ def _inject_css(rtl: bool):
   .stDeployButton {{ display: none !important; }}
 </style>
 """, unsafe_allow_html=True)
+
+    # RTL: flip sidebar collapse direction so it slides off to the RIGHT
+    if rtl:
+        components.html("""
+<script>
+(function() {
+  if (window.__sidebarRtlFixed) return;
+  window.__sidebarRtlFixed = true;
+
+  function attachObserver() {
+    var doc = window.parent.document;
+    var sidebar = doc.querySelector('[data-testid="stSidebar"]');
+    if (!sidebar) { setTimeout(attachObserver, 300); return; }
+
+    var _skip = false;
+    var obs = new MutationObserver(function() {
+      if (_skip) return;
+      var t = sidebar.style.transform || '';
+      // Streamlit collapses by setting translateX(-Npx or -N%). Flip to positive.
+      var fixed = t.replace(/translateX\(\s*(-[\d.]+\s*(?:px|rem|%|vw)?)\s*\)/,
+        function(_, v) { return 'translateX(' + v.replace('-', '') + ')'; }
+      );
+      if (fixed !== t) {
+        _skip = true;
+        sidebar.style.transform = fixed;
+        _skip = false;
+      }
+    });
+    obs.observe(sidebar, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  if (document.readyState === 'complete') { attachObserver(); }
+  else { window.addEventListener('load', attachObserver); }
+  setTimeout(attachObserver, 800);
+})();
+</script>
+""", height=0)
 
 # ── Session state ──────────────────────────────────────────────────────────────
 if "monitor_running" not in st.session_state:
