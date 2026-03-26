@@ -9,7 +9,7 @@ import sqlite3
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-import anthropic
+import ai_client
 
 _lang = "he"
 
@@ -143,15 +143,13 @@ def generate_price_dna(watch_id: int = None) -> dict:
 
 
 def get_ai_price_dna(watch_id: int = None) -> dict:
-    """Claude מנתח את ה-DNA ומוציא insights אישיים."""
+    """AI מנתח את ה-DNA ומוציא insights אישיים."""
     dna = generate_price_dna(watch_id)
     if "error" in dna:
         return dna
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     prompt = f"""נתח את ה-DNA המחירי הזה ותן המלצות אישיות:
 
@@ -178,19 +176,16 @@ def get_ai_price_dna(watch_id: int = None) -> dict:
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1500,
-            thinking={"type": "adaptive"},
+        text = ai_client.ask(
+            prompt=prompt,
             system="You are a flight price analyst. Analyze patterns and give data-driven recommendations." + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else ""),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1500,
         )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            result = json.loads(m.group(0))
-            result["dna"] = dna
-            return result
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                result["dna"] = dna
+                return result
     except Exception as e:
         return {"error": str(e), "dna": dna}
     return {"dna": dna}

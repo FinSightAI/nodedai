@@ -6,12 +6,13 @@ import os
 import sys
 from pathlib import Path
 from dotenv import load_dotenv
+import ai_client
 
 load_dotenv(Path(__file__).parent / ".env")
 
 # Validate API key
-if not os.environ.get("ANTHROPIC_API_KEY"):
-    print("❌ ANTHROPIC_API_KEY not set")
+if not ai_client.is_configured():
+    print("❌ GEMINI_API_KEY not set")
     sys.exit(1)
 
 import database as db

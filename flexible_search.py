@@ -1,12 +1,13 @@
 """
 Flexible date search — מצא את היום/שבוע הכי זול לטוס.
-משתמש ב-Amadeus Fare Calendar ו-Claude לניתוח.
+משתמש ב-Amadeus Fare Calendar ו-AI לניתוח.
 """
 import os
 from datetime import datetime, timedelta
 from typing import Optional
 
 import amadeus_client
+import ai_client
 
 
 def search_cheapest_days(
@@ -58,8 +59,8 @@ def search_cheapest_days(
                     "deal_quality": best.get("deal_quality", ""),
                 })
     else:
-        # Fallback: use Claude to estimate (less accurate)
-        results = _claude_estimate_month(origin, destination, month, trip_duration)
+        # Fallback: use AI to estimate (less accurate)
+        results = _ai_estimate_month(origin, destination, month, trip_duration)
 
     results.sort(key=lambda x: x["price"])
     return results[:top_n]
@@ -100,13 +101,11 @@ def get_price_calendar(
     return calendar
 
 
-def _claude_estimate_month(
+def _ai_estimate_month(
     origin: str, destination: str, month: str, duration: int
 ) -> list[dict]:
-    """Fallback: ask Claude to estimate cheapest dates."""
+    """Fallback: ask AI to estimate cheapest dates."""
     try:
-        import anthropic
-        client = anthropic.Anthropic()
         prompt = (
             f"מתי הכי זול לטוס מ-{origin} ל-{destination} בחודש {month}? "
             f"טיול של {duration} ימים.\n"
@@ -114,17 +113,9 @@ def _claude_estimate_month(
             "החזר JSON: [{\"date\": \"YYYY-MM-DD\", \"price\": 000, \"currency\": \"USD\", "
             "\"details\": \"הסבר קצר\", \"deal_quality\": \"good\"}]"
         )
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=512,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        import json, re
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            return json.loads(arr.group(0))
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=512)
+        if text:
+            return ai_client.extract_json_array(text)
     except Exception:
         pass
     return []

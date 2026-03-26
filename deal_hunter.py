@@ -9,7 +9,7 @@ import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import anthropic
+import ai_client
 
 _lang = "he"
 
@@ -81,13 +81,11 @@ def ensure_deals_table():
 def hunt_deals(sources: Optional[list] = None) -> list[dict]:
     """
     Actively hunt for deals from Israeli airports.
-    Uses Claude with web_fetch to scan deal sites.
+    Uses AI with web search to scan deal sites.
     """
     ensure_deals_table()
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     if sources is None:
         sources = list(DEAL_SOURCES.values())[:4]  # Top 4 by default
@@ -96,14 +94,8 @@ def hunt_deals(sources: Optional[list] = None) -> list[dict]:
     prompt = f"סרוק את האתרים הבאים:\n{sources_str}\n\n{HUNT_PROMPT}"
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=4096,
-            thinking={"type": "adaptive"},
-            tools=[
-                {"type": "web_search_20260209", "name": "web_search"},
-                {"type": "web_fetch_20260209",  "name": "web_fetch"},
-            ],
+        text = ai_client.ask_with_search(
+            prompt=prompt,
             system=(
                 "You are an aggressive deal hunter. "
                 "Scan every site thoroughly. "
@@ -111,10 +103,12 @@ def hunt_deals(sources: Optional[list] = None) -> list[dict]:
                 "Always look for error fares — these are gold."
                 + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else "")
             ),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=4096,
         )
 
-        text = "".join(b.text for b in response.content if b.type == "text")
+        if not text:
+            return []
+
         arr_match = re.search(r"\[.*\]", text, re.DOTALL)
         if not arr_match:
             return []

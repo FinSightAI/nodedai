@@ -14,7 +14,32 @@
       "Bash(python -c \":*)",
       "Bash(xargs -I{} basename {})",
       "Bash(gh auth:*)",
-      "Bash(gh --version)"
+      "Bash(gh --version)",
+      "Bash(python -m py_compile app.py)",
+      "Bash(python3 -m py_compile app.py)",
+      "Bash(python3 -m py_compile positioning.py whatsapp_bot.py kiwi_client.py hidden_city.py rss_scanner.py auto_book.py price_dna.py)",
+      "Bash(grep -rn \"| None\\\\b\\\\|: float |\\\\|: str |\\\\|: int |\\\\|: list |\\\\|: dict |\\\\|: bool |-> float |\\\\|-> str |\\\\|-> int |\\\\|-> list |\\\\|-> dict |\\\\|-> bool |\" \"/Users/s/Desktop/mega traveller/\"*.py)",
+      "Bash(grep -rn \"| None\\\\|float | \\\\|str | \\\\|int | \\\\|list | \\\\|dict | \\\\|bool | \" *.py)",
+      "Bash(python3 -m py_compile app.py exchange_rates.py exporters.py)",
+      "Bash(cd:*)",
+      "Bash(sed -i '' 's/page_title=\"\"\"\"Noded ✈️\"\"\"\"/page_title=\"\"\"\"Noded 🧳\"\"\"\"/' app.py)",
+      "Bash(sed -i '' 's/page_icon=\"\"\"\"✈️\"\"\"\"/page_icon=\"\"\"\"🧳\"\"\"\"/' app.py)",
+      "Bash(python3 -m py_compile app.py translations.py)",
+      "Bash(grep -n '\"\"קנה\"\"\\\\|\"\"המתן\"\"' app.py)",
+      "Bash(python3 -m py_compile \"/Users/s/Desktop/mega traveller/app.py\")",
+      "Bash(ls:*)",
+      "Bash(python3 -c \"import os; from dotenv import load_dotenv; from pathlib import Path; load_dotenv\\(Path\\(''.env''\\)\\); print\\(repr\\(os.environ.get\\(''ANTHROPIC_API_KEY'', ''NOT SET''\\)\\)\\)\")",
+      "Bash(python3 -:*)",
+      "Bash(python3 -m py_compile agent.py sentiment_analyzer.py price_predictor.py smart_search.py trip_planner.py positioning.py deal_hunter.py visa_check.py competitor_check.py deal_insights.py price_dna.py)",
+      "Bash(python3 -c \"import database as db; print\\([m for m in dir\\(db\\) if not m.startswith\\(''_''\\)]\\)\")",
+      "Bash(python3 -c \"import database as db; db.init_db\\(\\); import json; items=db.get_all_watch_items\\(\\); print\\(json.dumps\\(items[:1], indent=2, default=str\\)\\)\")",
+      "Bash(python3 -c \"import database as db; db.init_db\\(\\); h=db.get_price_history\\(1, limit=5\\); import json; print\\(json.dumps\\(h, indent=2, default=str\\)\\)\")",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//Users/s/Desktop/mega traveller/**)",
+      "Bash(done)",
+      "Bash(python3 -m py_compile deal_hunter.py deal_scorer.py deal_insights.py sentiment_analyzer.py smart_search.py flexible_search.py competitor_check.py cost_calculator.py visa_check.py rss_scanner.py hidden_city.py stopover_finder.py positioning.py price_dna.py run_monitor.py)",
+      "Bash(python3 -m py_compile ai_client.py agent.py trip_planner.py price_predictor.py run_monitor.py)"
     ]
   }
 }

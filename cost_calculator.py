@@ -6,7 +6,7 @@ Cost Calculator Suite:
 """
 import json
 import re
-import anthropic
+import ai_client
 from typing import Optional
 
 
@@ -161,7 +161,6 @@ def calculate_points_value(
 
 def find_best_redemption(points: int, program: str) -> dict:
     """איפה הכי כדאי לממש נקודות — AI מחפש."""
-    client = anthropic.Anthropic()
     cpp, prog_name = POINTS_VALUES.get(program, (1.0, program))
 
     prompt = f"""יש לי {points:,} נקודות בתוכנית {prog_name}.
@@ -184,16 +183,11 @@ def find_best_redemption(points: int, program: str) -> dict:
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1500,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            return {"options": json.loads(arr.group(0)), "program": prog_name, "points": points}
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=1500)
+        if text:
+            options = ai_client.extract_json_array(text)
+            if options:
+                return {"options": options, "program": prog_name, "points": points}
     except Exception as e:
         return {"error": str(e)}
     return {}
@@ -212,7 +206,6 @@ def optimize_multi_city(
     מוצא את הסדר הזול ביותר לביקור במספר ערים.
     cities = ["טוקיו", "בנגקוק", "באלי", "סינגפור"]
     """
-    client = anthropic.Anthropic()
     days_info = ""
     if days_per_city:
         days_info = "\n".join(f"- {city}: {days} ימים" for city, days in days_per_city.items())
@@ -255,18 +248,15 @@ def optimize_multi_city(
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=3000,
-            thinking={"type": "adaptive"},
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
+        text = ai_client.ask_with_search(
+            prompt=prompt,
             system="אתה מומחה ל-travel hacking ותכנון מסלולים. מצא תמיד את הדרך הזולה ביותר.",
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=3000,
         )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}

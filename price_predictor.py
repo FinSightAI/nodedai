@@ -1,12 +1,12 @@
-import os
 """
-AI price prediction — האם המחיר יעלה או ירד?
-Claude מנתח היסטוריה, עונתיות ומגמות שוק.
+AI price prediction — powered by Gemini.
 """
 import json
+import re
 from datetime import datetime
 from typing import Optional
-import anthropic
+
+import ai_client
 
 _lang = "he"
 
@@ -38,13 +38,12 @@ Return JSON:
 }}"""
 
 
-def predict_price(item: dict, history: list[dict]) -> Optional[dict]:
-    """
-    Predict whether price will go up or down.
-    Returns prediction dict or None if not enough data.
-    """
+def predict_price(item: dict, history: list) -> Optional[dict]:
+    """Predict whether price will go up or down."""
     if len(history) < 3:
         return None
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reasoning": "GEMINI_API_KEY not configured"}
 
     prices = [r["price"] for r in history]
     avg = sum(prices) / len(prices)
@@ -54,52 +53,31 @@ def predict_price(item: dict, history: list[dict]) -> Optional[dict]:
         f"  {r['checked_at'][:16]}: {r['price']:.0f} {r['currency']}"
         for r in history[:15]
     )
-
-    dates = ""
-    if item.get("date_from"):
-        dates = item["date_from"]
-        if item.get("date_to"):
-            dates += f" → {item['date_to']}"
+    dates = item.get("date_from", "")
+    if dates and item.get("date_to"):
+        dates += f" → {item['date_to']}"
 
     prompt = PREDICTION_PROMPT.format(
-        name=item["name"],
-        category=item["category"],
+        name=item["name"], category=item["category"],
         destination=item["destination"],
         dates=dates or ("Not specified" if _lang == "en" else "לא צוין"),
-        history=history_str,
-        avg=avg,
-        min_p=min(prices),
-        max_p=max(prices),
-        current=current,
+        history=history_str, avg=avg,
+        min_p=min(prices), max_p=max(prices), current=current,
     )
+    if _lang == "en":
+        prompt += "\n\nRespond in English."
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    try:
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1024,
-            thinking={"type": "adaptive"},
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
+    text = ai_client.ask_with_search(prompt=prompt, max_tokens=1024)
+    if not text:
+        return None
 
-        text = "".join(b.text for b in response.content if b.type == "text")
+    result = ai_client.extract_json(text)
+    if result.get("found") is False and "reason" in result:
+        return None
 
-        import re
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            result = json.loads(json_match.group(0))
-            result["analyzed_at"] = datetime.now().isoformat()
-            result["current_price"] = current
-            return result
-
-    except Exception as e:
-        return {"error": str(e), "reasoning": "Analysis error" if _lang == "en" else "שגיאה בניתוח"}
-
-    return None
+    result["analyzed_at"] = datetime.now().isoformat()
+    result["current_price"] = current
+    return result
 
 
 def format_prediction(pred: dict) -> dict:

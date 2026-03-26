@@ -1,12 +1,11 @@
-import os
 """
-AI Trip Planner — תכנון טיול מלא עם Claude.
-תקציב, יעד, ימים → תכנית מפורטת עם מחירים.
+AI Trip Planner — powered by Gemini with Google Search.
 """
-import json
 import re
+import json
 from datetime import datetime
-import anthropic
+
+import ai_client
 
 _lang = "he"
 
@@ -35,23 +34,16 @@ Return structured JSON:
   "total_estimated": 0000,
   "currency": "USD",
   "budget_breakdown": {{
-    "flights": 000,
-    "hotel": 000,
-    "food": 000,
-    "activities": 000,
-    "transport": 000,
-    "other": 000
+    "flights": 000, "hotel": 000, "food": 000,
+    "activities": 000, "transport": 000, "other": 000
   }},
   "daily_plan": [
     {{
-      "day": 1,
-      "date": "YYYY-MM-DD",
-      "title": "day name",
+      "day": 1, "date": "YYYY-MM-DD", "title": "day name",
       "activities": ["activity 1", "activity 2"],
       "meals": {{"breakfast": "", "lunch": "", "dinner": ""}},
       "accommodation": "hotel/apartment name",
-      "estimated_cost": 000,
-      "tips": "important tip"
+      "estimated_cost": 000, "tips": "important tip"
     }}
   ],
   "best_deals": ["deal 1", "deal 2", "deal 3"],
@@ -68,12 +60,13 @@ def plan_trip(
     budget: float = 3000,
     currency: str = "USD",
     travelers: int = 2,
-    style: str = "Balanced",          # Budget / Balanced / Luxury
+    style: str = "Balanced",
     preferences: str = "",
 ) -> dict:
-    """Generate a complete trip plan using Claude."""
+    """Generate a complete trip plan using Gemini."""
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
-    # Calculate days
     days = 7
     if date_from and date_to:
         try:
@@ -83,109 +76,69 @@ def plan_trip(
         except ValueError:
             pass
 
+    flex = "Flexible" if _lang == "en" else "גמיש"
+    none_str = "None" if _lang == "en" else "אין"
+
     prompt = PLANNER_PROMPT.format(
-        destination=destination,
-        origin=origin,
-        date_from=date_from or ("Flexible" if _lang == "en" else "גמיש"),
-        date_to=date_to or ("Flexible" if _lang == "en" else "גמיש"),
-        days=days,
-        budget=budget,
-        currency=currency,
-        travelers=travelers,
-        style=style,
-        preferences=preferences or ("None" if _lang == "en" else "אין"),
+        destination=destination, origin=origin,
+        date_from=date_from or flex, date_to=date_to or flex,
+        days=days, budget=budget, currency=currency,
+        travelers=travelers, style=style,
+        preferences=preferences or none_str,
+    )
+    if _lang == "en":
+        prompt += "\n\nRespond in English."
+
+    system = (
+        "You are a professional trip planner with 20 years of experience. "
+        "Always search for realistic, current prices before suggesting. "
+        "Be specific with hotel names, restaurants and attractions."
+        + (" Respond in English." if _lang == "en" else "")
     )
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    try:
-        client = anthropic.Anthropic(api_key=api_key)
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=4096,
-            thinking={"type": "adaptive"},
-            tools=[
-                {"type": "web_search_20260209", "name": "web_search"},
-                {"type": "web_fetch_20260209", "name": "web_fetch"},
-            ],
-            system=(
-                "You are a professional trip planner with 20 years of experience. "
-                "Always search for realistic, current prices before suggesting. "
-                "Be specific with hotel names, restaurants and attractions."
-                + (" Respond in English." if _lang == "en" else "")
-            ),
-            messages=[{"role": "user", "content": prompt}],
-        )
+    text = ai_client.ask_with_search(prompt=prompt, system=system, max_tokens=4096)
+    if not text:
+        return {"error": "no_response", "summary": "Planning error" if _lang == "en" else "שגיאה בתכנון"}
 
-        text = "".join(b.text for b in response.content if b.type == "text")
-
-        # Extract JSON
-        patterns = [
-            r"```json\s*(\{.*?\})\s*```",
-            r"```\s*(\{.*?\})\s*```",
-        ]
-        for pattern in patterns:
-            m = re.search(pattern, text, re.DOTALL)
-            if m:
-                try:
-                    return json.loads(m.group(1))
-                except json.JSONDecodeError:
-                    pass
-
-        # Try raw JSON
-        m = re.search(r"\{.*\}", text, re.DOTALL)
+    # Try JSON extraction
+    for pattern in [r"```json\s*(\{.*?\})\s*```", r"```\s*(\{.*?\})\s*```"]:
+        m = re.search(pattern, text, re.DOTALL)
         if m:
             try:
-                return json.loads(m.group(0))
+                return json.loads(m.group(1))
             except json.JSONDecodeError:
                 pass
 
-        # Return raw text if JSON parsing fails
-        return {"raw": text, "summary": "Plan created — see full text" if _lang == "en" else "תכנית נוצרה — ראה טקסט מלא"}
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    if m:
+        try:
+            return json.loads(m.group(0))
+        except json.JSONDecodeError:
+            pass
 
-    except Exception as e:
-        return {"error": str(e), "summary": "Planning error" if _lang == "en" else "שגיאה בתכנון"}
+    return {"raw": text, "summary": "Plan created — see full text" if _lang == "en" else "תכנית נוצרה — ראה טקסט מלא"}
 
 
-def quick_budget_estimate(
-    destination: str, days: int, travelers: int, style: str
-) -> dict:
+def quick_budget_estimate(destination: str, days: int, travelers: int, style: str) -> dict:
     """Quick budget estimate without full planning."""
     style_multiplier = {"תקציבי": 0.6, "מאוזן": 1.0, "לוקסוס": 2.2}.get(style, 1.0)
-
-    # Base daily costs per person (USD) by style
-    base_daily = {
-        "אירופה": 120, "אסיה": 70, "אמריקה": 150,
-        "ים תיכון": 100, "default": 110,
-    }
+    base_daily = {"אירופה": 120, "אסיה": 70, "אמריקה": 150, "ים תיכון": 100, "default": 110}
 
     region_key = "default"
-    eu = ["לונדון", "פריז", "ברצלונה", "רומא", "אמסטרדם", "ברלין"]
-    asia = ["בנגקוק", "טוקיו", "באלי", "סינגפור"]
-    us = ["ניו יורק", "מיאמי", "לוס אנג'לס"]
-
-    for city in eu:
+    for city in ["לונדון", "פריז", "ברצלונה", "רומא", "אמסטרדם", "ברלין"]:
         if city in destination:
-            region_key = "אירופה"
-            break
-    for city in asia:
+            region_key = "אירופה"; break
+    for city in ["בנגקוק", "טוקיו", "באלי", "סינגפור"]:
         if city in destination:
-            region_key = "אסיה"
-            break
-    for city in us:
+            region_key = "אסיה"; break
+    for city in ["ניו יורק", "מיאמי", "לוס אנג'לס"]:
         if city in destination:
-            region_key = "אמריקה"
-            break
+            region_key = "אמריקה"; break
 
     daily = base_daily[region_key] * style_multiplier * travelers
-    total = daily * days + 400 * travelers  # + flights estimate
-
+    total = daily * days + 400 * travelers
     return {
-        "estimated_total": round(total),
-        "per_day": round(daily),
-        "per_person": round(total / travelers),
-        "currency": "USD",
-        "style": style,
-        "includes_flights": True,
+        "estimated_total": round(total), "per_day": round(daily),
+        "per_person": round(total / travelers), "currency": "USD",
+        "style": style, "includes_flights": True,
     }

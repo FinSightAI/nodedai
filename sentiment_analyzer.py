@@ -6,7 +6,7 @@ strikes, elections, wars, weather, local holidays, sporting events, etc.
 import json
 import re
 from datetime import datetime
-import anthropic
+import ai_client
 
 _lang = "he"
 
@@ -57,10 +57,8 @@ def analyze_sentiment(
     """
     Analyze news sentiment for a route and return price impact prediction.
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
 
     prompt = SENTIMENT_PROMPT.format(
@@ -71,23 +69,20 @@ def analyze_sentiment(
     )
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=3000,
-            thinking={"type": "adaptive"},
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
+        text = ai_client.ask_with_search(
+            prompt=prompt,
             system=(
                 "You are an expert flight price analyst. "
                 "Analyze real-time news and assess their impact on flight prices. "
                 "Be specific and fact-based only."
                 + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else "")
             ),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=3000,
         )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}

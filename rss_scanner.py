@@ -12,7 +12,7 @@ import urllib.error
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
-import anthropic
+import ai_client
 
 DB_PATH = Path(__file__).parent / "prices.db"
 
@@ -229,8 +229,7 @@ def scan_rss_feeds(feeds: list = None) -> list:
 
 
 def scan_reddit_deals(subreddits: list = None, keywords: list = None) -> list:
-    """סרוק Reddit לדילים חמים באמצעות Claude web_search."""
-    client = anthropic.Anthropic()
+    """סרוק Reddit לדילים חמים באמצעות AI web search."""
     subs = subreddits or REDDIT_SUBS[:3]
     kws = keywords or ["deal", "mistake fare", "cheap flight", "error fare"]
 
@@ -263,48 +262,42 @@ def scan_reddit_deals(subreddits: list = None, keywords: list = None) -> list:
 
     ensure_rss_table()
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=2000,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            results = json.loads(arr.group(0))
-            now = datetime.now().isoformat()
-            with sqlite3.connect(DB_PATH) as conn:
-                for r in results:
-                    score = 6.0
-                    if r.get("deal_type") == "mistake_fare":
-                        score = 9.0
-                    elif r.get("deal_type") == "flash_sale":
-                        score = 7.5
-                    if r.get("price", 999) < 150:
-                        score += 1.0
-                    try:
-                        conn.execute("""
-                            INSERT OR IGNORE INTO rss_deals
-                            (source, title, description, url, origin, destination,
-                             price, currency, deal_type, score, found_at)
-                            VALUES (?,?,?,?,?,?,?,?,?,?,?)
-                        """, (
-                            r.get("subreddit", "Reddit"),
-                            r.get("title", ""),
-                            r.get("summary", ""),
-                            r.get("url", ""),
-                            r.get("origin", ""),
-                            r.get("destination", ""),
-                            r.get("price"),
-                            r.get("currency", "USD"),
-                            r.get("deal_type", "deal"),
-                            min(10.0, score),
-                            now,
-                        ))
-                    except sqlite3.IntegrityError:
-                        pass
-            return sorted(results, key=lambda x: x.get("upvotes_approx", 0), reverse=True)
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=2000)
+        if text:
+            results = ai_client.extract_json_array(text)
+            if results:
+                now = datetime.now().isoformat()
+                with sqlite3.connect(DB_PATH) as conn:
+                    for r in results:
+                        score = 6.0
+                        if r.get("deal_type") == "mistake_fare":
+                            score = 9.0
+                        elif r.get("deal_type") == "flash_sale":
+                            score = 7.5
+                        if r.get("price", 999) < 150:
+                            score += 1.0
+                        try:
+                            conn.execute("""
+                                INSERT OR IGNORE INTO rss_deals
+                                (source, title, description, url, origin, destination,
+                                 price, currency, deal_type, score, found_at)
+                                VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                            """, (
+                                r.get("subreddit", "Reddit"),
+                                r.get("title", ""),
+                                r.get("summary", ""),
+                                r.get("url", ""),
+                                r.get("origin", ""),
+                                r.get("destination", ""),
+                                r.get("price"),
+                                r.get("currency", "USD"),
+                                r.get("deal_type", "deal"),
+                                min(10.0, score),
+                                now,
+                            ))
+                        except sqlite3.IntegrityError:
+                            pass
+                return sorted(results, key=lambda x: x.get("upvotes_approx", 0), reverse=True)
     except Exception as e:
         return [{"error": str(e)}]
     return []

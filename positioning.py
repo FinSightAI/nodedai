@@ -7,7 +7,7 @@ Positioning Flight Optimizer — האם כדאי לטוס מנמל תעופה א
 import json
 import re
 from typing import Optional
-import anthropic
+import ai_client
 
 _lang = "he"
 
@@ -68,10 +68,8 @@ def find_positioning_opportunities(
     מוצא הזדמנויות positioning:
     האם כדאי לטוס תחילה לאמסטרדם/לונדון ומשם לטוס לyyyy?
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     hubs_str = "\n".join(
         f"- {a['code']} ({a['city']}, {a['country']}) — "
@@ -131,27 +129,20 @@ def find_positioning_opportunities(
 החזר JSON array. כלול רק הזדמנויות עם חיסכון של 10%+ אחרי כל הוצאות."""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=3000,
-            thinking={"type": "adaptive"},
-            tools=[
-                {"type": "web_search_20260209", "name": "web_search"},
-                {"type": "web_fetch_20260209", "name": "web_fetch"},
-            ],
+        text = ai_client.ask_with_search(
+            prompt=prompt,
             system=(
                 "You are an expert in positioning flights and travel hacking. "
                 "Find real opportunities most people miss. "
                 "Focus on European low-cost carriers and smaller airports."
                 + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else "")
             ),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=3000,
         )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            results = json.loads(arr.group(0))
-            return sorted(results, key=lambda x: x.get("savings", 0), reverse=True)
+        if text:
+            results = ai_client.extract_json_array(text)
+            if results:
+                return sorted(results, key=lambda x: x.get("savings", 0), reverse=True)
     except Exception as e:
         return [{"error": str(e)}]
     return []
@@ -165,10 +156,8 @@ def analyze_overnight_positioning(
     """
     מנתח האם שווה ללון בעיר הביניים — אולי לבקר שם גם?
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     hub_info = next((a for a in POSITIONING_AIRPORTS if a["code"] == hub), {})
     hub_city = hub_info.get("city", hub)
@@ -202,16 +191,11 @@ def analyze_overnight_positioning(
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1000,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=1000)
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}
@@ -221,10 +205,8 @@ def get_cheapest_tlv_positioning_routes(month: str = "") -> list:
     """
     מה הנתיבי positioning הזולים ביותר מ-TLV — לאן כדאי לטוס כ-positioning?
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     airports_str = ", ".join(
         f"{a['code']} ({a['city']})"
@@ -256,16 +238,9 @@ def get_cheapest_tlv_positioning_routes(month: str = "") -> list:
 החזר JSON array ממוין לפי מחיר."""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=2000,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            return json.loads(arr.group(0))
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=2000)
+        if text:
+            return ai_client.extract_json_array(text)
     except Exception as e:
         return [{"error": str(e)}]
     return []

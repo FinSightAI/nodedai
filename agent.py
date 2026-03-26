@@ -1,37 +1,18 @@
 """
-Claude-powered price search agent.
-Strategy:
-  1. Amadeus API (רשמי, מדויק) — לטיסות ומלונות
-  2. Claude + web_search (fallback) — לכל השאר / אם Amadeus לא מוגדר
+Price search agent — powered by Gemini (free tier) with Google Search.
+Fallback: Amadeus API for flights/hotels.
 """
-import json
-import re
 import os
+import re
 from datetime import datetime
 from typing import Optional
 
-import anthropic
+import ai_client
 import amadeus_client
 
-# ── Claude client ──────────────────────────────────────────────────────────────
-_client: Optional[anthropic.Anthropic] = None
-
-
-def get_client() -> Optional[anthropic.Anthropic]:
-    global _client
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return None
-    if _client is None:
-        _client = anthropic.Anthropic(api_key=api_key)
-    return _client
-
-
-# Module-level language (set by app.py)
 _lang = "he"
 
-# ── System prompt ──────────────────────────────────────────────────────────────
-SYSTEM_PROMPT_HE = """You are a professional travel price agent. Find the best prices for flights, hotels, apartments and vacation packages.
+SYSTEM_PROMPT = """You are a professional travel price agent. Find the best prices for flights, hotels, apartments and vacation packages.
 
 When searching for a price:
 1. Search the internet for current prices
@@ -42,27 +23,24 @@ Always return valid JSON in this format:
 {
   "found": true/false,
   "price": 123.45,
-  "currency": "USD" / "ILS" / "EUR" etc,
-  "source": "website name / source",
-  "details": "deal description - airline / hotel / etc",
+  "currency": "USD" / "ILS" / "EUR",
+  "source": "website name",
+  "details": "deal description",
   "deal_quality": "excellent" / "good" / "average" / "poor",
   "notes": "important notes"
 }
 
 If no price found, return {"found": false, "reason": "reason"}
-
 Be accurate! Realistic prices only. Do not invent prices."""
 
 
 def build_search_prompt(item: dict) -> str:
-    """Build a search prompt from a watch item."""
     category = item["category"]
     destination = item["destination"]
     origin = item.get("origin", "")
     date_from = item.get("date_from", "")
     date_to = item.get("date_to", "")
     custom_query = item.get("query", "")
-
     today = datetime.now().strftime("%Y-%m-%d")
 
     if custom_query:
@@ -94,21 +72,19 @@ def build_search_prompt(item: dict) -> str:
     else:
         base = f"Price for {destination}"
 
+    lang_note = " Respond in English." if _lang == "en" else " השב בעברית."
     return (
         f"Find the best price for: {base}\n"
         f"(Check date: {today})\n\n"
         f"Search for realistic, current prices. "
         f"Check Google Flights, Booking.com, Airbnb, Kayak, Skyscanner, "
         f"and Israeli sites like Gulliver, Israir, Arkia.\n\n"
-        f"Return JSON in the exact format specified."
+        f"Return JSON in the exact format specified.{lang_note}"
     )
 
 
 def search_price(item: dict) -> dict:
-    """
-    Find current price for a watch item.
-    Strategy: Amadeus first (accurate) → Claude web search (fallback).
-    """
+    """Find current price. Strategy: Amadeus first → Gemini web search fallback."""
     category = item["category"]
     destination = item["destination"]
     origin = item.get("origin", "TLV")
@@ -119,11 +95,8 @@ def search_price(item: dict) -> dict:
     if amadeus_client.is_configured():
         if category == "flight" and date_from:
             results = amadeus_client.search_flights(
-                origin=origin,
-                destination=destination,
-                departure_date=date_from,
-                return_date=date_to,
-                max_results=3,
+                origin=origin, destination=destination,
+                departure_date=date_from, return_date=date_to, max_results=3,
             )
             if results:
                 best = results[0]
@@ -132,201 +105,68 @@ def search_price(item: dict) -> dict:
 
         elif category == "hotel" and date_from and date_to:
             results = amadeus_client.search_hotels(
-                city=destination,
-                check_in=date_from,
-                check_out=date_to,
-                max_results=3,
+                city=destination, check_in=date_from,
+                check_out=date_to, max_results=3,
             )
             if results:
                 best = results[0]
                 best["amadeus"] = True
                 return best
 
-    # ── Fallback: Claude + web search ─────────────────────────────────────────
-    return _claude_web_search(item)
+    # ── Fallback: Gemini + Google Search ──────────────────────────────────────
+    if not ai_client.is_configured():
+        return {"found": False, "error": "no_api_key", "reason": "GEMINI_API_KEY not configured"}
 
-
-def _claude_web_search(item: dict) -> dict:
-    """
-    Use Claude Opus 4.6 with web search to find the current price for a watch item.
-    Returns a dict with price info or error.
-    """
-    client = get_client()
-    if client is None:
-        return {"found": False, "error": "no_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
     prompt = build_search_prompt(item)
-    try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=2048,
-            thinking={"type": "adaptive"},
-            system=SYSTEM_PROMPT_HE + (" Respond in English." if _lang == "en" else " השב בעברית."),
-            tools=[
-                {"type": "web_search_20260209", "name": "web_search"},
-                {"type": "web_fetch_20260209", "name": "web_fetch"},
-            ],
-            messages=[{"role": "user", "content": prompt}],
-        )
+    system = SYSTEM_PROMPT + (" Respond in English." if _lang == "en" else " השב בעברית.")
+    text = ai_client.ask_with_search(prompt=prompt, system=system, max_tokens=1024)
 
-        # Extract the final text response
-        result_text = ""
-        for block in response.content:
-            if block.type == "text":
-                result_text += block.text
+    if text is None:
+        return {"found": False, "error": "rate_limit", "reason": "Gemini quota reached"}
 
-        # Parse JSON from the response
-        return _extract_json(result_text)
-
-    except anthropic.RateLimitError:
-        return {"found": False, "error": "rate_limit", "reason": "Rate limit"}
-    except anthropic.APIError as e:
-        return {"found": False, "error": "api_error", "reason": str(e)[:100]}
-    except Exception as e:
-        return {"found": False, "error": "unknown", "reason": str(e)[:100]}
-
-
-def _extract_json(text: str) -> dict:
-    """Extract JSON object from Claude's response text."""
-    # Try to find JSON block
-    patterns = [
-        r"```json\s*(\{.*?\})\s*```",
-        r"```\s*(\{.*?\})\s*```",
-        r"(\{[^{}]*\"found\"[^{}]*\})",
-    ]
-
-    for pattern in patterns:
-        matches = re.findall(pattern, text, re.DOTALL)
-        if matches:
-            try:
-                return json.loads(matches[-1])
-            except json.JSONDecodeError:
-                continue
-
-    # Try to find the last JSON-like object
-    try:
-        # Find the last { ... } block
-        start = text.rfind("{")
-        end = text.rfind("}") + 1
-        if start != -1 and end > start:
-            return json.loads(text[start:end])
-    except (json.JSONDecodeError, ValueError):
-        pass
-
-    # Fallback: try to extract price with regex
-    price_match = re.search(r"\b(\d{2,6}(?:[.,]\d{1,2})?)\b", text)
-    if price_match:
-        try:
-            price = float(price_match.group(1).replace(",", ""))
-            if 10 < price < 100000:
-                return {
-                    "found": True,
-                    "price": price,
-                    "currency": "USD",
-                    "source": "web search",
-                    "details": text[:200],
-                    "deal_quality": "unknown",
-                    "notes": "",
-                }
-        except ValueError:
-            pass
-
-    return {"found": False, "reason": "Could not parse price from response"}
+    return ai_client.extract_json(text)
 
 
 def analyze_deal(item: dict, price_history: list) -> str:
-    """
-    Use Claude to analyze whether this is a good deal based on price history.
-    """
-    client = get_client()
-    if client is None:
-        return "ANTHROPIC_API_KEY not configured"
-
+    """Use Gemini to analyze whether this is a good deal."""
+    if not ai_client.is_configured():
+        return "GEMINI_API_KEY not configured"
     if len(price_history) < 2:
         return "Not enough history to analyze"
 
     prices = [r["price"] for r in price_history[:20]]
     avg = sum(prices) / len(prices)
-    minimum = min(prices)
-    maximum = max(prices)
     current = prices[0]
 
-    prompt = f"""Analyze whether this is a good deal:
-- Item: {item['name']} ({item['category']}) to {item['destination']}
-- Current price: {current}
-- Average (up to 20 measurements): {avg:.0f}
-- Minimum seen: {minimum}
-- Maximum seen: {maximum}
-
-Give a short recommendation (2-3 sentences){" in English" if _lang == "en" else " in Hebrew"}: Should I buy now? Why?"""
-
-    try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=256,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        for block in response.content:
-            if block.type == "text":
-                return block.text.strip()
-    except Exception:
-        pass
-
-    return f"Current price {current:.0f} vs average {avg:.0f}"
+    lang_note = "in English" if _lang == "en" else "in Hebrew"
+    prompt = (
+        f"Analyze whether this is a good deal:\n"
+        f"- Item: {item['name']} ({item['category']}) to {item['destination']}\n"
+        f"- Current price: {current}\n"
+        f"- Average (up to 20 measurements): {avg:.0f}\n"
+        f"- Minimum seen: {min(prices)}\n"
+        f"- Maximum seen: {max(prices)}\n\n"
+        f"Give a short recommendation (2-3 sentences) {lang_note}: Should I buy now? Why?"
+    )
+    result = ai_client.ask(prompt=prompt, max_tokens=256)
+    return result or f"Current price {current:.0f} vs average {avg:.0f}"
 
 
-def smart_search_opportunities(destinations: list[str]) -> list[dict]:
-    """
-    Ask Claude to proactively find good travel deals to a list of destinations.
-    Returns a list of opportunity dicts.
-    """
-    client = get_client()
-    if client is None:
+def smart_search_opportunities(destinations: list) -> list:
+    """Ask Gemini to proactively find good travel deals."""
+    if not ai_client.is_configured():
         return []
 
     dest_str = ", ".join(destinations)
-    prompt = f"""Find 3 excellent travel opportunities right now to one of these destinations: {dest_str}
-
-Search for:
-- Cheap flights
-- Hotels on sale
-- Vacation packages
-
-For each opportunity return JSON:
-{{
-  "destination": "...",
-  "type": "flight/hotel/package",
-  "deal": "deal description",
-  "price": 000,
-  "currency": "USD",
-  "why_good": "why this is excellent right now",
-  "urgency": "high/medium/low"
-}}
-
-Return JSON list: [{{}}, {{}}, ...]"""
-
-    try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=2048,
-            thinking={"type": "adaptive"},
-            system="You are a travel expert searching for price opportunities. Always search for realistic prices." + (" Respond in English." if _lang == "en" else ""),
-            tools=[
-                {"type": "web_search_20260209", "name": "web_search"},
-            ],
-            messages=[{"role": "user", "content": prompt}],
-        )
-
-        result_text = ""
-        for block in response.content:
-            if block.type == "text":
-                result_text += block.text
-
-        # Extract JSON array
-        arr_match = re.search(r"\[.*\]", result_text, re.DOTALL)
-        if arr_match:
-            return json.loads(arr_match.group(0))
-
-    except Exception:
-        pass
-
-    return []
+    prompt = (
+        f"Find 3 excellent travel opportunities right now to one of these destinations: {dest_str}\n\n"
+        f"Search for cheap flights, hotels on sale, vacation packages.\n\n"
+        f'For each return JSON: {{"destination":"...","type":"flight/hotel/package",'
+        f'"deal":"description","price":000,"currency":"USD","why_good":"reason","urgency":"high/medium/low"}}\n\n'
+        f"Return JSON list: [{{...}}, {{...}}, ...]"
+    )
+    lang_system = "You are a travel expert searching for price opportunities." + (
+        " Respond in English." if _lang == "en" else ""
+    )
+    text = ai_client.ask_with_search(prompt=prompt, system=lang_system, max_tokens=2048)
+    return ai_client.extract_json_array(text or "")

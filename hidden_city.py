@@ -9,7 +9,7 @@ Hidden City Ticketing Finder — מוצא כרטיסים זולים יותר ד�
 """
 import json
 import re
-import anthropic
+import ai_client
 
 MAJOR_HUBS = [
     ("LHR", "לונדון"),
@@ -42,8 +42,6 @@ def find_hidden_city_deals(
     מחפש טיסות origin → final_dest שעוברות דרך real_destination
     ובודק אם הן זולות מ-origin → real_destination ישיר.
     """
-    client = anthropic.Anthropic()
-
     hubs_str = ", ".join(f"{code} ({name})" for code, name in MAJOR_HUBS)
 
     prompt = f"""מצא הזדמנויות Hidden City Ticketing:
@@ -86,23 +84,19 @@ def find_hidden_city_deals(
 החזר JSON array. כלול רק הזדמנויות אמיתיות עם חיסכון של 15%+."""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=3000,
-            thinking={"type": "adaptive"},
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
+        text = ai_client.ask_with_search(
+            prompt=prompt,
             system=(
                 "אתה מומחה ל-travel hacking ו-hidden city ticketing. "
                 "מצא הזדמנויות אמיתיות עם חיסכון משמעותי. "
                 "תמיד ציין את הסיכונים בבירור."
             ),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=3000,
         )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            results = json.loads(arr.group(0))
-            return sorted(results, key=lambda x: x.get("savings_pct", 0), reverse=True)
+        if text:
+            results = ai_client.extract_json_array(text)
+            if results:
+                return sorted(results, key=lambda x: x.get("savings_pct", 0), reverse=True)
     except Exception as e:
         return [{"error": str(e)}]
     return []
@@ -117,8 +111,6 @@ def find_throwaway_ticketing(
     Throwaway Ticketing — לפעמים round-trip זול מ-one-way.
     מזמין הלוך-חזור ומשתמש רק בחלק הראשון.
     """
-    client = anthropic.Anthropic()
-
     prompt = f"""בדוק: האם round-trip זול יותר מ-one-way?
 
 מסלול: {origin} → {destination}
@@ -142,16 +134,11 @@ def find_throwaway_ticketing(
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1000,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=1000)
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}

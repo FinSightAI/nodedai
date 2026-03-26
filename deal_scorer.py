@@ -3,8 +3,9 @@ Deal Scorer — מערכת ניקוד חכמה לדילים.
 מדרגת כל דיל 0-10 עם הסבר + שולחת התראה רק על הדילים שבאמת שווים.
 """
 import json
+import re
 from datetime import datetime
-import anthropic
+import ai_client
 
 
 SCORE_PROMPT = """דרג את הדיל הבא בסקלה של 0-10 ותן ניתוח מפורט.
@@ -40,8 +41,7 @@ SCORE_PROMPT = """דרג את הדיל הבא בסקלה של 0-10 ותן נית
 
 
 def score_deal(deal: dict) -> dict:
-    """Score a single deal using Claude AI."""
-    client = anthropic.Anthropic()
+    """Score a single deal using AI."""
     prompt = SCORE_PROMPT.format(
         destination=deal.get("destination", ""),
         price=deal.get("price", 0),
@@ -52,16 +52,11 @@ def score_deal(deal: dict) -> dict:
     )
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=512,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        import re
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        text = ai_client.ask(prompt=prompt, max_tokens=512)
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"score": 5.0, "verdict": "לא ניתן לנתח", "error": str(e)}
     return {}

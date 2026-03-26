@@ -5,7 +5,7 @@ Emirates → Dubai, Icelandair → Reykjavik, Turkish → Istanbul, Qatar → Do
 """
 import json
 import re
-import anthropic
+import ai_client
 
 
 STOPOVER_AIRLINES = [
@@ -31,8 +31,6 @@ def find_stopovers(
     מוצא אפשרויות stopover בדרך ליעד.
     מחזיר רשימה ממוינת לפי ערך (חיסכון + יעד בונוס).
     """
-    client = anthropic.Anthropic()
-
     airlines_str = "\n".join(
         f"- {a} דרך {city} ({code})"
         for a, city, code in STOPOVER_AIRLINES
@@ -76,34 +74,26 @@ def find_stopovers(
 החזר JSON array. כלול רק אפשרויות ריאליות ומעניינות."""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=3000,
-            thinking={"type": "adaptive"},
-            tools=[
-                {"type": "web_search_20260209", "name": "web_search"},
-                {"type": "web_fetch_20260209", "name": "web_fetch"},
-            ],
+        text = ai_client.ask_with_search(
+            prompt=prompt,
             system=(
                 "אתה מומחה ל-travel hacking ו-stopovers. "
                 "תמיד מחפש את הדרך הכי חכמה לטוס ולחסוך כסף. "
                 "תן מידע ספציפי ומעשי."
             ),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=3000,
         )
-
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            results = json.loads(arr.group(0))
-            # Sort: free stopovers first, then by savings
-            results.sort(
-                key=lambda x: (
-                    not x.get("is_free_stopover", False),
-                    -(x.get("savings_vs_direct", 0) or 0),
+        if text:
+            results = ai_client.extract_json_array(text)
+            if results:
+                # Sort: free stopovers first, then by savings
+                results.sort(
+                    key=lambda x: (
+                        not x.get("is_free_stopover", False),
+                        -(x.get("savings_vs_direct", 0) or 0),
+                    )
                 )
-            )
-            return results
+                return results
     except Exception as e:
         return [{"error": str(e)}]
     return []

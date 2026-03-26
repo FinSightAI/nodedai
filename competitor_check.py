@@ -4,7 +4,7 @@ Competitor Price Comparison — finds the same flight/hotel on 5 booking sites s
 """
 import json
 import re
-import anthropic
+import ai_client
 
 _lang = "he"
 
@@ -29,10 +29,8 @@ def compare_prices(
     Search for the same trip on multiple booking sites.
     Returns list of results sorted by price (cheapest first).
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     trip_type = ("Round-trip flight" if _lang == "en" else "טיסה הלוך-חזור") if date_return else ("One-way flight" if _lang == "en" else "טיסה חד-כיוונית")
     if category == "hotel":
@@ -70,23 +68,16 @@ def compare_prices(
 החזר JSON array בלבד."""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=3000,
-            thinking={"type": "adaptive"},
-            tools=[
-                {"type": "web_search_20260209", "name": "web_search"},
-                {"type": "web_fetch_20260209", "name": "web_fetch"},
-            ],
+        text = ai_client.ask_with_search(
+            prompt=prompt,
             system="You are an expert in flight price comparison. Search for realistic and current prices only." + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else ""),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=3000,
         )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            results = json.loads(arr.group(0))
-            available = [r for r in results if r.get("available") and r.get("price")]
-            return sorted(available, key=lambda x: x.get("price", 999_999))
+        if text:
+            results = ai_client.extract_json_array(text)
+            if results:
+                available = [r for r in results if r.get("available") and r.get("price")]
+                return sorted(available, key=lambda x: x.get("price", 999_999))
     except Exception as e:
         return [{"error": str(e)}]
     return []

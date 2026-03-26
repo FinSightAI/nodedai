@@ -4,7 +4,7 @@ Visa Requirements Checker — checks entry requirements for Israeli passport hol
 """
 import json
 import re
-import anthropic
+import ai_client
 
 _lang = "he"
 
@@ -48,25 +48,21 @@ def check_visa(destination: str, passport: str = "Israeli") -> dict:
     """
     Check visa requirements for the given destination for Israeli passport holders.
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     prompt = VISA_PROMPT.format(destination=destination)
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1500,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
+        text = ai_client.ask_with_search(
+            prompt=prompt,
             system="You are an expert in entry requirements and passports. Provide accurate and current information only." + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else ""),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1500,
         )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}

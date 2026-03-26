@@ -11,7 +11,7 @@ Smart Search Engine — חיפוש חכם מורכב.
 import json
 import re
 from datetime import datetime, timedelta
-import anthropic
+import ai_client
 
 _lang = "he"
 
@@ -36,10 +36,8 @@ def surprise_me(
     "הפתיעני" — מצא את הדסטינציה הכי שווה לתקציב ולתאריכים.
     Returns top 5 destinations with deal info.
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     from_date = from_date or datetime.now().strftime("%Y-%m-%d")
     to_date = to_date or (
@@ -75,21 +73,16 @@ def surprise_me(
 החזר JSON array מ-5 יעדים."""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=3000,
-            thinking={"type": "adaptive"},
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
+        text = ai_client.ask_with_search(
+            prompt=prompt,
             system="You are an expert in smart and budget travel. Always search for opportunities others miss." + (" Respond in English." if _lang == "en" else ""),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=3000,
         )
-
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            results = json.loads(arr.group(0))
-            results.sort(key=lambda x: x.get("surprise_factor", 0), reverse=True)
-            return results
+        if text:
+            results = ai_client.extract_json_array(text)
+            if results:
+                results.sort(key=lambda x: x.get("surprise_factor", 0), reverse=True)
+                return results
     except Exception as e:
         return [{"error": str(e)}]
     return []
@@ -104,10 +97,8 @@ def check_split_ticket(
     """
     Check if two one-way tickets are cheaper than a round trip.
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     prompt = f"""השווה: הלוך-חזור vs. שני כרטיסים חד-כיווניים.
 
@@ -139,16 +130,11 @@ def check_split_ticket(
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1024,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=1024)
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}
@@ -163,10 +149,8 @@ def check_nearby_airports(
     Check prices from all Israeli airports for a given destination.
     Returns comparison list sorted by price.
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     airports_str = ", ".join(f"{code} ({name})" for code, name in IL_AIRPORTS)
     prompt = f"""השווה מחירי טיסות מכל שדות התעופה בישראל ל-{destination}.
@@ -189,20 +173,14 @@ def check_nearby_airports(
 החזר JSON array."""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1500,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            results = json.loads(arr.group(0))
-            return sorted(
-                [r for r in results if r.get("available") and r.get("price")],
-                key=lambda x: x["price"]
-            )
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=1500)
+        if text:
+            results = ai_client.extract_json_array(text)
+            if results:
+                return sorted(
+                    [r for r in results if r.get("available") and r.get("price")],
+                    key=lambda x: x["price"]
+                )
     except Exception:
         pass
     return []
@@ -214,10 +192,8 @@ def find_cheapest_day_of_week(
     month: str,
 ) -> dict:
     """Find which day of the week is cheapest to fly this route."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     prompt = f"""באיזה יום בשבוע הכי זול לטוס מ-{origin} ל-{destination} בחודש {month}?
 
@@ -241,16 +217,11 @@ def find_cheapest_day_of_week(
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1024,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=1024)
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}
@@ -264,10 +235,8 @@ def compare_package_vs_separate(
     travelers: int = 2,
 ) -> dict:
     """Compare package deal vs. booking flight + hotel separately."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     prompt = f"""השווה: חבילה מאורגנת vs. הזמנה עצמאית.
 
@@ -297,17 +266,11 @@ def compare_package_vs_separate(
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1500,
-            thinking={"type": "adaptive"},
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=1500)
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}
@@ -319,10 +282,8 @@ def find_last_minute_deals(
     max_price: float = 300,
 ) -> list[dict]:
     """Find last-minute deals departing in the next X days."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     from_date = datetime.now().strftime("%Y-%m-%d")
     to_date = (datetime.now() + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
@@ -350,17 +311,11 @@ def find_last_minute_deals(
 החזר JSON array."""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=2000,
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        arr = re.search(r"\[.*\]", text, re.DOTALL)
-        if arr:
-            results = json.loads(arr.group(0))
-            return [r for r in results if r.get("price", 999) <= max_price]
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=2000)
+        if text:
+            results = ai_client.extract_json_array(text)
+            if results:
+                return [r for r in results if r.get("price", 999) <= max_price]
     except Exception:
         pass
     return []
@@ -375,10 +330,8 @@ def best_time_to_book(
     Analyze historical booking patterns and find the optimal booking window:
     how many weeks before departure gives the cheapest price.
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
     prompt = f"""נתח: מתי הכי כדאי לקנות כרטיס טיסה למסלול הבא?
 
@@ -414,17 +367,11 @@ def best_time_to_book(
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=2000,
-            thinking={"type": "adaptive"},
-            tools=[{"type": "web_search_20260209", "name": "web_search"}],
-            messages=[{"role": "user", "content": prompt}],
-        )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        text = ai_client.ask_with_search(prompt=prompt, max_tokens=2000)
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}

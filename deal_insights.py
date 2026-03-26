@@ -9,7 +9,7 @@ import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
 from collections import Counter, defaultdict
-import anthropic
+import ai_client
 
 _lang = "he"
 
@@ -154,19 +154,17 @@ def get_deal_patterns() -> dict:
 
 def get_ai_insights() -> dict:
     """
-    שולח את הסטטיסטיקות ל-Claude לניתוח עמוק.
+    שולח את הסטטיסטיקות ל-AI לניתוח עמוק.
     מחזיר המלצות ואסטרטגיה.
     """
     stats = _get_db_stats()
     if stats["total_deals"] == 0:
         return {"error": "No data to analyze" if _lang == "en" else "אין נתונים לניתוח"}
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        return {"error": "missing_api_key", "reason": "ANTHROPIC_API_KEY not configured"}
-    client = anthropic.Anthropic(api_key=api_key)
+    if not ai_client.is_configured():
+        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
 
-    # Prepare compact summary for Claude
+    # Prepare compact summary for AI
     summary = {
         "total_deals": stats["total_deals"],
         "avg_score": stats["avg_score"],
@@ -199,17 +197,15 @@ def get_ai_insights() -> dict:
 }}"""
 
     try:
-        response = client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1500,
-            thinking={"type": "adaptive"},
+        text = ai_client.ask(
+            prompt=prompt,
             system="You are a travel analyst. Analyze deal patterns and give practical recommendations." + (" Respond in English. Use English for all text fields in the JSON." if _lang == "en" else ""),
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=1500,
         )
-        text = "".join(b.text for b in response.content if b.type == "text")
-        m = re.search(r"\{.*\}", text, re.DOTALL)
-        if m:
-            return json.loads(m.group(0))
+        if text:
+            result = ai_client.extract_json(text)
+            if result and "found" not in result:
+                return result
     except Exception as e:
         return {"error": str(e)}
     return {}
