@@ -5,6 +5,9 @@ on:
     - cron: "0 * * * *"   # every hour
   workflow_dispatch:        # manual trigger
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # opt-in to Node.js 24
+
 jobs:
   check-prices:
     runs-on: ubuntu-latest
@@ -25,7 +28,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: prices.db
-          key: prices-db-${{ github.run_id }}
+          key: prices-db-persistent          # fixed key so same DB restored every run
           restore-keys: prices-db-
 
       - name: Run price monitor
@@ -44,12 +47,24 @@ jobs:
           SMTP_PASSWORD:           ${{ secrets.SMTP_PASSWORD }}
           ALERT_EMAIL:             ${{ secrets.ALERT_EMAIL }}
           DISCORD_WEBHOOK_URL:     ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: python run_monitor.py
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "⚠️  ANTHROPIC_API_KEY not set — skipping AI checks"
+            exit 0
+          fi
+          python run_monitor.py
+
+      - name: Save price DB
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: prices.db
+          key: prices-db-persistent
 
       - name: Upload price DB artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: prices-db
+          name: prices-db-${{ github.run_number }}
           path: prices.db
           retention-days: 30
