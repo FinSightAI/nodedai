@@ -651,8 +651,8 @@ with st.sidebar:
     st.divider()
 
     # API key status
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    if api_key and api_key.startswith("sk-"):
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    if api_key:
         st.success(i18n.t("api_key_ok", _lang))
     else:
         st.error(i18n.t("api_key_missing", _lang))
@@ -2142,14 +2142,14 @@ elif page == "⚙️ הגדרות":
     st.title(_t("⚙️ הגדרות", "⚙️ Settings"))
 
     # ── API Key ────────────────────────────────────────────────────────────────
-    st.subheader("🔑 Claude API Key")
-    api_key_val = os.environ.get("ANTHROPIC_API_KEY", "")
+    st.subheader("🔑 Gemini API Key")
+    api_key_val = os.environ.get("GEMINI_API_KEY", "")
     if api_key_val:
-        st.success(f"{_t('מוגדר', 'Configured')} ✅  (sk-ant-...{api_key_val[-6:]})")
+        st.success(f"{_t('מוגדר', 'Configured')} ✅  (AIza...{api_key_val[-6:]})")
     else:
-        new_key = st.text_input(_t("הכנס Anthropic API Key", "Enter Anthropic API Key"), type="password")
+        new_key = st.text_input(_t("הכנס Gemini API Key", "Enter Gemini API Key"), type="password")
         if st.button(_t("שמור API Key", "Save API Key")) and new_key:
-            _save_env("ANTHROPIC_API_KEY", new_key)
+            _save_env("GEMINI_API_KEY", new_key)
             st.success(_t("נשמר! רענן את הדף.", "Saved! Refresh the page."))
 
     st.divider()
@@ -4559,7 +4559,7 @@ with st.expander(_chat_label, expanded=st.session_state.chat_open):
         else:
             st.session_state.chat_messages.append({
                 "role": "assistant",
-                "content": _t("חסר ANTHROPIC_API_KEY", "Missing ANTHROPIC_API_KEY")
+                "content": _t("חסר GEMINI_API_KEY", "Missing GEMINI_API_KEY")
             })
             st.rerun()
 

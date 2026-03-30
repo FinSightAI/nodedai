@@ -170,10 +170,6 @@ def get_lowest_price(watch_id: int) -> Optional[dict]:
 
 
 def check_price_drop(watch_id: int, new_price: float) -> dict:
-    """
-    Returns alert info if new_price triggers an alert.
-    Checks both max_price threshold and % drop.
-    """
     with get_db() as conn:
         item = conn.execute(
             "SELECT * FROM watch_items WHERE id=?", (watch_id,)
@@ -184,14 +180,12 @@ def check_price_drop(watch_id: int, new_price: float) -> dict:
         item = dict(item)
         alerts = []
 
-        # Check max_price threshold
         if item["max_price"] and new_price <= item["max_price"]:
             alerts.append({
                 "type": "threshold",
                 "message": f"מחיר {new_price:.0f} ≤ יעד {item['max_price']:.0f}!",
             })
 
-        # Check % drop from last seen price
         last = get_last_price(watch_id)
         if last:
             last_price = last["price"]
@@ -213,10 +207,9 @@ def check_price_drop(watch_id: int, new_price: float) -> dict:
         }
 
 
-# ── Alert Rules ────────────────────────────────────────────────────────────────
+# ── Alert Rules ──────────────────────────────────────────────────────────────
 
 def add_alert_rule(name: str, conditions: dict, watch_id: Optional[int] = None) -> int:
-    """Add a new alert rule. watch_id=None means applies to all items."""
     with get_db() as conn:
         cur = conn.execute(
             """INSERT INTO alert_rules (name, watch_id, conditions, enabled, created_at)
@@ -228,7 +221,6 @@ def add_alert_rule(name: str, conditions: dict, watch_id: Optional[int] = None) 
 
 
 def get_alert_rules(watch_id: Optional[int] = None) -> list:
-    """Get rules that apply to a specific item or to all items (watch_id=None)."""
     with get_db() as conn:
         if watch_id is not None:
             rows = conn.execute(
@@ -265,11 +257,6 @@ def mark_rule_triggered(rule_id: int):
 
 
 def evaluate_alert_rules(watch_id: int, new_price: float, price_result: dict) -> list:
-    """
-    Evaluate all matching alert rules for a new price.
-    Returns list of triggered rules with their match reason.
-    price_result: the dict returned by agent.search_price()
-    """
     from datetime import datetime as dt
     rules = get_alert_rules(watch_id)
     triggered = []
@@ -278,14 +265,12 @@ def evaluate_alert_rules(watch_id: int, new_price: float, price_result: dict) ->
         cond = rule["conditions"]
         reasons = []
 
-        # 1. Max price threshold
         max_p = cond.get("max_price")
         if max_p and new_price > max_p:
-            continue  # price too high for this rule
+            continue
         if max_p:
             reasons.append(f"מחיר {new_price:.0f} ≤ {max_p:.0f}")
 
-        # 2. Minimum % drop from last price
         min_drop = cond.get("min_drop_pct", 0)
         if min_drop > 0:
             last = get_last_price(watch_id)
@@ -295,7 +280,6 @@ def evaluate_alert_rules(watch_id: int, new_price: float, price_result: dict) ->
                     continue
                 reasons.append(f"ירידה {drop:.1f}% ≥ {min_drop}%")
 
-        # 3. Days of week (0=Mon, 6=Sun)
         days = cond.get("days_of_week")
         if days:
             today_dow = dt.now().weekday()
@@ -304,14 +288,12 @@ def evaluate_alert_rules(watch_id: int, new_price: float, price_result: dict) ->
             day_names = ["ב׳","ג׳","ד׳","ה׳","ו׳","ש׳","א׳"]
             reasons.append(f"יום {day_names[today_dow]}")
 
-        # 4. Deal quality filter
         min_quality = cond.get("min_deal_quality", "")
         quality_rank = {"excellent": 3, "good": 2, "average": 1, "poor": 0, "": 0}
         result_quality = price_result.get("deal_quality", "")
         if min_quality and quality_rank.get(result_quality, 0) < quality_rank.get(min_quality, 0):
             continue
 
-        # 5. Airline whitelist
         airlines_include = cond.get("airlines_include", [])
         if airlines_include:
             result_airline = price_result.get("airline", "") or price_result.get("details", "")
@@ -319,14 +301,12 @@ def evaluate_alert_rules(watch_id: int, new_price: float, price_result: dict) ->
                 continue
             reasons.append(f"חברה: {result_airline[:30]}")
 
-        # 6. Airline blacklist
         airlines_exclude = cond.get("airlines_exclude", [])
         if airlines_exclude:
             result_airline = price_result.get("airline", "") or price_result.get("details", "")
             if any(a.lower() in result_airline.lower() for a in airlines_exclude):
                 continue
 
-        # 7. Min AI score
         min_score = cond.get("min_ai_score", 0)
         if min_score > 0:
             ai_score = price_result.get("ai_score", 0)
@@ -334,7 +314,6 @@ def evaluate_alert_rules(watch_id: int, new_price: float, price_result: dict) ->
                 continue
             reasons.append(f"AI ציון {ai_score:.1f}")
 
-        # Rule matched!
         mark_rule_triggered(rule["id"])
         triggered.append({
             "rule_id": rule["id"],
@@ -347,7 +326,6 @@ def evaluate_alert_rules(watch_id: int, new_price: float, price_result: dict) ->
 
 
 def get_price_stats(watch_id: int) -> dict:
-    """Return min/max/avg and recent trend for a watch item."""
     with get_db() as conn:
         row = conn.execute("""
             SELECT
@@ -363,7 +341,6 @@ def get_price_stats(watch_id: int) -> dict:
             return {}
         stats = dict(row)
 
-        # Trend: compare last 3 vs previous 3
         recent = conn.execute("""
             SELECT price FROM price_records WHERE watch_id=?
             ORDER BY checked_at DESC LIMIT 6
