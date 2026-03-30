@@ -1190,6 +1190,8 @@ elif page == "🔥 ציד דילים":
                 else:
                     st.success(f"🎉 {_t('נמצאו', 'Found')} {len(found)} {_t('דילים!', 'deals!')}")
                     for d in found:
+                        if not isinstance(d, dict):
+                            continue
                         grade = d.get("ai_grade", d.get("deal_type", ""))
                         gcolor = GRADE_COLOR.get(grade, "#aaa")
                         urgency = URGENCY_ICON.get(d.get("urgency", ""), "📅")

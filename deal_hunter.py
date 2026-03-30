@@ -85,7 +85,7 @@ def hunt_deals(sources: Optional[list] = None) -> list[dict]:
     """
     ensure_deals_table()
     if not ai_client.is_configured():
-        return {"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}
+        return [{"error": "missing_api_key", "reason": "GEMINI_API_KEY not configured"}]
 
     if sources is None:
         sources = list(DEAL_SOURCES.values())[:4]  # Top 4 by default
