@@ -1288,6 +1288,8 @@ elif page == "🔥 ציד דילים":
                 recent = scored if scored else recent
 
             for d in recent:
+                if not isinstance(d, dict):
+                    continue
                 score = d.get("score", d.get("ai_score", 0))
                 grade = d.get("ai_grade", "")
                 gcolor = GRADE_COLOR.get(grade, "#667eea")
@@ -1580,6 +1582,7 @@ elif page == "🛠️ כלים חכמים":
                 st.dataframe(df[display_cols] if display_cols else df, use_container_width=True, hide_index=True)
 
                 for d in deals[:3]:
+                    if not isinstance(d, dict): continue
                     with st.expander(f"✈️ {d.get('destination','')} — ${d.get('price',0):,} ({d.get('departure_date','')})"):
                         st.markdown(f"**{_t('חברה', 'Airline')}:** {d.get('airline','')}")
                         st.markdown(f"**{_t('סיבת הזול', 'Why cheap')}:** {d.get('why_cheap','')}")
@@ -3704,6 +3707,7 @@ elif page == "📊 תובנות ודפוסים":
             st.divider()
             st.subheader(_t("🏆 הדילים הכי טובים שנצפו", "🏆 Best Deals Seen"))
             for d in recent:
+                if not isinstance(d, dict): continue
                 score = d.get("score", 0)
                 score_bar = "🟩" * int(score / 2) + "⬜" * (5 - int(score / 2))
                 st.markdown(
