@@ -48,6 +48,8 @@ import deal_insights
 import telegram_bot
 import kiwi_client
 import validators
+import nl_parser
+import weekly_digest
 import hidden_city
 import rss_scanner
 import auto_book
@@ -1071,6 +1073,51 @@ if page == "🏠 לוח בקרה":
                                 analysis = agent.analyze_deal(item, history)
                             st.info(f"💡 {analysis}")
 
+                    # Auto-renew: suggest new dates if watch has expired
+                    _date_to_str = item.get("date_to", "")
+                    _watch_expired = False
+                    if _date_to_str:
+                        try:
+                            from datetime import date as _date_cls2
+                            _watch_expired = _date_cls2.fromisoformat(_date_to_str) < _date_cls2.today()
+                        except Exception:
+                            pass
+                    if _watch_expired:
+                        st.warning(_t(
+                            f"⏰ המעקב פג ב-{_date_to_str}",
+                            f"⏰ Watch expired on {_date_to_str}",
+                        ))
+                        if st.button(_t("🔄 חדש תאריכים (AI)", "🔄 Renew dates (AI)"), key=f"renew_{item['id']}"):
+                            with st.spinner(_t("AI מחפש תאריכים דומים...", "AI finding similar dates...")):
+                                _renew_prompt = (
+                                    f"A travel watch for {item.get('destination')} from {item.get('origin','TLV')} "
+                                    f"expired on {_date_to_str}. "
+                                    f"Suggest 3 new date ranges (date_from, date_to) for similar travel in the next 3-6 months "
+                                    f"from today ({__import__('datetime').date.today()}). "
+                                    f"Return JSON array: [{{\"date_from\":\"YYYY-MM-DD\",\"date_to\":\"YYYY-MM-DD\",\"label\":\"...\"}}]. "
+                                    + ("Respond in Hebrew." if _lang == "he" else "")
+                                )
+                                try:
+                                    _renew_text = ai_client.ask(_renew_prompt, max_tokens=400)
+                                    import re as _re2
+                                    _arr_match = _re2.search(r'\[.*\]', _renew_text, _re2.DOTALL)
+                                    if _arr_match:
+                                        _suggestions = json.loads(_arr_match.group(0))
+                                        st.session_state[f"renew_suggestions_{item['id']}"] = _suggestions
+                                except Exception as _ex:
+                                    st.error(str(_ex))
+
+                    _renew_suggs = st.session_state.get(f"renew_suggestions_{item['id']}", [])
+                    if _renew_suggs:
+                        st.markdown(_t("**📅 תאריכים מוצעים:**", "**📅 Suggested dates:**"))
+                        for _sug in _renew_suggs:
+                            _sug_label = _sug.get("label", f"{_sug.get('date_from','')} → {_sug.get('date_to','')}")
+                            if st.button(f"✅ {_sug_label}", key=f"apply_renew_{item['id']}_{_sug.get('date_from','')}"):
+                                db.update_watch_dates(item["id"], _sug["date_from"], _sug.get("date_to",""))
+                                del st.session_state[f"renew_suggestions_{item['id']}"]
+                                st.success(_t("✅ תאריכים עודכנו!", "✅ Dates updated!"))
+                                st.rerun()
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Add Item
@@ -1078,32 +1125,82 @@ if page == "🏠 לוח בקרה":
 elif page == "➕ הוסף מעקב":
     st.title(_t("➕ הוסף פריט למעקב", "➕ Add Watch Item"))
 
+    # ── Natural Language Input ──────────────────────────────────────────────────
+    with st.expander(_t("🗣️ הוסף בשפה טבעית (AI)", "🗣️ Add in natural language (AI)"), expanded=False):
+        st.caption(_t(
+            'דוגמאות: "טיסה לברצלונה במאי עד 400 דולר" | "מלון בלונדון ב-15 ביוני, תקציב 200$"',
+            'Examples: "flight to Barcelona in May up to $400" | "hotel in London June 15, $200 budget"',
+        ))
+        nl_input = st.text_input(
+            _t("תאר את המעקב שלך:", "Describe your watch:"),
+            placeholder=_t("טיסה לטוקיו בספטמבר עד 800 דולר", "flight to Tokyo in September up to $800"),
+            key="nl_input_field",
+        )
+        nl_btn = st.button(_t("🤖 נתח ומלא", "🤖 Parse & fill"), key="nl_parse_btn")
+
+    if nl_btn and nl_input:
+        with st.spinner(_t("🤖 מנתח...", "🤖 Parsing...")):
+            _nl_result = nl_parser.parse_watch_request(nl_input)
+
+        if "error" in _nl_result:
+            st.error(f"שגיאה: {_nl_result['error']}")
+        else:
+            st.session_state["nl_prefill"] = _nl_result
+            _conf = _nl_result.get("confidence", 0)
+            st.success(
+                f"✅ {_t('זוהה', 'Detected')}: **{_nl_result.get('name','')}** "
+                f"→ {_nl_result.get('destination','')} | {_nl_result.get('date_from','')} — {_nl_result.get('date_to','')} | "
+                f"max ${_nl_result.get('max_price','?')}  _(confidence: {_conf:.0%})_"
+            )
+            if _nl_result.get("notes"):
+                st.caption(f"📝 {_nl_result['notes']}")
+            st.info(_t("הטופס למטה מולא אוטומטית — בדוק ולחץ הוסף", "Form below was pre-filled — review and click Add"))
+
+    # Pre-fill from NL parse
+    _pf = st.session_state.get("nl_prefill", {})
+
     with st.form("add_item_form"):
         col1, col2 = st.columns(2)
 
         with col1:
-            name = st.text_input(_t("שם הפריט *", "Item name *"), placeholder=_t("טיסה לברצלונה", "Flight to Barcelona"))
+            name = st.text_input(_t("שם הפריט *", "Item name *"), value=_pf.get("name",""), placeholder=_t("טיסה לברצלונה", "Flight to Barcelona"))
+            _cat_opts = ["flight", "hotel", "apartment", "package"]
+            _cat_default = _cat_opts.index(_pf["category"]) if _pf.get("category") in _cat_opts else 0
             category = st.selectbox(
                 _t("קטגוריה *", "Category *"),
-                ["flight", "hotel", "apartment", "package"],
+                _cat_opts,
+                index=_cat_default,
                 format_func=lambda x: f"{CAT_EMOJI[x]} {x}",
             )
             destination = st.text_input(
                 _t("יעד *", "Destination *"),
+                value=_pf.get("destination", ""),
                 placeholder=_t("ברצלונה / BCN / Spain", "Barcelona / BCN / Spain"),
                 help=_t("שם עיר, מדינה, או קוד IATA של שדה תעופה (3 אותיות)", "City name, country, or 3-letter IATA airport code"),
             )
             origin = st.text_input(
                 _t("עיר מוצא / קוד IATA", "Origin city / IATA code"),
+                value=_pf.get("origin", ""),
                 placeholder=_t("TLV", "TLV"),
                 help=_t("קוד IATA של שדה תעופה (TLV, SDV, ETH) או שם עיר", "IATA airport code (TLV, SDV, ETH) or city name"),
             )
 
         with col2:
-            date_from = st.date_input(_t("תאריך התחלה", "Start date"), value=None)
-            date_to = st.date_input(_t("תאריך סיום", "End date"), value=None)
+            _pf_date_from = None
+            _pf_date_to = None
+            try:
+                from datetime import date as _date_cls
+                if _pf.get("date_from"):
+                    _pf_date_from = _date_cls.fromisoformat(_pf["date_from"])
+                if _pf.get("date_to"):
+                    _pf_date_to = _date_cls.fromisoformat(_pf["date_to"])
+            except Exception:
+                pass
+            date_from = st.date_input(_t("תאריך התחלה", "Start date"), value=_pf_date_from)
+            date_to = st.date_input(_t("תאריך סיום", "End date"), value=_pf_date_to)
             max_price = st.number_input(
-                _t("מחיר יעד (התרע כשיורד אל/מתחת)", "Target price (alert when drops to/below)"), min_value=0.0, value=0.0, step=10.0
+                _t("מחיר יעד (התרע כשיורד אל/מתחת)", "Target price (alert when drops to/below)"),
+                min_value=0.0, value=float(_pf.get("max_price") or 0), step=10.0,
             )
             drop_pct = st.slider(_t("התרע בירידה של %", "Alert on % drop"), 5, 50, 10)
 
@@ -1385,6 +1482,23 @@ elif page == "🔥 ציד דילים":
                             st.link_button(_t("🔗 הזמן", "🔗 Book"), d["book_url"])
                         if d.get("expires"):
                             st.caption(f"⏰ {_t('פג תוקף', 'Expires')}: {d['expires']}")
+                        explain_key = f"explain_score_{d.get('id', d.get('destination',''))}_{score}"
+                        if st.button(_t("📖 למה הציון הזה?", "📖 Why this score?"), key=explain_key):
+                            with st.spinner(_t("Claude מנתח...", "Claude analyzing...")):
+                                explain_prompt = (
+                                    f"Deal: {d.get('destination')} from {d.get('origin','TLV')}, "
+                                    f"price ${d.get('price',0)}, type {d.get('deal_type','')}, "
+                                    f"discount {d.get('discount_pct',0)}%, urgency {d.get('urgency','')}, "
+                                    f"score {score}/10. "
+                                    f"Explain in 2-3 sentences why this score, what makes it good/bad, "
+                                    f"and whether the user should act now. "
+                                    + ("Respond in Hebrew." if _lang == "he" else "Respond in English.")
+                                )
+                                try:
+                                    explanation = ai_client.ask(explain_prompt, max_tokens=300)
+                                    st.markdown(f"**🤖 AI:** {explanation}")
+                                except Exception as ex:
+                                    st.error(str(ex))
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2393,6 +2507,48 @@ function requestPushPermission() {
             "💡 For alerts even when the app is closed — use ntfy.sh above",
         ))
 
+    # Weekly Digest ────────────────────────────────────────────────────────────
+    with st.expander(_t("📧 **סיכום שבועי** — דוח AI על מחירים ודילים", "📧 **Weekly Digest** — AI price & deal report")):
+        st.markdown(_t(
+            "קבל סיכום שבועי עם AI: תנועות מחירים, הדיל הכי טוב, המלצות לשבוע הבא.",
+            "Get a weekly AI-generated summary: price movements, best deal, recommendations for the coming week.",
+        ))
+        wd_col1, wd_col2 = st.columns(2)
+        with wd_col1:
+            if st.button(_t("📊 הצג סיכום עכשיו", "📊 Generate digest now"), key="show_digest"):
+                with st.spinner(_t("מייצר סיכום עם AI...", "Generating digest with AI...")):
+                    try:
+                        digest = weekly_digest.generate_digest(_lang)
+                        st.session_state["last_digest"] = digest
+                    except Exception as e:
+                        st.error(str(e))
+        with wd_col2:
+            if st.button(_t("📤 שלח סיכום (Telegram/ntfy)", "📤 Send digest (Telegram/ntfy)"), key="send_digest"):
+                with st.spinner(_t("שולח...", "Sending...")):
+                    try:
+                        result = weekly_digest.send_digest(_lang)
+                        if result.get("ok"):
+                            st.success(_t("✅ הסיכום נשלח!", "✅ Digest sent!"))
+                        else:
+                            st.warning(_t("⚠️ " + result.get("error","שגיאה"), "⚠️ " + result.get("error","Error")))
+                    except Exception as e:
+                        st.error(str(e))
+
+        if "last_digest" in st.session_state:
+            d = st.session_state["last_digest"]
+            st.markdown(f"### {d.get('subject','')}")
+            st.markdown(d.get("summary",""))
+            if d.get("top_movements"):
+                st.markdown(_t("**📈 תנועות מחירים:**", "**📈 Price movements:**"))
+                for m in d["top_movements"]:
+                    st.markdown(f"- {m}")
+            if d.get("best_deal"):
+                st.info(f"🏆 {d['best_deal']}")
+            if d.get("recommendations"):
+                st.markdown(_t("**💡 המלצות:**", "**💡 Recommendations:**"))
+                for r in d["recommendations"]:
+                    st.markdown(f"- {r}")
+
     # Telegram ─────────────────────────────────────────────────────────────────
     with st.expander(_t("✈️ **Telegram** — הודעות לטלגרם", "✈️ **Telegram** — Telegram messages")):
         st.markdown(_t("""
@@ -2936,6 +3092,128 @@ elif page == "🎯 כללי התראה":
                             st.success(f"✅ {_t('כלל', 'Rule')} '{m['rule_name']}' **{_t('יופעל', 'will trigger')}** — {m['message']}")
                     else:
                         st.info(_t("אף כלל לא יופעל למחיר זה", "No rule will trigger for this price"))
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE: Price Calendar Heatmap
+# ══════════════════════════════════════════════════════════════════════════════
+elif page == "📆 לוח מחירים":
+    st.title(_t("📆 לוח מחירים — חום לפי מחיר", "📆 Price Calendar — Heat by Price"))
+    st.caption(_t("ימים ירוקים = זול, אדומים = יקר. לחץ על תאריך להזמנה.", "Green days = cheap, red = expensive. Click a date to book."))
+
+    with st.form("cal_form"):
+        cc1, cc2, cc3 = st.columns(3)
+        with cc1:
+            cal_origin = st.text_input(_t("מוצא", "Origin"), value="TLV")
+        with cc2:
+            cal_dest = st.text_input(_t("יעד", "Destination"), placeholder="LON, BCN, NYC...")
+        with cc3:
+            cal_month = st.text_input(_t("חודש (YYYY-MM)", "Month (YYYY-MM)"), value=datetime.now().strftime("%Y-%m"))
+        cal_submit = st.form_submit_button(_t("📆 הצג לוח", "📆 Show calendar"), use_container_width=True)
+
+    if cal_submit and cal_dest:
+        with st.spinner(_t("🔍 טוען מחירים לכל ימי החודש...", "🔍 Loading prices for all days of the month...")):
+            cal_data = flexible_search.get_price_calendar(
+                origin=cal_origin,
+                destination=cal_dest,
+                month=cal_month,
+            )
+
+        prices_only = [v for v in cal_data.values() if v is not None]
+        if not prices_only:
+            st.warning(_t("לא נמצאו מחירים. ודא שה-Amadeus API מוגדר.", "No prices found. Make sure Amadeus API is configured."))
+        else:
+            import calendar as _cal
+            year, mon = map(int, cal_month.split("-"))
+            month_name = _cal.month_name[mon]
+
+            min_p, max_p = min(prices_only), max(prices_only)
+            avg_p = sum(prices_only) / len(prices_only)
+            best_date = min(cal_data, key=lambda d: cal_data[d] if cal_data[d] else float("inf"))
+
+            col_m1, col_m2, col_m3 = st.columns(3)
+            col_m1.metric(_t("🟢 הכי זול", "🟢 Cheapest"), f"${min_p:.0f}", best_date)
+            col_m2.metric(_t("📊 ממוצע", "📊 Average"), f"${avg_p:.0f}")
+            col_m3.metric(_t("🔴 הכי יקר", "🔴 Most expensive"), f"${max_p:.0f}")
+
+            st.divider()
+
+            # Build Plotly calendar heatmap
+            import pandas as pd
+            dates = list(cal_data.keys())
+            prices = [cal_data[d] for d in dates]
+
+            # Create week-grid layout
+            from datetime import date as _dt, timedelta as _td
+            first_day = _dt(year, mon, 1)
+            first_weekday = first_day.weekday()  # 0=Mon
+
+            # Pad with None for alignment
+            all_cells = [None] * first_weekday + prices
+            while len(all_cells) % 7:
+                all_cells.append(None)
+            all_dates_padded = [None] * first_weekday + dates
+            while len(all_dates_padded) % 7:
+                all_dates_padded.append(None)
+
+            weeks = [all_cells[i:i+7] for i in range(0, len(all_cells), 7)]
+            weeks_dates = [all_dates_padded[i:i+7] for i in range(0, len(all_dates_padded), 7)]
+            day_names = [_t("ב׳","Mon"), _t("ג׳","Tue"), _t("ד׳","Wed"), _t("ה׳","Thu"), _t("ו׳","Fri"), _t("ש׳","Sat"), _t("א׳","Sun")]
+
+            # Color scale: green (cheap) → yellow → red (expensive)
+            def _price_color(p, mn, mx):
+                if p is None:
+                    return "rgba(0,0,0,0)"
+                t = (p - mn) / (mx - mn) if mx != mn else 0.5
+                r = int(255 * t)
+                g = int(255 * (1 - t))
+                return f"rgb({r},{g},60)"
+
+            # Render as HTML grid
+            html_rows = []
+            html_rows.append(
+                "<table style='border-collapse:collapse;width:100%;font-family:sans-serif'>"
+                "<tr>" +
+                "".join(f"<th style='padding:4px 8px;color:#888;font-size:12px;text-align:center'>{d}</th>" for d in day_names) +
+                "</tr>"
+            )
+            for week_prices, week_dates in zip(weeks, weeks_dates):
+                html_rows.append("<tr>")
+                for p, d in zip(week_prices, week_dates):
+                    if p is None or d is None:
+                        html_rows.append("<td style='padding:4px'></td>")
+                    else:
+                        bg = _price_color(p, min_p, max_p)
+                        day_num = d.split("-")[2].lstrip("0")
+                        is_best = d == best_date
+                        border = "2px solid #fff" if is_best else "1px solid rgba(255,255,255,0.1)"
+                        html_rows.append(
+                            f"<td style='padding:4px;text-align:center'>"
+                            f"<div style='background:{bg};border:{border};border-radius:8px;"
+                            f"padding:8px 4px;min-width:40px;cursor:pointer' "
+                            f"title='{d}: ${p:.0f}'>"
+                            f"<div style='font-size:13px;color:rgba(0,0,0,0.8);font-weight:bold'>{day_num}</div>"
+                            f"<div style='font-size:11px;color:rgba(0,0,0,0.7)'>${p:.0f}</div>"
+                            f"{'<div style=\"font-size:10px\">🏆</div>' if is_best else ''}"
+                            f"</div></td>"
+                        )
+                html_rows.append("</tr>")
+            html_rows.append("</table>")
+            html_rows.append(
+                "<div style='margin-top:8px;font-size:12px;color:#888'>"
+                "🟢 זול &nbsp;&nbsp; 🟡 ממוצע &nbsp;&nbsp; 🔴 יקר"
+                "</div>"
+            )
+
+            components.html("\n".join(html_rows), height=len(weeks) * 70 + 60, scrolling=False)
+
+            st.divider()
+            # Cheapest 5 days
+            sorted_dates = sorted([(d, p) for d, p in cal_data.items() if p], key=lambda x: x[1])
+            st.subheader(_t("🏆 5 הימים הכי זולים", "🏆 5 Cheapest Days"))
+            _cols = st.columns(min(5, len(sorted_dates)))
+            for i, (d, p) in enumerate(sorted_dates[:5]):
+                _cols[i].metric(d, f"${p:.0f}", f"-${avg_p - p:.0f} vs avg")
 
 
 # ══════════════════════════════════════════════════════════════════════════════

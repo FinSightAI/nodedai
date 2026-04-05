@@ -124,6 +124,14 @@ def toggle_watch_item(watch_id: int, enabled: bool):
                      (1 if enabled else 0, watch_id))
 
 
+def update_watch_dates(watch_id: int, date_from: str, date_to: str):
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE watch_items SET date_from=?, date_to=?, enabled=1 WHERE id=?",
+            (date_from, date_to, watch_id),
+        )
+
+
 def save_price(record: PriceRecord) -> int:
     with get_db() as conn:
         cur = conn.execute(
