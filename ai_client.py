@@ -113,6 +113,45 @@ def extract_json(text: str) -> dict:
     return {"found": False, "reason": "could not parse JSON from response"}
 
 
+def chat_turn(
+    history: list,
+    user_message: str,
+    system: str = "",
+    max_tokens: int = 4096,
+    web_search: bool = False,
+) -> Optional[str]:
+    """
+    Multi-turn chat using Gemini.
+    history: list of {"role": "user"|"model", "parts": [{"text": "..."}]}
+    Returns assistant reply text, or None on error.
+    """
+    client = _get_client()
+    if client is None:
+        return None
+    try:
+        from google.genai import types
+
+        # Build contents: history + new user message
+        contents = list(history) + [{"role": "user", "parts": [{"text": user_message}]}]
+
+        config_kwargs: dict = {"max_output_tokens": max_tokens}
+        if system:
+            config_kwargs["system_instruction"] = system
+        if web_search:
+            config_kwargs["tools"] = [types.Tool(google_search=types.GoogleSearch())]
+
+        config = types.GenerateContentConfig(**config_kwargs)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=contents,
+            config=config,
+        )
+        return response.text
+    except Exception as e:
+        print(f"[ai_client.chat_turn] Error: {str(e)[:120]}")
+        return None
+
+
 def extract_json_array(text: str) -> list:
     """Extract the first JSON array from a text response."""
     if not text:

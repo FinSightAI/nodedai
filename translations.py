@@ -21,6 +21,7 @@ TRANSLATIONS = {
         "pages": [
             "🏠 לוח בקרה",
             "➕ הוסף מעקב",
+            "💬 סוכן נסיעות AI",
             "🌟 הזדמנויות AI",
             "🔥 ציד דילים",
             "🎲 הפתיעני",
@@ -130,6 +131,7 @@ TRANSLATIONS = {
         "pages": [
             "🏠 Dashboard",
             "➕ Add Watch",
+            "💬 AI Travel Agent",
             "🌟 AI Opportunities",
             "🔥 Deal Hunter",
             "🎲 Surprise Me",

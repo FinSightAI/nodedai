@@ -1297,6 +1297,161 @@ elif page == "➕ הוסף מעקב":
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE: AI Travel Agent Chat
+# ══════════════════════════════════════════════════════════════════════════════
+elif page in ("💬 סוכן נסיעות AI", "💬 AI Travel Agent"):
+    st.title(_t("💬 סוכן נסיעות AI", "💬 AI Travel Agent"))
+    st.caption(_t(
+        "שוחח עם סוכן AI שמכיר את כל המעקבים, הדילים והמחירים שלך",
+        "Chat with an AI agent that knows all your watches, deals and prices",
+    ))
+
+    # ── Build context snapshot from DB ──────────────────────────────────────
+    def _agent_context() -> str:
+        watches = db.get_all_watches()
+        deals = deal_hunter.get_recent_deals(limit=10, min_score=6)
+        lines = ["=== USER'S ACTIVE WATCHES ==="]
+        for w in watches[:15]:
+            hist = db.get_price_history(w["id"], limit=3)
+            last_price = f"${hist[0]['price']:.0f}" if hist else "no price yet"
+            lines.append(
+                f"• {w['name']}: {w.get('origin','TLV')}→{w['destination']} "
+                f"[{w.get('date_from','')}–{w.get('date_to','')}] "
+                f"max=${w.get('max_price') or '?'} | last={last_price}"
+            )
+        if deals:
+            lines.append("\n=== RECENT DEALS (score≥6) ===")
+            for d in deals[:5]:
+                lines.append(
+                    f"• {d.get('destination')} ${d.get('price',0):.0f} "
+                    f"({d.get('deal_type','')}, score {d.get('score',0):.1f}/10) — {d.get('why_amazing','')[:80]}"
+                )
+        lines.append(f"\nToday: {__import__('datetime').date.today()}")
+        lines.append(f"User language: {_lang}")
+        return "\n".join(lines)
+
+    _AGENT_SYSTEM = (
+        "You are a world-class AI travel agent assistant integrated into Noded — "
+        "a personal travel price monitoring app. "
+        "You have access to the user's active price watches, recent deals, and price history (provided in context). "
+        "You can help with: planning trips, finding best dates/prices, explaining deals, "
+        "suggesting destinations, calculating costs, giving visa tips, comparing airlines, "
+        "and anything travel-related. "
+        "Be conversational, specific, and proactive. Use emojis naturally. "
+        "When the user asks to search for flights or prices, give realistic estimates and explain how to find them. "
+        "When you recommend a specific action (like 'add a watch for this route'), "
+        "say so clearly so the user knows what to do in the app. "
+        "If the user writes in Hebrew, respond in Hebrew. If English, respond in English. "
+        "Never make up specific prices as facts — say 'approximately' or 'typically'. "
+        "Always be honest when you don't know something."
+    )
+
+    # ── Session state init ───────────────────────────────────────────────────
+    if "agent_history" not in st.session_state:
+        st.session_state["agent_history"] = []
+    if "agent_context_snapshot" not in st.session_state:
+        st.session_state["agent_context_snapshot"] = _agent_context()
+
+    # ── Toolbar ──────────────────────────────────────────────────────────────
+    tc1, tc2, tc3 = st.columns([2, 1, 1])
+    with tc1:
+        _use_search = st.toggle(
+            _t("🌐 חיפוש אינטרנט", "🌐 Web search"),
+            value=True,
+            help=_t("מאפשר לסוכן לחפש מחירים עדכניים ברשת", "Lets the agent search the web for live prices"),
+            key="agent_web_search",
+        )
+    with tc2:
+        if st.button(_t("🔄 רענן הקשר", "🔄 Refresh context"), key="agent_refresh_ctx"):
+            st.session_state["agent_context_snapshot"] = _agent_context()
+            st.toast(_t("הקשר עודכן!", "Context refreshed!"))
+    with tc3:
+        if st.button(_t("🗑 נקה שיחה", "🗑 Clear chat"), key="agent_clear"):
+            st.session_state["agent_history"] = []
+            st.rerun()
+
+    # ── Suggested starters ───────────────────────────────────────────────────
+    if not st.session_state["agent_history"]:
+        st.markdown(_t("**💡 דוגמאות לשאלות:**", "**💡 Try asking:**"))
+        starters_he = [
+            "תכנן לי שבוע בגיאורגיה עם תקציב 1500$",
+            "מה הדיל הכי טוב שיש לי עכשיו?",
+            "מתי הכי זול לטוס לבנקוק מתל אביב?",
+            "תסביר לי את הדילים שיש לי",
+            "תמצא לי חלופות זולות לרומא בספטמבר",
+        ]
+        starters_en = [
+            "Plan me a week in Georgia with a $1500 budget",
+            "What's my best deal right now?",
+            "When's the cheapest time to fly from TLV to Bangkok?",
+            "Explain the deals I have",
+            "Find me cheap alternatives to Rome in September",
+        ]
+        starters = starters_he if _lang == "he" else starters_en
+        scols = st.columns(len(starters))
+        for _si, (_sc, _sq) in enumerate(zip(scols, starters)):
+            with _sc:
+                if st.button(_sq, key=f"starter_{_si}", use_container_width=True):
+                    st.session_state["_agent_pending"] = _sq
+                    st.rerun()
+
+    # ── Render existing conversation ─────────────────────────────────────────
+    for msg in st.session_state["agent_history"]:
+        role = "user" if msg["role"] == "user" else "assistant"
+        with st.chat_message(role):
+            st.markdown(msg["parts"][0]["text"])
+
+    # ── Handle pending starter click ─────────────────────────────────────────
+    _pending = st.session_state.pop("_agent_pending", None)
+
+    # ── Chat input ───────────────────────────────────────────────────────────
+    _user_input = st.chat_input(
+        _t("שאל אותי כל דבר על נסיעות...", "Ask me anything about travel..."),
+        key="agent_chat_input",
+    ) or _pending
+
+    if _user_input:
+        # Show user message immediately
+        with st.chat_message("user"):
+            st.markdown(_user_input)
+
+        # Build full prompt: context snapshot + user message
+        _ctx = st.session_state["agent_context_snapshot"]
+        _full_prompt = f"[CONTEXT]\n{_ctx}\n\n[USER MESSAGE]\n{_user_input}"
+
+        # Stream-like thinking indicator
+        with st.chat_message("assistant"):
+            with st.spinner(_t("חושב...", "Thinking...")):
+                _reply = ai_client.chat_turn(
+                    history=st.session_state["agent_history"],
+                    user_message=_full_prompt,
+                    system=_AGENT_SYSTEM,
+                    max_tokens=2048,
+                    web_search=_use_search,
+                )
+            if _reply:
+                st.markdown(_reply)
+            else:
+                _reply = _t(
+                    "⚠️ לא הצלחתי לקבל תשובה. בדוק שה-GEMINI_API_KEY מוגדר.",
+                    "⚠️ Could not get a response. Check that GEMINI_API_KEY is set.",
+                )
+                st.warning(_reply)
+
+        # Append to history (store original user text, not the prompt+context)
+        st.session_state["agent_history"].append(
+            {"role": "user", "parts": [{"text": _user_input}]}
+        )
+        st.session_state["agent_history"].append(
+            {"role": "model", "parts": [{"text": _reply}]}
+        )
+
+        # Keep history manageable (last 20 turns = 10 exchanges)
+        if len(st.session_state["agent_history"]) > 20:
+            st.session_state["agent_history"] = st.session_state["agent_history"][-20:]
+
+
 # PAGE: Smart Opportunities
 # ══════════════════════════════════════════════════════════════════════════════
 elif page == "🌟 הזדמנויות AI":
@@ -3194,7 +3349,7 @@ elif page == "📆 לוח מחירים":
                             f"title='{d}: ${p:.0f}'>"
                             f"<div style='font-size:13px;color:rgba(0,0,0,0.8);font-weight:bold'>{day_num}</div>"
                             f"<div style='font-size:11px;color:rgba(0,0,0,0.7)'>${p:.0f}</div>"
-                            f"{'<div style=\"font-size:10px\">🏆</div>' if is_best else ''}"
+                            f"{'<div style=&quot;font-size:10px&quot;>🏆</div>' if is_best else ''}"
                             f"</div></td>"
                         )
                 html_rows.append("</tr>")
