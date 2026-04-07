@@ -14,6 +14,10 @@ import ai_client
 TEQUILA_BASE = "https://api.tequila.kiwi.com/v2"
 
 
+def is_configured() -> bool:
+    return bool(os.environ.get("KIWI_API_KEY", ""))
+
+
 def search_flights(
     origin: str,
     destination: str,

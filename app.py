@@ -743,6 +743,13 @@ with st.sidebar:
         st.error(i18n.t("api_key_missing", _lang))
         st.caption(i18n.t("api_key_hint", _lang))
 
+    # Kiwi real-price indicator
+    if kiwi_client.is_configured():
+        st.success(_t("✈️ Kiwi — מחירים אמיתיים", "✈️ Kiwi — Real prices"))
+    else:
+        st.warning(_t("⚠️ Kiwi API חסר — מחירים מוערכים", "⚠️ No Kiwi API — estimated prices"))
+        st.caption(_t("הוסף KIWI_API_KEY בהגדרות", "Add KIWI_API_KEY in Settings"))
+
     st.divider()
     st.markdown(f"#### {_t('📉 ירידות אחרונות', '📉 Recent Drops')}")
     _all_items = db.get_all_watch_items(enabled_only=False)
@@ -2795,6 +2802,74 @@ elif page == "⚙️ הגדרות":
         if st.button(_t("שמור API Key", "Save API Key")) and new_key:
             _save_env("GEMINI_API_KEY", new_key)
             st.success(_t("נשמר! רענן את הדף.", "Saved! Refresh the page."))
+
+    # ── Kiwi API (real flight prices) ──────────────────────────────────────────
+    st.subheader(_t("✈️ Kiwi API — מחירי טיסות אמיתיים", "✈️ Kiwi API — Real Flight Prices"))
+    st.markdown(_t(
+        "Kiwi Tequila API מחזיר מחירים **אמיתיים** לטיסות — לא הערכות AI. "
+        "חינמי עד 1,000 בקשות ביום.",
+        "Kiwi Tequila API returns **real** flight prices — not AI estimates. "
+        "Free up to 1,000 requests/day.",
+    ))
+
+    _kiwi_key = os.environ.get("KIWI_API_KEY", "")
+    if _kiwi_key:
+        st.success(_t("✅ Kiwi API מוגדר — מחירים אמיתיים פעילים!", "✅ Kiwi API configured — real prices active!"))
+        if st.button(_t("🗑 הסר Kiwi Key", "🗑 Remove Kiwi Key"), key="remove_kiwi"):
+            _save_env("KIWI_API_KEY", "")
+            st.rerun()
+    else:
+        st.info(_t(
+            "**איך מקבלים API Key (חינם):**\n\n"
+            "1. לך ל-[tequila.kiwi.com](https://tequila.kiwi.com)\n"
+            "2. הירשם (חינמי)\n"
+            "3. צור חשבון → קבל **API Key**\n"
+            "4. הכנס כאן:",
+            "**How to get an API Key (free):**\n\n"
+            "1. Go to [tequila.kiwi.com](https://tequila.kiwi.com)\n"
+            "2. Sign up (free)\n"
+            "3. Create account → get your **API Key**\n"
+            "4. Enter it here:",
+        ))
+        _new_kiwi = st.text_input(
+            _t("Kiwi API Key", "Kiwi API Key"),
+            type="password",
+            placeholder="your-kiwi-api-key",
+            key="kiwi_key_input",
+        )
+        if st.button(_t("💾 שמור Kiwi Key", "💾 Save Kiwi Key"), key="save_kiwi") and _new_kiwi:
+            _save_env("KIWI_API_KEY", _new_kiwi)
+            st.success(_t("✅ נשמר! כל בדיקות הטיסות יחזירו עכשיו מחירים אמיתיים.", "✅ Saved! All flight checks will now return real prices."))
+            st.rerun()
+
+        # Test button even without key
+        if st.button(_t("🧪 בדוק חיבור", "🧪 Test connection"), key="test_kiwi"):
+            _test_key = _new_kiwi or _kiwi_key
+            if not _test_key:
+                st.warning(_t("הכנס API Key תחילה", "Enter API Key first"))
+            else:
+                with st.spinner(_t("בודק...", "Testing...")):
+                    import urllib.request as _ur, urllib.parse as _up
+                    _turl = (
+                        "https://api.tequila.kiwi.com/v2/search?"
+                        + _up.urlencode({"fly_from": "TLV", "fly_to": "BCN",
+                                         "date_from": "01/09/2025", "date_to": "30/09/2025",
+                                         "limit": 1, "curr": "USD"})
+                    )
+                    try:
+                        _treq = _ur.Request(_turl, headers={"apikey": _test_key})
+                        with _ur.urlopen(_treq, timeout=10) as _tr:
+                            _td = __import__("json").loads(_tr.read())
+                        if _td.get("data"):
+                            _fp = _td["data"][0]
+                            st.success(_t(
+                                f"✅ עובד! TLV→BCN = ${_fp.get('price',0):.0f} ({_fp.get('airlines',['?'])[0] if isinstance(_fp.get('airlines'), list) else '?'})",
+                                f"✅ Working! TLV→BCN = ${_fp.get('price',0):.0f} ({_fp.get('airlines',['?'])[0] if isinstance(_fp.get('airlines'), list) else '?'})",
+                            ))
+                        else:
+                            st.warning(_t("מחובר אבל אין תוצאות", "Connected but no results"))
+                    except Exception as _te:
+                        st.error(f"❌ {_te}")
 
     st.divider()
 

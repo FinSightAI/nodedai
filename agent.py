@@ -9,6 +9,7 @@ from typing import Optional
 
 import ai_client
 import amadeus_client
+import kiwi_client
 
 _lang = "he"
 
@@ -84,14 +85,48 @@ def build_search_prompt(item: dict) -> str:
 
 
 def search_price(item: dict) -> dict:
-    """Find current price. Strategy: Amadeus first → Gemini web search fallback."""
+    """Find current price. Strategy: Kiwi → Amadeus → Gemini AI fallback."""
     category = item["category"]
     destination = item["destination"]
     origin = item.get("origin", "TLV")
     date_from = item.get("date_from")
     date_to = item.get("date_to")
+    travelers = item.get("travelers", 1)
 
-    # ── Try Amadeus first ──────────────────────────────────────────────────────
+    # ── 1. Kiwi Tequila API (real prices, flights only) ────────────────────────
+    if category == "flight" and date_from and kiwi_client.is_configured():
+        results = kiwi_client.search_flights(
+            origin=origin,
+            destination=destination,
+            date_from=date_from,
+            date_to=date_from,           # search window: same day
+            return_from=date_to or "",
+            return_to=date_to or "",
+            adults=travelers or 1,
+            currency="USD",
+            limit=5,
+        )
+        # Filter out error results
+        real = [r for r in results if r.get("price") and not r.get("error")]
+        if real:
+            best = sorted(real, key=lambda r: r["price"])[0]
+            return {
+                "found": True,
+                "price": best["price"],
+                "currency": best.get("currency", "USD"),
+                "source": f"Kiwi.com — {best.get('airline', '')}",
+                "details": (
+                    f"{best.get('departure', '')[:10]} · "
+                    f"{best.get('stops', 0)} stops · "
+                    f"{best.get('duration_hours', 0)}h"
+                ),
+                "deal_quality": "real_price",
+                "deep_link": best.get("deep_link", ""),
+                "booking_token": best.get("booking_token", ""),
+                "kiwi": True,
+            }
+
+    # ── 2. Amadeus ─────────────────────────────────────────────────────────────
     if amadeus_client.is_configured():
         if category == "flight" and date_from:
             results = amadeus_client.search_flights(
