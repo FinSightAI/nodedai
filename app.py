@@ -200,7 +200,11 @@ def _inject_css(rtl: bool):
     st.markdown(f"""
 <style>
   /* ── Direction ── */
-  html, body, * {{ direction: {d} !important; }}
+  html, body {{ direction: {d} !important; }}
+  [data-testid="stAppViewContainer"],
+  [data-testid="stAppViewBlockContainer"],
+  [data-testid="stVerticalBlock"],
+  .block-container {{ overflow: visible !important; }}
 
   p, h1, h2, h3, h4, h5, h6,
   li, td, th, caption, label, span, small, strong, em, b, i,
