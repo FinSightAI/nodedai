@@ -427,26 +427,29 @@ def _inject_css(rtl: bool):
   [data-testid="stAppToolbar"],
   [data-testid="stToolbarActions"]      {{ display: none !important; }}
 
-  /* Sidebar toggle — always visible, fixed top corner */
+  /* Sidebar toggle — bold orange pill, top corner */
   [data-testid="stSidebarCollapsedControl"],
   [data-testid="collapsedControl"] {{
     display: flex !important;
     position: fixed !important;
-    top: 6px !important;
-    {("right" if rtl else "left")}: 6px !important;
+    top: 10px !important;
+    {("right" if rtl else "left")}: 10px !important;
     z-index: 9999 !important;
-    background: rgba(102,126,234,0.85) !important;
-    border-radius: 8px !important;
-    padding: 4px 8px !important;
-    backdrop-filter: blur(8px) !important;
+    background: #ff6b35 !important;
+    border-radius: 20px !important;
+    padding: 6px 14px !important;
+    box-shadow: 0 3px 14px rgba(255,107,53,0.55) !important;
   }}
   [data-testid="stSidebarCollapsedControl"] button,
   [data-testid="collapsedControl"] button {{
     color: white !important;
+    font-size: 1.1rem !important;
   }}
   [data-testid="stSidebarCollapsedControl"] svg,
   [data-testid="collapsedControl"] svg {{
     fill: white !important;
+    width: 20px !important;
+    height: 20px !important;
   }}
 
   /* Footer / bottom bar (Hosted by Streamlit, Built by ...) */
