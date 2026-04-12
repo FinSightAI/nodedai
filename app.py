@@ -496,54 +496,74 @@ def _inject_css(rtl: bool):
     setTimeout(fixSidebarScroll, 1000);
   }
 
-  // ── Hide Streamlit chrome from parent frame ────────────────────────────────
-  function hideChrome() {
-    var doc = window.parent.document;
-    // Hide by data-testid / id / class
-    var selectors = [
-      '[data-testid="stHeader"]',
-      '[data-testid="stToolbar"]',
-      '[data-testid="stAppToolbar"]',
-      '[data-testid="stToolbarActions"]',
-      '[data-testid="stDeployButton"]',
-      '[data-testid="stDecoration"]',
-      '[data-testid="stStatusWidget"]',
-      '[data-testid="stBottom"]',
-      '[data-testid="stBottomBlockContainer"]',
-      '[data-testid="manage-app-button"]',
-      '[data-testid="stToolbarActionButtonTooltip"]',
-      '#MainMenu',
-      '.stDeployButton',
-      '.stBottom',
-      'footer',
-    ];
-    selectors.forEach(function(sel) {
+  // ── Hide Streamlit chrome — searches parent + top frames ──────────────────
+  var HIDE_SELECTORS = [
+    '[data-testid="stHeader"]',
+    '[data-testid="stToolbar"]',
+    '[data-testid="stAppToolbar"]',
+    '[data-testid="stToolbarActions"]',
+    '[data-testid="stDeployButton"]',
+    '[data-testid="stDecoration"]',
+    '[data-testid="stStatusWidget"]',
+    '[data-testid="stBottom"]',
+    '[data-testid="stBottomBlockContainer"]',
+    '[data-testid="manage-app-button"]',
+    '[data-testid="stToolbarActionButtonTooltip"]',
+    '#MainMenu',
+    '.stDeployButton',
+    '.stBottom',
+    'footer',
+  ];
+  var HIDE_KEYWORDS = ['Manage app', 'Share', 'Edit app'];
+
+  function hideInDoc(doc) {
+    if (!doc || !doc.body) return;
+    HIDE_SELECTORS.forEach(function(sel) {
       doc.querySelectorAll(sel).forEach(function(el) {
         el.style.setProperty('display', 'none', 'important');
       });
     });
-    // Also hide any element whose text contains "Manage app" or "Share"
-    var keywords = ['Manage app', 'Share', 'Edit'];
-    doc.querySelectorAll('button, a, div[role="button"]').forEach(function(el) {
-      var txt = el.innerText && el.innerText.trim();
-      if (txt && keywords.some(function(k) { return txt === k; })) {
-        var parent = el.closest('[class*="toolbar"], [class*="Toolbar"], [class*="bottom"], [class*="Bottom"], [class*="manage"], [class*="Manage"]') || el;
-        parent.style.setProperty('display', 'none', 'important');
-      }
+    // Hide fixed bottom-right elements (Manage app floats here)
+    doc.querySelectorAll('*').forEach(function(el) {
+      try {
+        var cs = doc.defaultView.getComputedStyle(el);
+        if (cs.position === 'fixed') {
+          var r = el.getBoundingClientRect();
+          if (r.bottom > doc.defaultView.innerHeight - 120 && r.right > doc.defaultView.innerWidth - 250) {
+            el.style.setProperty('display', 'none', 'important');
+          }
+        }
+      } catch(e) {}
+    });
+    // Hide by keyword text
+    HIDE_KEYWORDS.forEach(function(kw) {
+      doc.querySelectorAll('button, a, [role="button"]').forEach(function(el) {
+        if (el.innerText && el.innerText.trim() === kw) {
+          (el.closest('[class*="toolbar"],[class*="Toolbar"],[class*="bottom"],[class*="Bottom"],[class*="manage"],[class*="Manage"]') || el)
+            .style.setProperty('display', 'none', 'important');
+        }
+      });
     });
   }
 
-  // MutationObserver to catch dynamically added chrome elements
-  function watchChrome() {
-    var doc = window.parent.document;
-    var obs = new MutationObserver(function() { hideChrome(); });
-    obs.observe(doc.body, { childList: true, subtree: true });
+  function hideChrome() {
+    try { hideInDoc(window.parent.document); } catch(e) {}
+    try {
+      if (window.top !== window.parent) hideInDoc(window.top.document);
+    } catch(e) {}
+  }
+
+  // MutationObserver on both frames
+  function watchDoc(doc) {
+    if (!doc || !doc.body) return;
+    new MutationObserver(function() { hideChrome(); }).observe(doc.body, { childList: true, subtree: true });
   }
 
   function init() {
     hideChrome();
     attachObserver();
-    try { watchChrome(); } catch(e) {}
+    try { watchDoc(window.parent.document); } catch(e) {}
+    try { if (window.top !== window.parent) watchDoc(window.top.document); } catch(e) {}
   }
   if (document.readyState === 'complete') { init(); }
   else { window.addEventListener('load', init); }
