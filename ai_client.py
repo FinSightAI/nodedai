@@ -15,6 +15,36 @@ from typing import Optional
 
 _client = None
 
+# ── Per-session rate limiting ──────────────────────────────────────────────────
+import time as _time
+
+_AI_MAX_PER_HOUR = 30  # max AI calls per session per hour
+_rate_store: dict = {}  # session_id → {"count": int, "reset_at": float}
+
+
+def _get_session_id() -> str:
+    """Return Streamlit session ID, or 'global' outside Streamlit."""
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        ctx = get_script_run_ctx()
+        return ctx.session_id if ctx else "global"
+    except Exception:
+        return "global"
+
+
+def _check_rate_limit() -> bool:
+    """Returns True if call is allowed, False if rate limit exceeded."""
+    sid = _get_session_id()
+    now = _time.time()
+    entry = _rate_store.get(sid)
+    if not entry or entry["reset_at"] < now:
+        _rate_store[sid] = {"count": 1, "reset_at": now + 3600}
+        return True
+    if entry["count"] >= _AI_MAX_PER_HOUR:
+        return False
+    entry["count"] += 1
+    return True
+
 
 def _get_client():
     global _client
@@ -41,6 +71,10 @@ def ask(
     Send a prompt to Gemini and return the text response.
     Returns None if no API key or on error.
     """
+    if not _check_rate_limit():
+        print("[ai_client] Rate limit exceeded for this session")
+        return None
+
     client = _get_client()
     if client is None:
         return None
@@ -125,6 +159,10 @@ def chat_turn(
     history: list of {"role": "user"|"model", "parts": [{"text": "..."}]}
     Returns assistant reply text, or None on error.
     """
+    if not _check_rate_limit():
+        print("[ai_client] Rate limit exceeded for this session")
+        return None
+
     client = _get_client()
     if client is None:
         return None
