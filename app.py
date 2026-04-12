@@ -447,8 +447,6 @@ def _inject_css(rtl: bool):
       if (fixed !== t) {
         _skip = true;
         sidebar.style.transform = fixed;
-        // Also ensure overflow hidden so content doesn't bleed
-        sidebar.style.overflow = 'hidden';
         setTimeout(function(){ _skip = false; }, 50);
       }
     }
