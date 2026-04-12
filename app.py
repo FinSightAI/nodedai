@@ -95,15 +95,15 @@ def _inject_pwa():
   var doc = window.parent.document;
 
   // Google Analytics
-  if (!doc.querySelector('script[src*="G-MPRTN6CJ9K"]')) {
+  if (!doc.querySelector('script[src*="G-QZ60YLW8FE"]')) {
     var gs = doc.createElement('script');
     gs.async = true;
-    gs.src = 'https://www.googletagmanager.com/gtag/js?id=G-MPRTN6CJ9K';
+    gs.src = 'https://www.googletagmanager.com/gtag/js?id=G-QZ60YLW8FE';
     doc.head.appendChild(gs);
     window.parent.dataLayer = window.parent.dataLayer || [];
     window.parent.gtag = function(){window.parent.dataLayer.push(arguments);};
     window.parent.gtag('js', new Date());
-    window.parent.gtag('config', 'G-MPRTN6CJ9K');
+    window.parent.gtag('config', 'G-QZ60YLW8FE');
   }
 
   // Register real SW served by nginx at /sw.js
