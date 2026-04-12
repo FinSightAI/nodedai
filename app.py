@@ -409,27 +409,15 @@ def _inject_css(rtl: bool):
   /* ── Hide Streamlit chrome ── */
   #MainMenu,
   .stMainMenu,
-  [data-testid="stMainMenu"]             {{ display: none !important; }}
-
-  /* Toolbar: Share / Manage app / Edit / star */
-  [data-testid="stToolbar"],
-  [data-testid="stAppToolbar"],
-  [data-testid="stToolbarActions"],
-  [data-testid="stHeader"] [data-testid="stToolbar"],
-  header [data-testid="stToolbar"]       {{ display: none !important; }}
-
-  /* Top header bar (contains the toolbar) */
-  [data-testid="stHeader"]               {{ display: none !important; }}
-
-  /* Footer / "Made with Streamlit" */
-  footer,
-  [data-testid="stBottom"]              {{ visibility: hidden !important; height: 0 !important; }}
-
-  /* Deploy / status */
+  [data-testid="stMainMenu"],
+  [data-testid="stHeader"],
   [data-testid="stDeployButton"],
   .stDeployButton,
   [data-testid="stDecoration"],
   [data-testid="stStatusWidget"]        {{ display: none !important; }}
+
+  /* Footer */
+  footer                                 {{ visibility: hidden !important; height: 0 !important; }}
 </style>
 """, unsafe_allow_html=True)
 
