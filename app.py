@@ -144,19 +144,8 @@ def _inject_pwa():
     }
   });
 
-  // Request browser notification permission
-  if ('Notification' in window.parent) {
-    if (window.parent.Notification.permission === 'default') {
-      // Show subtle permission banner after 3 seconds
-      setTimeout(function() {
-        if (window.parent.Notification.permission === 'default') {
-          window.parent.Notification.requestPermission();
-        }
-      }, 3000);
-    }
-  }
-
   // Expose global helper so Streamlit custom components can trigger notifications
+  // (permission is requested on-demand when user adds a price alert, not automatically)
   window.parent.nodedNotify = function(title, body, icon) {
     if (window.parent.Notification && window.parent.Notification.permission === 'granted') {
       new window.parent.Notification(title, {
