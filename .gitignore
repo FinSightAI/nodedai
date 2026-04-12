@@ -6,10 +6,18 @@ __pycache__/
 
 # Secrets
 .env
+.env.save
 .streamlit/secrets.toml
+
+# Claude local settings
+.claude/
 
 # Database (local only)
 prices.db
+
+# Logs
+alerts.log
+*.log
 
 # OS
 .DS_Store

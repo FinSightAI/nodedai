@@ -9,7 +9,8 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
 
-DB_PATH = Path(__file__).parent / "prices.db"
+import os as _os
+DB_PATH = Path(_os.environ.get("DB_PATH", str(Path(__file__).parent / "prices.db")))
 
 
 @dataclass
