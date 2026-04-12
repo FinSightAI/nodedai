@@ -341,11 +341,11 @@ def _inject_css(rtl: bool):
   hr {{ border-color: rgba(255,255,255,0.07) !important; }}
 
   /* ── Typography ── */
-  html, body, * {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; }}
+  html, body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; }}
   h1 {{ color: #ffffff !important; font-weight: 700 !important; }}
   h2 {{ color: #e2e8f0 !important; font-weight: 600 !important; }}
   h3 {{ color: #cbd5e1 !important; }}
-  p, li, span, label {{ color: #e2e8f0 !important; }}
+  p {{ color: #e2e8f0 !important; }}
 
   /* ── Alerts ── */
   [data-testid="stAlert"] {{
