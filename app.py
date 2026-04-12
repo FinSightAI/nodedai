@@ -427,26 +427,21 @@ def _inject_css(rtl: bool):
   [data-testid="stAppToolbar"],
   [data-testid="stToolbarActions"]      {{ display: none !important; }}
 
-  /* Sidebar toggle — bold orange pill, top corner */
-  [data-testid="stSidebarCollapsedControl"],
-  [data-testid="collapsedControl"] {{
-    display: flex !important;
+  /* Sidebar toggle — always visible orange pill */
+  [data-testid="stSidebarCollapseButton"] {{
     position: fixed !important;
     top: 10px !important;
     {("right" if rtl else "left")}: 10px !important;
-    z-index: 9999 !important;
+    z-index: 99999 !important;
     background: #ff6b35 !important;
     border-radius: 20px !important;
-    padding: 6px 14px !important;
-    box-shadow: 0 3px 14px rgba(255,107,53,0.55) !important;
+    padding: 4px 10px !important;
+    box-shadow: 0 3px 14px rgba(255,107,53,0.6) !important;
   }}
-  [data-testid="stSidebarCollapsedControl"] button,
-  [data-testid="collapsedControl"] button {{
+  [data-testid="stSidebarCollapseButton"] button {{
     color: white !important;
-    font-size: 1.1rem !important;
   }}
-  [data-testid="stSidebarCollapsedControl"] svg,
-  [data-testid="collapsedControl"] svg {{
+  [data-testid="stSidebarCollapseButton"] svg {{
     fill: white !important;
     width: 20px !important;
     height: 20px !important;
