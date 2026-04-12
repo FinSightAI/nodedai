@@ -176,7 +176,7 @@ def _inject_css(rtl: bool):
       section[data-testid="stSidebar"] > div:first-child,
       section[data-testid="stSidebar"] [data-testid="stSidebarContent"],
       section[data-testid="stSidebar"] .stSidebarContent {{
-        border-left: 1px solid rgba(102,126,234,0.2) !important;
+        border-left: 1px solid rgba(255,255,255,0.1) !important;
         border-right: none !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
@@ -189,7 +189,7 @@ def _inject_css(rtl: bool):
       }}
       section[data-testid="stSidebar"] *::-webkit-scrollbar-thumb,
       section[data-testid="stSidebar"] > div:first-child::-webkit-scrollbar-thumb {{
-        background: rgba(102,126,234,0.35) !important;
+        background: rgba(16,185,129,0.35) !important;
         border-radius: 3px !important;
       }}
       /* Collapsed state: ensure sidebar is fully off-screen to the right */
@@ -247,55 +247,41 @@ def _inject_css(rtl: bool):
     text-align: {ta} !important;
   }}
 
-  /* ── Aurora background ── */
+  /* ── Background (FinSight navy) ── */
   [data-testid="stAppViewContainer"] {{
-    background: linear-gradient(135deg, #0a0a1a 0%, #0d1b2e 40%, #1a0a2e 70%, #0a1a1a 100%) !important;
-  }}
-  [data-testid="stAppViewContainer"]::before {{
-    content: '';
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background:
-      radial-gradient(ellipse at 20% 50%, rgba(102,126,234,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse at 80% 20%, rgba(118,75,162,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse at 60% 80%, rgba(0,200,150,0.04) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
   }}
 
-  /* ── Sidebar glass ── */
+  /* ── Sidebar ── */
   [data-testid="stSidebar"] {{
-    background: rgba(10,10,30,0.88) !important;
-    backdrop-filter: blur(20px) !important;
-    border-right: 1px solid rgba(102,126,234,0.2) !important;
+    background: rgba(0,0,0,0.25) !important;
+    border-right: 1px solid rgba(255,255,255,0.1) !important;
   }}
 
-  /* ── Expanders → glass cards ── */
+  /* ── Expanders → cards ── */
   [data-testid="stExpander"] {{
-    background: rgba(255,255,255,0.04) !important;
-    backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255,255,255,0.09) !important;
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
     border-radius: 16px !important;
     margin-bottom: 10px !important;
     transition: border-color 0.3s, box-shadow 0.3s !important;
   }}
   [data-testid="stExpander"]:hover {{
-    border-color: rgba(102,126,234,0.35) !important;
-    box-shadow: 0 8px 32px rgba(102,126,234,0.12) !important;
+    border-color: rgba(16,185,129,0.35) !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
   }}
 
-  /* ── Metrics glass ── */
+  /* ── Metrics ── */
   [data-testid="stMetric"] {{
-    background: rgba(255,255,255,0.04) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
-    border-radius: 14px !important;
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 16px !important;
     padding: 12px 16px !important;
     transition: transform 0.2s, box-shadow 0.2s !important;
   }}
   [data-testid="stMetric"]:hover {{
     transform: translateY(-2px) !important;
-    box-shadow: 0 4px 20px rgba(102,126,234,0.18) !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
   }}
   [data-testid="stMetricValue"] {{
     color: #a78bfa !important;
@@ -303,51 +289,51 @@ def _inject_css(rtl: bool):
     font-weight: 700 !important;
   }}
 
-  /* ── Buttons ── */
+  /* ── Buttons (FinSight emerald→blue gradient) ── */
   .stButton button {{
-    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    background: linear-gradient(135deg, #10b981, #3b82f6) !important;
     color: white !important;
     border: none !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     font-weight: 600 !important;
     transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s !important;
-    box-shadow: 0 4px 15px rgba(102,126,234,0.28) !important;
+    box-shadow: 0 4px 15px rgba(16,185,129,0.25) !important;
   }}
   .stButton button:hover {{
     opacity: 0.9 !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 6px 20px rgba(102,126,234,0.42) !important;
+    box-shadow: 0 6px 20px rgba(16,185,129,0.4) !important;
   }}
   .stButton button:active {{
     transform: translateY(0) !important;
   }}
 
-  /* ── Inputs glass ── */
+  /* ── Inputs ── */
   [data-testid="stTextInput"] input,
   [data-testid="stNumberInput"] input,
   [data-testid="stTextArea"] textarea {{
     background: rgba(255,255,255,0.06) !important;
     border: 1px solid rgba(255,255,255,0.12) !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     color: white !important;
   }}
   [data-testid="stTextInput"] input:focus,
   [data-testid="stTextArea"] textarea:focus {{
-    border-color: rgba(102,126,234,0.6) !important;
-    box-shadow: 0 0 0 2px rgba(102,126,234,0.18) !important;
+    border-color: rgba(16,185,129,0.6) !important;
+    box-shadow: 0 0 0 2px rgba(16,185,129,0.15) !important;
   }}
 
-  /* ── Progress bar gradient ── */
+  /* ── Progress bar ── */
   [data-testid="stProgressBar"] > div > div {{
-    background: linear-gradient(90deg, #667eea, #00ff88) !important;
+    background: linear-gradient(90deg, #10b981, #3b82f6) !important;
     border-radius: 4px !important;
   }}
 
   /* ── Price drop pulse animation ── */
   @keyframes priceDrop {{
-    0%   {{ box-shadow: 0 0 0 0 rgba(0,255,136,0.5); }}
-    70%  {{ box-shadow: 0 0 0 10px rgba(0,255,136,0); }}
-    100% {{ box-shadow: 0 0 0 0 rgba(0,255,136,0); }}
+    0%   {{ box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }}
+    70%  {{ box-shadow: 0 0 0 10px rgba(16,185,129,0); }}
+    100% {{ box-shadow: 0 0 0 0 rgba(16,185,129,0); }}
   }}
   .price-drop-pulse {{ animation: priceDrop 1.5s ease-out 3; border-radius: 8px; }}
 
@@ -355,34 +341,35 @@ def _inject_css(rtl: bool):
   hr {{ border-color: rgba(255,255,255,0.07) !important; }}
 
   /* ── Typography ── */
-  h1 {{ color: white !important; font-weight: 700 !important; }}
-  h2 {{ color: #e2d9f3 !important; font-weight: 600 !important; }}
-  h3 {{ color: #c4b5fd !important; }}
+  html, body, * {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; }}
+  h1 {{ color: #ffffff !important; font-weight: 700 !important; }}
+  h2 {{ color: #e2e8f0 !important; font-weight: 600 !important; }}
+  h3 {{ color: #cbd5e1 !important; }}
+  p, li, span, label {{ color: #e2e8f0 !important; }}
 
-  /* ── Alert boxes ── */
+  /* ── Alerts ── */
   [data-testid="stAlert"] {{
-    background: rgba(255,255,255,0.04) !important;
+    background: rgba(255,255,255,0.05) !important;
     border-radius: 12px !important;
     border: 1px solid rgba(255,255,255,0.1) !important;
-    backdrop-filter: blur(8px) !important;
   }}
 
   /* ── Scrollbar ── */
   ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
   ::-webkit-scrollbar-track {{ background: rgba(255,255,255,0.02); }}
-  ::-webkit-scrollbar-thumb {{ background: rgba(102,126,234,0.4); border-radius: 3px; }}
-  ::-webkit-scrollbar-thumb:hover {{ background: rgba(102,126,234,0.65); }}
+  ::-webkit-scrollbar-thumb {{ background: rgba(16,185,129,0.4); border-radius: 3px; }}
+  ::-webkit-scrollbar-thumb:hover {{ background: rgba(16,185,129,0.65); }}
 
   /* ── Deal colors ── */
-  .deal-excellent {{ color: #00ff88; font-weight: bold; }}
-  .deal-good      {{ color: #88ff44; }}
-  .deal-average   {{ color: #ffcc00; }}
-  .deal-poor      {{ color: #ff4444; }}
+  .deal-excellent {{ color: #10b981; font-weight: bold; }}
+  .deal-good      {{ color: #34d399; }}
+  .deal-average   {{ color: #f59e0b; }}
+  .deal-poor      {{ color: #f43f5e; }}
 
   /* ── Alert box legacy ── */
   .alert-box {{
-    background: rgba(255,75,75,0.12);
-    border: 1px solid rgba(255,75,75,0.4);
+    background: rgba(244,63,94,0.1);
+    border: 1px solid rgba(244,63,94,0.35);
     border-radius: 10px;
     padding: 12px 16px;
     margin-bottom: 8px;
@@ -390,9 +377,9 @@ def _inject_css(rtl: bool):
 
   /* ── Chat messages ── */
   [data-testid="stChatMessage"] {{
-    background: rgba(255,255,255,0.03) !important;
+    background: rgba(255,255,255,0.04) !important;
     border-radius: 12px !important;
-    border: 1px solid rgba(255,255,255,0.07) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
   }}
 
   /* ── Hide Streamlit chrome ── */
@@ -495,9 +482,9 @@ def _inject_css(rtl: bool):
     btn.title = 'פתח / סגור תפריט';
     btn.style.cssText = [
       'position:fixed', 'top:10px', 'right:10px', 'z-index:99999',
-      'background:#ff6b35', 'border:none', 'border-radius:50px',
+      'background:linear-gradient(135deg,#10b981,#3b82f6)', 'border:none', 'border-radius:50px',
       'padding:8px 16px', 'color:white', 'font-size:1.3rem',
-      'cursor:pointer', 'box-shadow:0 3px 16px rgba(255,107,53,0.6)',
+      'cursor:pointer', 'box-shadow:0 3px 16px rgba(16,185,129,0.5)',
       'line-height:1'
     ].join('!important;') + '!important';
     btn.addEventListener('click', function() {
