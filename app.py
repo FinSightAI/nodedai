@@ -94,6 +94,18 @@ def _inject_pwa():
 (function() {
   var doc = window.parent.document;
 
+  // Google Analytics
+  if (!doc.querySelector('script[src*="G-MPRTN6CJ9K"]')) {
+    var gs = doc.createElement('script');
+    gs.async = true;
+    gs.src = 'https://www.googletagmanager.com/gtag/js?id=G-MPRTN6CJ9K';
+    doc.head.appendChild(gs);
+    window.parent.dataLayer = window.parent.dataLayer || [];
+    window.parent.gtag = function(){window.parent.dataLayer.push(arguments);};
+    window.parent.gtag('js', new Date());
+    window.parent.gtag('config', 'G-MPRTN6CJ9K');
+  }
+
   // Register real SW served by nginx at /sw.js
   if ('serviceWorker' in window.parent.navigator) {
     window.parent.navigator.serviceWorker.register('/sw.js', { scope: '/' })
