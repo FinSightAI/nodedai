@@ -848,6 +848,40 @@ with st.sidebar:
         st.session_state.lang = new_lang
         st.rerun()
 
+    # ── WizeLife Account ──────────────────────────────
+    _wl_plan  = st.session_state.get("wizelife_plan", "free")
+    _wl_email = st.session_state.get("wizelife_email", "")
+    _plan_icon = {"free": "⭐ Free", "pro": "💎 Pro", "yolo": "⚡ YOLO"}.get(_wl_plan, "⭐ Free")
+
+    with st.expander(f"WizeLife — {_plan_icon}", expanded=False):
+        if _wl_email:
+            st.caption(f"מחובר: {_wl_email}")
+            if st.button("התנתק", key="wl_signout"):
+                for k in ("wizelife_plan", "wizelife_email", "wizelife_uid", "wizelife_token"):
+                    st.session_state.pop(k, None)
+                st.rerun()
+        else:
+            _wl_em  = st.text_input("אימייל", key="wl_email_input", placeholder="you@example.com")
+            _wl_pwd = st.text_input("סיסמה", key="wl_pwd_input", type="password")
+            if st.button("כניסה לחשבון WizeLife", key="wl_signin"):
+                if _wl_em and _wl_pwd:
+                    import wizelife_auth as _wla
+                    _res = _wla.sign_in(_wl_em.strip(), _wl_pwd)
+                    if _res["ok"]:
+                        _plan = _wla.get_plan(_res["uid"], _res["id_token"])
+                        st.session_state["wizelife_plan"]  = _plan
+                        st.session_state["wizelife_email"] = _res["email"]
+                        st.session_state["wizelife_uid"]   = _res["uid"]
+                        st.session_state["wizelife_token"] = _res["id_token"]
+                        st.success(f"✅ מחובר | תוכנית: {_plan}")
+                        st.rerun()
+                    else:
+                        st.error(_res["error"])
+                else:
+                    st.warning("יש להזין אימייל וסיסמה")
+            st.caption("💡 5 שאלות AI ביום (Free) · Pro: 20/day · YOLO: 40/day")
+    st.divider()
+
     st.markdown(f"## ✈️ Noded")
     st.markdown(f"*{i18n.t('tagline', _lang)}*")
     st.divider()
@@ -1695,10 +1729,14 @@ elif page in ("💬 סוכן נסיעות AI", "💬 AI Travel Agent"):
             if _reply:
                 st.markdown(_reply)
             else:
-                _reply = _t(
-                    "⚠️ לא הצלחתי לקבל תשובה. בדוק שה-GEMINI_API_KEY מוגדר.",
-                    "⚠️ Could not get a response. Check that GEMINI_API_KEY is set.",
-                )
+                _rl_reason = st.session_state.pop("ai_rate_limit_reason", "")
+                if _rl_reason:
+                    _reply = f"⚠️ {_rl_reason}"
+                else:
+                    _reply = _t(
+                        "⚠️ לא הצלחתי לקבל תשובה. בדוק שה-GEMINI_API_KEY מוגדר.",
+                        "⚠️ Could not get a response. Check that GEMINI_API_KEY is set.",
+                    )
                 st.warning(_reply)
 
         # Append to history (store original user text, not the prompt+context)

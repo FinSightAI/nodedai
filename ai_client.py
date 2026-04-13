@@ -15,11 +15,11 @@ from typing import Optional
 
 _client = None
 
-# ── Per-session rate limiting ──────────────────────────────────────────────────
+# ── Per-session daily rate limiting ───────────────────────────────────────────
 import time as _time
 
-_AI_MAX_PER_HOUR = 30  # max AI calls per session per hour
-_rate_store: dict = {}  # session_id → {"count": int, "reset_at": float}
+_AI_DAILY_LIMITS = {"free": 5, "pro": 20, "yolo": 40}
+_rate_store: dict = {}  # session_id → {"date": "YYYY-MM-DD", "count": int}
 
 
 def _get_session_id() -> str:
@@ -32,18 +32,34 @@ def _get_session_id() -> str:
         return "global"
 
 
-def _check_rate_limit() -> bool:
-    """Returns True if call is allowed, False if rate limit exceeded."""
-    sid = _get_session_id()
-    now = _time.time()
-    entry = _rate_store.get(sid)
-    if not entry or entry["reset_at"] < now:
-        _rate_store[sid] = {"count": 1, "reset_at": now + 3600}
-        return True
-    if entry["count"] >= _AI_MAX_PER_HOUR:
-        return False
+def _get_plan_from_session() -> str:
+    """Read plan from Streamlit session state if available."""
+    try:
+        import streamlit as _st
+        return _st.session_state.get("wizelife_plan", "free")
+    except Exception:
+        return "free"
+
+
+def _check_rate_limit() -> tuple[bool, str]:
+    """Returns (allowed, reason). reason is non-empty when denied."""
+    plan  = _get_plan_from_session()
+    limit = _AI_DAILY_LIMITS.get(plan, _AI_DAILY_LIMITS["free"])
+    sid   = _get_session_id()
+    today = _time.strftime("%Y-%m-%d")
+    entry = _rate_store.get(sid, {"date": "", "count": 0})
+    if entry["date"] != today:
+        entry = {"date": today, "count": 0}
+    if entry["count"] >= limit:
+        upgrade = (
+            " שדרג ל-Pro (wizelife.ai) ל-20 ביום." if plan == "free"
+            else " שדרג ל-YOLO ל-40 ביום." if plan == "pro"
+            else ""
+        )
+        return False, f"הגעת למגבלת {limit} שאלות AI יומיות.{upgrade}"
     entry["count"] += 1
-    return True
+    _rate_store[sid] = entry
+    return True, ""
 
 
 def _get_client():
@@ -71,8 +87,14 @@ def ask(
     Send a prompt to Gemini and return the text response.
     Returns None if no API key or on error.
     """
-    if not _check_rate_limit():
-        print("[ai_client] Rate limit exceeded for this session")
+    allowed, reason = _check_rate_limit()
+    if not allowed:
+        print(f"[ai_client] Rate limit: {reason}")
+        try:
+            import streamlit as _st
+            _st.session_state["ai_rate_limit_reason"] = reason
+        except Exception:
+            pass
         return None
 
     client = _get_client()
@@ -159,8 +181,14 @@ def chat_turn(
     history: list of {"role": "user"|"model", "parts": [{"text": "..."}]}
     Returns assistant reply text, or None on error.
     """
-    if not _check_rate_limit():
-        print("[ai_client] Rate limit exceeded for this session")
+    allowed, reason = _check_rate_limit()
+    if not allowed:
+        print(f"[ai_client] Rate limit: {reason}")
+        try:
+            import streamlit as _st
+            _st.session_state["ai_rate_limit_reason"] = reason
+        except Exception:
+            pass
         return None
 
     client = _get_client()
