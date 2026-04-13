@@ -18,6 +18,6 @@ RUN chmod +x /app/start.sh
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=15s \
-  CMD curl -f http://localhost:${PORT:-8080}/manifest.json || exit 1
+  CMD curl -f http://localhost:${PORT:-8080}/health || exit 1
 
 CMD ["/app/start.sh"]

@@ -1,20 +1,16 @@
 #!/bin/sh
 # Replace __PORT__ placeholder with actual $PORT (Render sets this)
 PORT=${PORT:-8080}
-STREAMLIT_PORT=8501
+UVICORN_PORT=8000
 
 sed "s/__PORT__/$PORT/g" /app/nginx.conf > /tmp/nginx.conf
 
-# Start Streamlit in background
-streamlit run app.py \
-  --server.port=$STREAMLIT_PORT \
-  --server.address=127.0.0.1 \
-  --server.headless=true \
-  --browser.gatherUsageStats=false &
+# Start FastAPI/uvicorn in background
+uvicorn server:app --host 127.0.0.1 --port $UVICORN_PORT --workers 1 &
 
-# Wait for Streamlit to be ready
+# Wait for uvicorn to be ready
 for i in $(seq 1 30); do
-  curl -sf http://127.0.0.1:$STREAMLIT_PORT/_stcore/health > /dev/null 2>&1 && break
+  curl -sf http://127.0.0.1:$UVICORN_PORT/health > /dev/null 2>&1 && break
   sleep 1
 done
 
