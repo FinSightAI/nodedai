@@ -1,1180 +1,985 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Noded — AI Travel Intelligence</title>
+<title>Noded ✈️ — סוכן מחירי נסיעות חכם</title>
 <style>
-/* ── Reset & Base ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:       #050810;
-  --surface:  #0d1117;
-  --surface2: #161b27;
-  --border:   rgba(255,255,255,0.07);
-  --text:     #e2e8f0;
-  --muted:    #6b7280;
-  --accent:   #6366f1;
-  --accent2:  #8b5cf6;
-  --green:    #22c55e;
-  --red:      #ef4444;
-  --amber:    #f59e0b;
-  --sidebar-w: 220px;
+  --bg:      #050810;
+  --surf:    #0d1117;
+  --surf2:   #161b27;
+  --border:  rgba(255,255,255,0.07);
+  --text:    #e2e8f0;
+  --muted:   #6b7280;
+  --accent:  #6366f1;
+  --green:   #22c55e;
+  --red:     #ef4444;
+  --amber:   #f59e0b;
+  --sw: 230px;
 }
-html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
-a { color: inherit; text-decoration: none; }
-button { cursor: pointer; font-family: inherit; }
-input, textarea, select { font-family: inherit; }
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2a3040; border-radius: 99px; }
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;font-family:inherit;}
+input,textarea,select{font-family:inherit;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:#2a3040;border-radius:99px;}
 
-/* ── Layout ─────────────────────────────────────────────────── */
-#app { display: flex; height: 100vh; overflow: hidden; }
+/* Layout */
+#app{display:flex;height:100vh;overflow:hidden;}
 
-/* ── Sidebar ────────────────────────────────────────────────── */
-#sidebar {
-  width: var(--sidebar-w); flex-shrink: 0;
-  background: var(--surface); border-right: 1px solid var(--border);
-  display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden;
+/* Sidebar */
+#sidebar{width:var(--sw);flex-shrink:0;background:var(--surf);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;transition:transform .25s;}
+.s-logo{padding:18px 14px 14px;font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:8px;}
+.s-logo span{font-size:1.3rem;}
+.nav-sec{padding:6px 0;}
+.nav-lbl{padding:4px 14px 2px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:.82rem;color:#94a3b8;cursor:pointer;border:none;background:none;width:100%;text-align:right;transition:background .15s,color .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nav-btn:hover{background:rgba(255,255,255,.04);color:var(--text);}
+.nav-btn.active{background:rgba(99,102,241,.15);color:#a5b4fc;}
+.nav-btn .ico{font-size:.95rem;width:18px;text-align:center;flex-shrink:0;}
+.s-footer{margin-top:auto;padding:10px 14px;border-top:1px solid var(--border);}
+.plan-btn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:6px 10px;border-radius:99px;font-size:.74rem;font-weight:600;background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3);cursor:pointer;transition:background .15s;}
+.plan-btn:hover{background:rgba(99,102,241,.25);}
+.quota-info{font-size:.68rem;color:var(--muted);text-align:center;padding:3px 0 7px;}
+
+/* Main */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;border-bottom:1px solid var(--border);background:var(--surf);flex-shrink:0;}
+.topbar-title{font-size:.95rem;font-weight:700;}
+#content{flex:1;overflow-y:auto;padding:20px;}
+
+/* Pages */
+.page{display:none;}
+.page.active{display:block;}
+#page-chat.active{display:flex;}
+
+/* Cards */
+.card{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:18px;}
+.card-title{font-size:.88rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+
+/* Grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+@media(max-width:900px){.g4{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:1fr 1fr;}.g2{grid-template-columns:1fr;}}
+
+/* Stat */
+.stat{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
+.stat-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px;}
+.stat-val{font-size:1.55rem;font-weight:800;letter-spacing:-.5px;}
+.up{color:var(--green);}.down{color:var(--red);}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.81rem;}
+th{text-align:right;padding:7px 11px;color:var(--muted);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);}
+td{padding:10px 11px;border-bottom:1px solid rgba(255,255,255,.04);}
+tr:hover td{background:rgba(255,255,255,.02);}
+tr:last-child td{border-bottom:none;}
+
+/* Tags */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:600;}
+.t-flight{background:rgba(99,102,241,.15);color:#a5b4fc;}
+.t-hotel{background:rgba(34,197,94,.12);color:#4ade80;}
+.t-apt{background:rgba(245,158,11,.12);color:#fcd34d;}
+.t-pkg{background:rgba(239,68,68,.12);color:#f87171;}
+.t-on{background:rgba(34,197,94,.1);color:#4ade80;}
+.t-off{background:rgba(107,114,128,.1);color:#9ca3af;}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:.8rem;font-weight:600;border:none;cursor:pointer;transition:all .15s;}
+.btn-p{background:var(--accent);color:#fff;}.btn-p:hover{background:#5254cc;}
+.btn-g{background:var(--surf2);color:var(--text);border:1px solid var(--border);}.btn-g:hover{background:#1e2435;}
+.btn-d{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);}.btn-d:hover{background:rgba(239,68,68,.25);}
+.btn-sm{padding:4px 9px;font-size:.74rem;}
+.btn-ico{padding:5px 7px;}
+
+/* Form */
+.fg{margin-bottom:12px;}
+label{display:block;font-size:.76rem;color:var(--muted);margin-bottom:4px;font-weight:500;}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=password],select,textarea{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-size:.84rem;outline:none;transition:border-color .15s;direction:inherit;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:70px;}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:600px){.f2{grid-template-columns:1fr;}}
+
+/* Overlay */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:26px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.modal-hdr h3{font-size:.95rem;font-weight:700;}
+.x-btn{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:1px 6px;border-radius:4px;}.x-btn:hover{color:var(--text);background:var(--surf2);}
+
+/* Chat */
+#page-chat{height:calc(100vh - 52px);flex-direction:column;}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+.bubble{max-width:72%;padding:9px 13px;border-radius:12px;font-size:.86rem;line-height:1.55;}
+.bubble.user{background:var(--accent);color:#fff;align-self:flex-start;border-bottom-left-radius:4px;}
+.bubble.ai{background:var(--surf2);color:var(--text);align-self:flex-end;border-bottom-right-radius:4px;}
+.bubble.ai.typing::after{content:"▋";animation:blink .7s infinite;}
+@keyframes blink{50%{opacity:0;}}
+.chat-bar{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:7px;flex-shrink:0;}
+.chat-bar textarea{flex:1;background:var(--surf2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;font-size:.86rem;resize:none;height:40px;outline:none;direction:rtl;}
+.chat-bar textarea:focus{border-color:var(--accent);}
+
+/* AI result box */
+.ai-box{background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:.85rem;line-height:1.65;min-height:80px;direction:rtl;white-space:pre-wrap;}
+.ai-placeholder{color:var(--muted);}
+
+/* Price chart */
+.p-chart{height:110px;display:flex;align-items:flex-end;gap:3px;padding:6px 0;}
+.p-bar{flex:1;background:rgba(99,102,241,.4);border-radius:3px 3px 0 0;min-height:4px;transition:background .15s;position:relative;}
+.p-bar:hover{background:var(--accent);}
+.p-bar::after{content:attr(data-p);position:absolute;top:-20px;right:50%;transform:translateX(50%);background:var(--surf);border:1px solid var(--border);padding:1px 5px;border-radius:4px;font-size:.64rem;white-space:nowrap;opacity:0;pointer-events:none;}
+.p-bar:hover::after{opacity:1;}
+
+/* Toast */
+#toasts{position:fixed;bottom:20px;left:20px;z-index:200;display:flex;flex-direction:column;gap:7px;}
+.toast{background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:9px 15px;font-size:.8rem;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:slin .2s ease;min-width:200px;}
+.toast.ok{border-color:rgba(34,197,94,.4);}.toast.err{border-color:rgba(239,68,68,.4);}
+@keyframes slin{from{transform:translateX(-20px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* Spinner */
+.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:rot .6s linear infinite;vertical-align:middle;}
+@keyframes rot{to{transform:rotate(360deg);}}
+.loading{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.84rem;padding:12px 0;}
+
+/* Section header */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.sh h2{font-size:.97rem;font-weight:700;}
+
+/* Mobile */
+@media(max-width:700px){
+  #sidebar{position:fixed;right:-230px;top:0;bottom:0;z-index:50;transition:right .25s;}
+  #sidebar.open{right:0;}
+  .mob-btn{display:flex!important;}
 }
-.sidebar-logo {
-  padding: 20px 16px 16px;
-  font-size: 1.1rem; font-weight: 800; letter-spacing: -0.5px;
-  display: flex; align-items: center; gap: 8px;
-}
-.sidebar-logo span { font-size: 1.3rem; }
-.nav-section { padding: 8px 0; }
-.nav-label { padding: 4px 16px 2px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--muted); }
-.nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 16px; font-size: 0.85rem; color: #94a3b8;
-  border-radius: 0; transition: background 0.15s, color 0.15s;
-  cursor: pointer; border: none; background: none; width: 100%; text-align: left;
-}
-.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
-.nav-item.active { background: rgba(99,102,241,0.15); color: #a5b4fc; }
-.nav-item .icon { font-size: 1rem; width: 18px; text-align: center; }
-.sidebar-footer { margin-top: auto; padding: 12px 16px; border-top: 1px solid var(--border); }
-.plan-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 4px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 600;
-  background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3);
-  cursor: pointer; width: 100%; justify-content: center; transition: background 0.15s;
-}
-.plan-badge:hover { background: rgba(99,102,241,0.25); }
+.mob-btn{display:none;background:none;border:none;color:var(--text);font-size:1.25rem;padding:4px 7px;cursor:pointer;}
 
-/* ── Main ────────────────────────────────────────────────────── */
-#main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px; height: 54px; border-bottom: 1px solid var(--border);
-  background: var(--surface); flex-shrink: 0;
-}
-.topbar-title { font-size: 1rem; font-weight: 700; }
-.topbar-actions { display: flex; gap: 8px; }
-.btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
-  border: none; transition: all 0.15s;
-}
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { background: #5254cc; }
-.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
-.btn-ghost:hover { background: #1e2435; }
-.btn-danger { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-.btn-danger:hover { background: rgba(239,68,68,0.25); }
-.btn-sm { padding: 4px 10px; font-size: 0.75rem; }
-.btn-icon { padding: 6px 8px; }
-#content { flex: 1; overflow-y: auto; padding: 24px; }
+/* WizeLife plan colors */
+.p-free{color:#94a3b8;}.p-pro{color:#a5b4fc;}.p-yolo{color:#fcd34d;}
 
-/* ── Pages ───────────────────────────────────────────────────── */
-.page { display: none; }
-.page.active { display: block; }
-
-/* ── Cards ───────────────────────────────────────────────────── */
-.card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 12px; padding: 20px;
-}
-.card-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
-
-/* ── Grid ────────────────────────────────────────────────────── */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-@media (max-width: 900px) { .grid-4 { grid-template-columns: 1fr 1fr; } .grid-3 { grid-template-columns: 1fr 1fr; } .grid-2 { grid-template-columns: 1fr; } }
-
-/* ── Stat cards ──────────────────────────────────────────────── */
-.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; }
-.stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
-.stat-value { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; }
-.stat-sub { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
-.up { color: var(--green); }
-.down { color: var(--red); }
-
-/* ── Table ───────────────────────────────────────────────────── */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-th { text-align: left; padding: 8px 12px; color: var(--muted); font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid var(--border); }
-td { padding: 11px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
-tr:hover td { background: rgba(255,255,255,0.02); }
-tr:last-child td { border-bottom: none; }
-
-/* ── Tags ────────────────────────────────────────────────────── */
-.tag {
-  display: inline-flex; align-items: center;
-  padding: 2px 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 600;
-}
-.tag-flight  { background: rgba(99,102,241,0.15); color: #a5b4fc; }
-.tag-hotel   { background: rgba(34,197,94,0.12); color: #4ade80; }
-.tag-apt     { background: rgba(245,158,11,0.12); color: #fcd34d; }
-.tag-package { background: rgba(239,68,68,0.12); color: #f87171; }
-.tag-enabled { background: rgba(34,197,94,0.1); color: #4ade80; }
-.tag-disabled{ background: rgba(107,114,128,0.1); color: #9ca3af; }
-
-/* ── Form elements ───────────────────────────────────────────── */
-.form-group { margin-bottom: 14px; }
-label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
-input[type=text], input[type=number], input[type=date], input[type=email], input[type=password], select, textarea {
-  width: 100%; background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 0.85rem;
-  outline: none; transition: border-color 0.15s;
-}
-input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-textarea { resize: vertical; min-height: 80px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
-
-/* ── Drawer / Modal ──────────────────────────────────────────── */
-.overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center;
-}
-.overlay.open { display: flex; }
-.modal {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 28px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
-}
-.modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-.close-btn { background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
-.close-btn:hover { color: var(--text); background: var(--surface2); }
-
-/* ── Chat ────────────────────────────────────────────────────── */
-#chat-page { display: none; height: 100%; flex-direction: column; }
-#chat-page.active { display: flex; }
-.chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.chat-bubble { max-width: 72%; padding: 10px 14px; border-radius: 12px; font-size: 0.87rem; line-height: 1.55; }
-.chat-bubble.user { background: var(--accent); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
-.chat-bubble.ai { background: var(--surface2); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
-.chat-bubble.ai.typing::after { content: "▋"; animation: blink 0.7s infinite; }
-@keyframes blink { 50% { opacity: 0; } }
-.chat-input-area {
-  padding: 12px 16px; border-top: 1px solid var(--border); display: flex; gap: 8px; flex-shrink: 0;
-}
-.chat-input-area textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 9px 13px; border-radius: 10px; font-size: 0.87rem; resize: none; height: 42px; outline: none; }
-.chat-input-area textarea:focus { border-color: var(--accent); }
-.chat-tools { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
-
-/* ── Empty state ─────────────────────────────────────────────── */
-.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
-.empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.5; }
-.empty-state p { font-size: 0.9rem; }
-
-/* ── Toast ───────────────────────────────────────────────────── */
-#toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
-.toast {
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 10px; padding: 10px 16px; font-size: 0.82rem;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4); animation: slideIn 0.2s ease;
-  display: flex; align-items: center; gap: 8px; min-width: 220px;
-}
-.toast.success { border-color: rgba(34,197,94,0.4); }
-.toast.error   { border-color: rgba(239,68,68,0.4); }
-@keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-/* ── Loader ──────────────────────────────────────────────────── */
-.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── Price chart ─────────────────────────────────────────────── */
-.price-chart { height: 120px; display: flex; align-items: flex-end; gap: 3px; padding: 8px 0; }
-.price-bar { flex: 1; background: rgba(99,102,241,0.4); border-radius: 3px 3px 0 0; min-height: 4px; transition: background 0.15s; position: relative; }
-.price-bar:hover { background: var(--accent); }
-.price-bar::after { content: attr(data-price); position: absolute; top: -22px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; white-space: nowrap; opacity: 0; pointer-events: none; }
-.price-bar:hover::after { opacity: 1; }
-
-/* ── WizeLife auth modal ─────────────────────────────────────── */
-.wl-plan-free  { color: #94a3b8; }
-.wl-plan-pro   { color: #a5b4fc; }
-.wl-plan-yolo  { color: #fcd34d; }
-
-/* ── Section header ──────────────────────────────────────────── */
-.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.section-header h2 { font-size: 1rem; font-weight: 700; }
-
-/* ── Toggle ──────────────────────────────────────────────────── */
-.toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
-.toggle input { opacity: 0; width: 0; height: 0; }
-.toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #374151; border-radius: 99px; transition: 0.2s; }
-.toggle-slider::before { content: ""; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
-.toggle input:checked + .toggle-slider { background: var(--accent); }
-.toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
-
-/* ── Progress ────────────────────────────────────────────────── */
-.progress-bar { height: 4px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.5s ease; }
-
-/* ── Responsive sidebar ──────────────────────────────────────── */
-@media (max-width: 700px) {
-  #sidebar { position: fixed; left: -220px; top: 0; bottom: 0; z-index: 50; transition: left 0.25s; }
-  #sidebar.open { left: 0; }
-  .mobile-menu-btn { display: flex !important; }
-  #main { width: 100%; }
-}
-.mobile-menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 1.3rem; padding: 4px 8px; cursor: pointer; }
-
-/* ── AI quota badge ──────────────────────────────────────────── */
-.quota-info { font-size: 0.7rem; color: var(--muted); text-align: center; padding: 4px 0 8px; }
+/* Warn box */
+.warn-box{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:12px 14px;font-size:.8rem;color:#d1d5db;line-height:1.5;}
+.warn-title{color:#fcd34d;font-weight:700;margin-bottom:5px;}
 </style>
 </head>
 <body>
-
 <div id="app">
-  <!-- ── Sidebar ── -->
-  <nav id="sidebar">
-    <div class="sidebar-logo"><span>✈️</span> Noded</div>
 
-    <div class="nav-section">
-      <div class="nav-label">Overview</div>
-      <button class="nav-item active" data-page="dashboard"><span class="icon">📊</span> Dashboard</button>
-      <button class="nav-item" data-page="watches"><span class="icon">👁</span> Watch List</button>
-      <button class="nav-item" data-page="history"><span class="icon">📈</span> Price History</button>
+<!-- ══ SIDEBAR ══ -->
+<nav id="sidebar">
+  <div class="s-logo"><span>✈️</span> Noded</div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">ראשי</div>
+    <button class="nav-btn active" data-page="dashboard"><span class="ico">🏠</span>לוח בקרה</button>
+    <button class="nav-btn" data-page="watches"><span class="ico">👁</span>רשימת מעקב</button>
+    <button class="nav-btn" data-page="history"><span class="ico">📊</span>היסטוריית מחירים</button>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">AI — כלים</div>
+    <button class="nav-btn" data-page="chat"><span class="ico">💬</span>סוכן נסיעות AI</button>
+    <button class="nav-btn" data-page="wait-or-buy"><span class="ico">🔮</span>כדאי לחכות?</button>
+    <button class="nav-btn" data-page="ai-opps"><span class="ico">🌟</span>הזדמנויות AI</button>
+    <button class="nav-btn" data-page="deal-hunter"><span class="ico">🔥</span>ציד דילים</button>
+    <button class="nav-btn" data-page="surprise"><span class="ico">🎲</span>יעד מפתיע</button>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">תכנון נסיעה</div>
+    <button class="nav-btn" data-page="trip-planner"><span class="ico">🗺️</span>תכנן טיול</button>
+    <button class="nav-btn" data-page="multi-city"><span class="ico">🌍</span>מסלול מרובה ערים</button>
+    <button class="nav-btn" data-page="stopovers"><span class="ico">🔁</span>עצירות חינם</button>
+    <button class="nav-btn" data-page="flexible-dates"><span class="ico">📅</span>תאריכים גמישים</button>
+    <button class="nav-btn" data-page="true-cost"><span class="ico">💰</span>עלות אמיתית</button>
+    <button class="nav-btn" data-page="points-vs-cash"><span class="ico">💳</span>נקודות vs מזומן</button>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">ניתוח & חקר</div>
+    <button class="nav-btn" data-page="predict"><span class="ico">📈</span>חיזוי מחיר</button>
+    <button class="nav-btn" data-page="deal-insights"><span class="ico">📊</span>תובנות ודפוסים</button>
+    <button class="nav-btn" data-page="price-dna"><span class="ico">🧬</span>Price DNA</button>
+    <button class="nav-btn" data-page="competitor"><span class="ico">🔍</span>השוואת אתרים</button>
+    <button class="nav-btn" data-page="sentiment"><span class="ico">📰</span>סנטימנט & חדשות</button>
+    <button class="nav-btn" data-page="rss"><span class="ico">📡</span>RSS & Reddit</button>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">כלים</div>
+    <button class="nav-btn" data-page="visa"><span class="ico">🛂</span>בדיקת ויזה</button>
+    <button class="nav-btn" data-page="hidden-city"><span class="ico">🕵️</span>Hidden City</button>
+    <button class="nav-btn" data-page="kiwi"><span class="ico">🔍</span>Kiwi טיסות</button>
+    <button class="nav-btn" data-page="exchange"><span class="ico">💱</span>שערי חליפין</button>
+  </div>
+
+  <div class="nav-sec">
+    <div class="nav-lbl">מערכת</div>
+    <button class="nav-btn" data-page="alerts"><span class="ico">🎯</span>כללי התראה</button>
+    <button class="nav-btn" data-page="settings"><span class="ico">⚙️</span>הגדרות</button>
+  </div>
+
+  <div class="s-footer">
+    <div class="quota-info" id="quota-display">תוכנית: חינמי</div>
+    <button class="plan-btn" onclick="openWL()"><span>⭐</span><span id="plan-lbl">חינמי</span></button>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<div id="main">
+  <header class="topbar">
+    <div style="display:flex;align-items:center;gap:9px;">
+      <button class="mob-btn" onclick="toggleSidebar()">☰</button>
+      <span class="topbar-title" id="topbar-title">לוח בקרה</span>
     </div>
+    <div id="topbar-btns"></div>
+  </header>
 
-    <div class="nav-section">
-      <div class="nav-label">AI Tools</div>
-      <button class="nav-item" data-page="chat"><span class="icon">💬</span> AI Chat</button>
-      <button class="nav-item" data-page="deal-hunter"><span class="icon">🎯</span> Deal Hunter</button>
-      <button class="nav-item" data-page="hidden-city"><span class="icon">🗺</span> Hidden City</button>
-      <button class="nav-item" data-page="price-dna"><span class="icon">🧬</span> Price DNA</button>
-    </div>
+  <div id="content">
 
-    <div class="nav-section">
-      <div class="nav-label">Research</div>
-      <button class="nav-item" data-page="visa"><span class="icon">🛂</span> Visa Check</button>
-      <button class="nav-item" data-page="exchange"><span class="icon">💱</span> Exchange Rates</button>
-      <button class="nav-item" data-page="sentiment"><span class="icon">📰</span> Market Pulse</button>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-label">System</div>
-      <button class="nav-item" data-page="alerts"><span class="icon">🔔</span> Alerts</button>
-      <button class="nav-item" data-page="settings"><span class="icon">⚙️</span> Settings</button>
-    </div>
-
-    <div class="sidebar-footer">
-      <div class="quota-info" id="quota-display">AI: — / — today</div>
-      <button class="plan-badge" onclick="openWizeLife()">
-        <span>⭐</span> <span id="plan-label">Free Plan</span>
-      </button>
-    </div>
-  </nav>
-
-  <!-- ── Main ── -->
-  <div id="main">
-    <header class="topbar">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
-        <span class="topbar-title" id="topbar-title">Dashboard</span>
+    <!-- ══ לוח בקרה ══ -->
+    <div class="page active" id="page-dashboard">
+      <div class="g4" style="margin-bottom:16px;">
+        <div class="stat"><div class="stat-lbl">מעקבים פעילים</div><div class="stat-val" id="s-watches">—</div></div>
+        <div class="stat"><div class="stat-lbl">המחיר הנמוך ביותר</div><div class="stat-val down" id="s-low">—</div></div>
+        <div class="stat"><div class="stat-lbl">ירידות מחיר</div><div class="stat-val up" id="s-drops">—</div></div>
+        <div class="stat"><div class="stat-lbl">AI שאילתות היום</div><div class="stat-val" id="s-ai">—</div></div>
       </div>
-      <div class="topbar-actions" id="topbar-actions"></div>
-    </header>
-    <div id="content">
-
-      <!-- ══ DASHBOARD ══ -->
-      <div class="page active" id="page-dashboard">
-        <div class="grid-4" style="margin-bottom:20px;" id="stats-row">
-          <div class="stat-card"><div class="stat-label">Active Watches</div><div class="stat-value" id="stat-watches">—</div></div>
-          <div class="stat-card"><div class="stat-label">Lowest Price Found</div><div class="stat-value down" id="stat-low">—</div></div>
-          <div class="stat-card"><div class="stat-label">Price Drops</div><div class="stat-value up" id="stat-drops">—</div></div>
-          <div class="stat-card"><div class="stat-label">AI Queries Today</div><div class="stat-value" id="stat-ai">—</div></div>
-        </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-title">📋 Recent Watches</div>
-            <div id="dashboard-watches-list">
-              <div class="empty-state"><div class="icon">👁</div><p>No watches yet.<br>Add one to get started.</p></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">📰 Market Pulse</div>
-            <div id="dashboard-sentiment" style="font-size:0.85rem;line-height:1.6;color:#94a3b8;min-height:80px;">
-              <div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div> Loading…</div>
-            </div>
-            <button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="loadSentiment('')">Refresh</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ WATCHES ══ -->
-      <div class="page" id="page-watches">
-        <div class="section-header">
-          <h2>Watch List</h2>
-          <button class="btn btn-primary" onclick="openAddWatch()">+ Add Watch</button>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">📋 מעקבים אחרונים</div>
+          <div id="db-watches"><div class="loading"><div class="spin"></div>טוען…</div></div>
         </div>
         <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Name</th><th>Category</th><th>Destination</th><th>Last Price</th><th>Lowest</th><th>Status</th><th>Actions</th></tr></thead>
-              <tbody id="watches-table-body">
-                <tr><td colspan="7"><div class="empty-state" style="padding:30px;"><div class="icon">👁</div><p>No watches yet</p></div></td></tr>
-              </tbody>
-            </table>
-          </div>
+          <div class="card-title">📰 סנטימנט שוק</div>
+          <div id="db-sentiment"><div class="loading"><div class="spin"></div>טוען…</div></div>
+          <button class="btn btn-g btn-sm" style="margin-top:10px;" onclick="loadSentiment('')">🔄 רענן</button>
         </div>
       </div>
+    </div>
 
-      <!-- ══ HISTORY ══ -->
-      <div class="page" id="page-history">
-        <div class="section-header">
-          <h2>Price History</h2>
+    <!-- ══ רשימת מעקב ══ -->
+    <div class="page" id="page-watches">
+      <div class="sh"><h2>👁 רשימת מעקב</h2><button class="btn btn-p" onclick="openAddWatch()">+ הוסף מעקב</button></div>
+      <div class="card">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>שם</th><th>קטגוריה</th><th>יעד</th><th>מחיר אחרון</th><th>הנמוך</th><th>סטטוס</th><th>פעולות</th></tr></thead>
+            <tbody id="watches-tbody"></tbody>
+          </table>
         </div>
-        <div class="card" style="margin-bottom:16px;">
-          <div class="form-row">
-            <div class="form-group" style="margin:0;">
-              <label>Select Watch Item</label>
-              <select id="history-watch-select" onchange="loadHistory()">
-                <option value="">— Select —</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin:0;">
-              <label>Records</label>
-              <select id="history-limit" onchange="loadHistory()">
-                <option value="30">Last 30</option>
-                <option value="60" selected>Last 60</option>
-                <option value="100">Last 100</option>
-              </select>
-            </div>
-          </div>
+      </div>
+    </div>
+
+    <!-- ══ היסטוריית מחירים ══ -->
+    <div class="page" id="page-history">
+      <div class="sh"><h2>📊 היסטוריית מחירים</h2></div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="f2">
+          <div class="fg" style="margin:0;"><label>בחר מעקב</label><select id="hist-sel" onchange="loadHistory()"><option value="">— בחר —</option></select></div>
+          <div class="fg" style="margin:0;"><label>כמות רשומות</label><select id="hist-lim" onchange="loadHistory()"><option value="30">30 אחרונות</option><option value="60" selected>60 אחרונות</option><option value="100">100 אחרונות</option></select></div>
         </div>
-        <div class="grid-4" style="margin-bottom:16px;" id="stats-cards">
-          <div class="stat-card"><div class="stat-label">Current</div><div class="stat-value" id="h-current">—</div></div>
-          <div class="stat-card"><div class="stat-label">Lowest</div><div class="stat-value down" id="h-low">—</div></div>
-          <div class="stat-card"><div class="stat-label">Highest</div><div class="stat-value up" id="h-high">—</div></div>
-          <div class="stat-card"><div class="stat-label">Average</div><div class="stat-value" id="h-avg">—</div></div>
+      </div>
+      <div class="g4" style="margin-bottom:14px;">
+        <div class="stat"><div class="stat-lbl">נוכחי</div><div class="stat-val" id="h-cur">—</div></div>
+        <div class="stat"><div class="stat-lbl">הנמוך</div><div class="stat-val down" id="h-low">—</div></div>
+        <div class="stat"><div class="stat-lbl">הגבוה</div><div class="stat-val up" id="h-high">—</div></div>
+        <div class="stat"><div class="stat-lbl">ממוצע</div><div class="stat-val" id="h-avg">—</div></div>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-title">מגמת מחיר</div>
+        <div class="p-chart" id="p-chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">רשומות</div>
+        <div class="tbl-wrap"><table><thead><tr><th>תאריך</th><th>מחיר</th><th>מטבע</th><th>מקור</th></tr></thead><tbody id="hist-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ══ צ'אט AI ══ -->
+    <div class="page" id="page-chat" style="height:calc(100vh - 52px);flex-direction:column;">
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="bubble ai">✈️ שלום! אני סוכן הנסיעות החכם שלך. שאל אותי על טיסות, מלונות, ויזות, דילים ועוד.</div>
+      </div>
+      <div class="chat-bar">
+        <textarea id="chat-in" placeholder="שאל על טיסות, דילים, ויזות…" onkeydown="chatKey(event)" dir="rtl"></textarea>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <label style="display:flex;align-items:center;gap:4px;font-size:.73rem;color:var(--muted);cursor:pointer;margin:0;"><input type="checkbox" id="web-tog" style="width:auto;accent-color:var(--accent);"> אינטרנט</label>
+          <button class="btn btn-p btn-ico" onclick="sendChat()">➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ כדאי לחכות? ══ -->
+    <div class="page" id="page-wait-or-buy">
+      <div class="sh"><h2>🔮 כדאי לחכות?</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">פרטי הטיסה / מלון</div>
+          <div class="fg"><label>מסלול ויעד</label><input type="text" id="wob-q" placeholder="למשל: טיסה TLV → NYC בינואר 2026, מחיר כיום 800$"></div>
+          <button class="btn btn-p" onclick="runAI('wait-or-buy','wob-q','wob-res')" id="wob-btn">🔮 נתח</button>
+        </div>
+        <div class="card"><div class="card-title">ניתוח AI</div><div class="ai-box ai-placeholder" id="wob-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ הזדמנויות AI ══ -->
+    <div class="page" id="page-ai-opps">
+      <div class="sh"><h2>🌟 הזדמנויות AI</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>יעד / מוצא (אופציונלי)</label><input type="text" id="opps-q" placeholder="למשל: טיסות מתל אביב, אירופה, כל מקום"></div>
+          <button class="btn btn-p" onclick="runAI('ai-opps','opps-q','opps-res')" id="opps-btn">🌟 חפש הזדמנויות</button>
+        </div>
+        <div class="card"><div class="card-title">הזדמנויות עכשיו</div><div class="ai-box ai-placeholder" id="opps-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ ציד דילים ══ -->
+    <div class="page" id="page-deal-hunter">
+      <div class="sh"><h2>🔥 ציד דילים</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>נקודת מוצא</label><input type="text" id="dh-orig" placeholder="למשל: TLV, ת&quot;א, תל אביב"></div>
+          <div class="fg"><label>תקציב מקסימלי (USD)</label><input type="number" id="dh-budget" placeholder="למשל: 500"></div>
+          <div class="fg"><label>תאריכים</label><input type="text" id="dh-dates" placeholder="למשל: ינואר 2026, גמיש"></div>
+          <div class="fg"><label>העדפות</label><textarea id="dh-prefs" placeholder="למשל: חוף ים, מזג אוויר חם, 7-10 ימים, טיסה ישירה"></textarea></div>
+          <button class="btn btn-p" onclick="runDealHunter()" id="dh-btn">🔥 צוד דילים</button>
+        </div>
+        <div class="card"><div class="card-title">תוצאות</div><div class="ai-box ai-placeholder" id="dh-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ יעד מפתיע ══ -->
+    <div class="page" id="page-surprise">
+      <div class="sh"><h2>🎲 יעד מפתיע</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>תקציב</label><input type="text" id="surp-budget" placeholder="למשל: 500 USD, 1500 שקל"></div>
+          <div class="fg"><label>העדפות (אופציונלי)</label><textarea id="surp-prefs" placeholder="למשל: אוהב טבע, מאסיל הומים, חופשה רומנטית"></textarea></div>
+          <button class="btn btn-p" onclick="runSurprise()" id="surp-btn">🎲 הפתע אותי!</button>
+        </div>
+        <div class="card"><div class="card-title">יעדים מפתיעים</div><div class="ai-box ai-placeholder" id="surp-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ תכנן טיול ══ -->
+    <div class="page" id="page-trip-planner">
+      <div class="sh"><h2>🗺️ תכנן טיול</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>פרטי הטיול</label><textarea id="tp-q" placeholder="למשל: 10 ימים בטוקיו ועוד 3 ימים בקיוטו, זוג, תקציב 3000$, ינואר 2026" style="min-height:100px;"></textarea></div>
+          <button class="btn btn-p" onclick="runAI('trip-planner','tp-q','tp-res')" id="tp-btn">🗺️ תכנן</button>
+        </div>
+        <div class="card"><div class="card-title">תוכנית הטיול</div><div class="ai-box ai-placeholder" id="tp-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ מסלול מרובה ערים ══ -->
+    <div class="page" id="page-multi-city">
+      <div class="sh"><h2>🌍 מסלול מרובה ערים</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>ערים לביקור</label><textarea id="mc-q" placeholder="למשל: TLV → פריז → אמסטרדם → ברלין → TLV, מאי 2026, תקציב 1500$"></textarea></div>
+          <button class="btn btn-p" onclick="runAI('multi-city','mc-q','mc-res')" id="mc-btn">🌍 תכנן מסלול</button>
+        </div>
+        <div class="card"><div class="card-title">מסלול אופטימלי</div><div class="ai-box ai-placeholder" id="mc-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ עצירות חינם ══ -->
+    <div class="page" id="page-stopovers">
+      <div class="sh"><h2>🔁 עצירות חינם</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>מסלול</label><input type="text" id="stp-q" placeholder="למשל: TLV → ניו יורק, מצא עצירת חינם בדובאי או איסטנבול"></div>
+          <button class="btn btn-p" onclick="runAI('stopovers','stp-q','stp-res')" id="stp-btn">🔁 חפש עצירות</button>
+        </div>
+        <div class="card"><div class="card-title">הזדמנויות עצירה</div><div class="ai-box ai-placeholder" id="stp-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ תאריכים גמישים ══ -->
+    <div class="page" id="page-flexible-dates">
+      <div class="sh"><h2>📅 תאריכים גמישים</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>מסלול וחודש</label><input type="text" id="fd-q" placeholder="למשל: TLV → בנגקוק, מרץ-אפריל 2026, גמיש ב-10 ימים"></div>
+          <button class="btn btn-p" onclick="runAI('flexible-dates','fd-q','fd-res')" id="fd-btn">📅 מצא תאריכים זולים</button>
+        </div>
+        <div class="card"><div class="card-title">השוואת תאריכים</div><div class="ai-box ai-placeholder" id="fd-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ חיזוי מחיר ══ -->
+    <div class="page" id="page-predict">
+      <div class="sh"><h2>📈 חיזוי מחיר</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>מסלול ומחיר נוכחי</label><input type="text" id="pred-q" placeholder="למשל: TLV → לונדון, מחיר נוכחי 600$, נסיעה בפברואר 2026"></div>
+          <button class="btn btn-p" onclick="runAI('predict','pred-q','pred-res')" id="pred-btn">📈 חזה מחיר</button>
+        </div>
+        <div class="card"><div class="card-title">תחזית מחיר</div><div class="ai-box ai-placeholder" id="pred-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ עלות אמיתית ══ -->
+    <div class="page" id="page-true-cost">
+      <div class="sh"><h2>💰 עלות אמיתית</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>פרטי הטיול</label><textarea id="tc-q" placeholder="למשל: 7 ימים בברצלונה לזוג, אפריל 2026, כולל אירוח וטיסה" style="min-height:80px;"></textarea></div>
+          <button class="btn btn-p" onclick="runAI('true-cost','tc-q','tc-res')" id="tc-btn">💰 חשב עלות מלאה</button>
+        </div>
+        <div class="card"><div class="card-title">פירוט עלויות</div><div class="ai-box ai-placeholder" id="tc-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ נקודות vs מזומן ══ -->
+    <div class="page" id="page-points-vs-cash">
+      <div class="sh"><h2>💳 נקודות vs מזומן</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>מסלול ותוכנית נאמנות</label><input type="text" id="pvc-q" placeholder="למשל: TLV → מיאמי, יש לי 80,000 נקודות ארקיע / אל על"></div>
+          <button class="btn btn-p" onclick="runAI('points-vs-cash','pvc-q','pvc-res')" id="pvc-btn">💳 השווה</button>
+        </div>
+        <div class="card"><div class="card-title">ניתוח ערך נקודות</div><div class="ai-box ai-placeholder" id="pvc-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ תובנות ודפוסים ══ -->
+    <div class="page" id="page-deal-insights">
+      <div class="sh"><h2>📊 תובנות ודפוסים</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>מסלול</label><input type="text" id="di-q" placeholder="למשל: TLV → אתונה, מצא דפוסי מחיר ושבועות זולים"></div>
+          <button class="btn btn-p" onclick="runAI('deal-insights','di-q','di-res')" id="di-btn">📊 נתח</button>
+        </div>
+        <div class="card"><div class="card-title">תובנות</div><div class="ai-box ai-placeholder" id="di-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ Price DNA ══ -->
+    <div class="page" id="page-price-dna">
+      <div class="sh"><h2>🧬 Price DNA</h2><button class="btn btn-p" onclick="loadPriceDNA()">נתח</button></div>
+      <div class="card"><div class="ai-box ai-placeholder" id="dna-res">לחץ "נתח" להפעלת ניתוח Price DNA על נתוני המעקב.</div></div>
+    </div>
+
+    <!-- ══ השוואת אתרים ══ -->
+    <div class="page" id="page-competitor">
+      <div class="sh"><h2>🔍 השוואת אתרים</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>מסלול ותאריכים</label><input type="text" id="comp-q" placeholder="למשל: TLV → פריז 15.3.2026 → 22.3.2026"></div>
+          <button class="btn btn-p" onclick="runAI('competitor','comp-q','comp-res')" id="comp-btn">🔍 השווה מחירים</button>
+        </div>
+        <div class="card"><div class="card-title">השוואת מחירים</div><div class="ai-box ai-placeholder" id="comp-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ סנטימנט ══ -->
+    <div class="page" id="page-sentiment">
+      <div class="sh"><h2>📰 סנטימנט & חדשות</h2></div>
+      <div class="card" style="margin-bottom:14px;max-width:420px;">
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;"><label>יעד (אופציונלי)</label><input type="text" id="sent-dest" placeholder="למשל: אירופה, טוקיו, כל מקום"></div>
+          <button class="btn btn-p" onclick="loadSentiment(document.getElementById('sent-dest').value)" style="align-self:flex-end;">נתח</button>
+        </div>
+      </div>
+      <div class="card"><div class="card-title">ניתוח שוק</div><div class="ai-box ai-placeholder" id="sent-res">התוצאה תופיע כאן…</div></div>
+    </div>
+
+    <!-- ══ RSS & Reddit ══ -->
+    <div class="page" id="page-rss">
+      <div class="sh"><h2>📡 RSS & Reddit</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>יעד / נושא</label><input type="text" id="rss-q" placeholder="למשל: דילים לאירופה, error fares, TLV"></div>
+          <button class="btn btn-p" onclick="runAI('rss','rss-q','rss-res')" id="rss-btn">📡 סרוק</button>
+        </div>
+        <div class="card"><div class="card-title">מה אומרים ב-Reddit</div><div class="ai-box ai-placeholder" id="rss-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ בדיקת ויזה ══ -->
+    <div class="page" id="page-visa">
+      <div class="sh"><h2>🛂 בדיקת ויזה</h2></div>
+      <div class="card" style="max-width:460px;margin-bottom:14px;">
+        <div class="f2">
+          <div class="fg"><label>דרכון (מדינה)</label><input type="text" id="visa-pass" placeholder="למשל: ישראלי, אמריקאי"></div>
+          <div class="fg"><label>יעד</label><input type="text" id="visa-dest" placeholder="למשל: יפן, ארה&quot;ב, תאילנד"></div>
+        </div>
+        <button class="btn btn-p" onclick="runVisaCheck()" id="visa-btn">בדוק ויזה</button>
+      </div>
+      <div class="card" id="visa-card" style="display:none;"><div class="card-title">דרישות ויזה</div><div class="ai-box" id="visa-res"></div></div>
+    </div>
+
+    <!-- ══ Hidden City ══ -->
+    <div class="page" id="page-hidden-city">
+      <div class="sh"><h2>🕵️ Hidden City</h2></div>
+      <div class="card" style="max-width:460px;margin-bottom:14px;">
+        <div class="f2">
+          <div class="fg"><label>מוצא</label><input type="text" id="hc-from" placeholder="TLV"></div>
+          <div class="fg"><label>יעד</label><input type="text" id="hc-to" placeholder="NYC"></div>
+        </div>
+        <div class="fg"><label>תאריך (אופציונלי)</label><input type="date" id="hc-date"></div>
+        <button class="btn btn-p" onclick="runHiddenCity()" id="hc-btn">🔍 חפש</button>
+      </div>
+      <div class="card" id="hc-card" style="display:none;"><div class="card-title">הזדמנויות Hidden City</div><div class="ai-box" id="hc-res"></div></div>
+      <div class="warn-box" style="max-width:460px;margin-top:10px;"><div class="warn-title">⚠️ שים לב</div>Hidden city ticketing מפר את תנאי השימוש של רוב חברות התעופה. השתמש למחקר בלבד. אל תבדוק מטען!</div>
+    </div>
+
+    <!-- ══ Kiwi טיסות ══ -->
+    <div class="page" id="page-kiwi">
+      <div class="sh"><h2>🔍 Kiwi טיסות</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="fg"><label>מסלול ותאריכים</label><input type="text" id="kiwi-q" placeholder="למשל: TLV → מדריד, יוני 2026, עד 600$"></div>
+          <button class="btn btn-p" onclick="runAI('kiwi','kiwi-q','kiwi-res')" id="kiwi-btn">🔍 חפש ב-Kiwi</button>
+        </div>
+        <div class="card"><div class="card-title">מסלולי Kiwi</div><div class="ai-box ai-placeholder" id="kiwi-res">התוצאה תופיע כאן…</div></div>
+      </div>
+    </div>
+
+    <!-- ══ שערי חליפין ══ -->
+    <div class="page" id="page-exchange">
+      <div class="sh"><h2>💱 שערי חליפין</h2></div>
+      <div class="card" id="exch-card"><div class="loading"><div class="spin"></div>טוען שערים…</div></div>
+    </div>
+
+    <!-- ══ כללי התראה ══ -->
+    <div class="page" id="page-alerts">
+      <div class="sh"><h2>🎯 כללי התראה</h2><button class="btn btn-p" onclick="openAddAlert()">+ הוסף התראה</button></div>
+      <div class="card">
+        <div class="tbl-wrap"><table><thead><tr><th>שם</th><th>מעקב</th><th>תנאים</th><th>סטטוס</th><th></th></tr></thead><tbody id="alerts-tbody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ══ הגדרות ══ -->
+    <div class="page" id="page-settings">
+      <div class="sh"><h2>⚙️ הגדרות</h2></div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">🔑 מפתחות API</div>
+          <div id="settings-form"></div>
+          <button class="btn btn-p" onclick="saveSettings()">שמור</button>
         </div>
         <div class="card">
-          <div class="card-title">Price Trend</div>
-          <div class="price-chart" id="price-chart-area"></div>
-        </div>
-        <div class="card" style="margin-top:16px;">
-          <div class="card-title">Records</div>
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Date</th><th>Price</th><th>Currency</th><th>Source</th></tr></thead>
-              <tbody id="history-table"></tbody>
-            </table>
-          </div>
+          <div class="card-title">📥 ייצוא נתונים</div>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px;">ייצא את כל המעקבים והיסטוריית המחירים לקובץ CSV.</p>
+          <a href="/api/export/csv" class="btn btn-g" download>📥 הורד CSV</a>
         </div>
       </div>
+    </div>
 
-      <!-- ══ CHAT ══ -->
-      <div class="page" id="page-chat" style="height:calc(100vh - 54px);display:none;flex-direction:column;">
-        <div class="chat-messages" id="chat-messages">
-          <div class="chat-bubble ai">✈️ Hi! I'm your AI travel assistant. Ask me anything about flights, hotels, visas, or deals.</div>
-        </div>
-        <div class="chat-input-area">
-          <textarea id="chat-input" placeholder="Ask about flights, deals, visas…" onkeydown="chatKey(event)"></textarea>
-          <div class="chat-tools">
-            <label style="display:flex;align-items:center;gap:5px;font-size:0.75rem;color:var(--muted);cursor:pointer;margin:0;">
-              <input type="checkbox" id="web-search-toggle" style="width:auto;accent-color:var(--accent);"> Web
-            </label>
-            <button class="btn btn-primary btn-icon" onclick="sendChat()">➤</button>
-          </div>
-        </div>
-      </div>
+  </div><!-- #content -->
+</div><!-- #main -->
+</div><!-- #app -->
 
-      <!-- ══ DEAL HUNTER ══ -->
-      <div class="page" id="page-deal-hunter">
-        <div class="section-header"><h2>🎯 Deal Hunter</h2></div>
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-title">Search Parameters</div>
-            <div class="form-group"><label>Origin Airport / City</label><input type="text" id="dh-origin" placeholder="e.g. TLV, NYC, London"></div>
-            <div class="form-group"><label>Max Budget (USD)</label><input type="number" id="dh-budget" placeholder="e.g. 500"></div>
-            <div class="form-group"><label>Travel Dates</label><input type="text" id="dh-dates" placeholder="e.g. December 2025, flexible"></div>
-            <div class="form-group"><label>Preferences</label><textarea id="dh-prefs" placeholder="e.g. beach, warm weather, 7-10 days, direct flight preferred"></textarea></div>
-            <button class="btn btn-primary" onclick="runDealHunter()" id="dh-btn">🎯 Hunt Deals</button>
-          </div>
-          <div class="card">
-            <div class="card-title">Results</div>
-            <div id="dh-result" style="font-size:0.85rem;line-height:1.65;min-height:120px;color:#94a3b8;">Results will appear here…</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ HIDDEN CITY ══ -->
-      <div class="page" id="page-hidden-city">
-        <div class="section-header"><h2>🗺 Hidden City Finder</h2></div>
-        <div class="card" style="margin-bottom:16px;max-width:500px;">
-          <div class="card-title">Find Hidden City Tickets</div>
-          <div class="form-row">
-            <div class="form-group"><label>From</label><input type="text" id="hc-origin" placeholder="e.g. TLV"></div>
-            <div class="form-group"><label>To</label><input type="text" id="hc-dest" placeholder="e.g. NYC"></div>
-          </div>
-          <div class="form-group"><label>Date (optional)</label><input type="date" id="hc-date"></div>
-          <button class="btn btn-primary" onclick="runHiddenCity()" id="hc-btn">🔍 Search</button>
-        </div>
-        <div class="card" id="hc-result-card" style="display:none;">
-          <div class="card-title">Hidden City Opportunities</div>
-          <div id="hc-result" style="font-size:0.85rem;line-height:1.65;"></div>
-        </div>
-        <div class="card" style="background:rgba(245,158,11,0.05);border-color:rgba(245,158,11,0.2);max-width:500px;margin-top:12px;">
-          <div style="font-size:0.8rem;color:#fcd34d;font-weight:700;margin-bottom:6px;">⚠️ Important Note</div>
-          <div style="font-size:0.78rem;color:#d1d5db;line-height:1.55;">Hidden city ticketing violates most airline ToS. Use this for research only. Never check bags when using this technique.</div>
-        </div>
-      </div>
-
-      <!-- ══ PRICE DNA ══ -->
-      <div class="page" id="page-price-dna">
-        <div class="section-header">
-          <h2>🧬 Price DNA</h2>
-          <button class="btn btn-primary" onclick="loadPriceDNA()">Analyze</button>
-        </div>
-        <div class="card">
-          <div id="price-dna-result" style="font-size:0.87rem;line-height:1.7;color:#94a3b8;min-height:100px;">
-            Click "Analyze" to run Price DNA analysis on your watch data.
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ VISA ══ -->
-      <div class="page" id="page-visa">
-        <div class="section-header"><h2>🛂 Visa Check</h2></div>
-        <div class="card" style="max-width:480px;margin-bottom:16px;">
-          <div class="form-row">
-            <div class="form-group"><label>Passport (Country)</label><input type="text" id="visa-passport" placeholder="e.g. Israeli, American, British"></div>
-            <div class="form-group"><label>Destination</label><input type="text" id="visa-dest" placeholder="e.g. Japan, USA, Thailand"></div>
-          </div>
-          <button class="btn btn-primary" onclick="runVisaCheck()" id="visa-btn">Check Visa</button>
-        </div>
-        <div class="card" id="visa-result-card" style="display:none;">
-          <div class="card-title">Visa Requirements</div>
-          <div id="visa-result" style="font-size:0.87rem;line-height:1.7;"></div>
-        </div>
-      </div>
-
-      <!-- ══ EXCHANGE ══ -->
-      <div class="page" id="page-exchange">
-        <div class="section-header"><h2>💱 Exchange Rates</h2></div>
-        <div class="card" id="exchange-card">
-          <div style="display:flex;align-items:center;gap:8px;color:var(--muted);"><div class="spinner"></div> Loading rates…</div>
-        </div>
-      </div>
-
-      <!-- ══ SENTIMENT ══ -->
-      <div class="page" id="page-sentiment">
-        <div class="section-header">
-          <h2>📰 Market Pulse</h2>
-        </div>
-        <div class="card" style="margin-bottom:16px;max-width:400px;">
-          <div class="form-group" style="margin:0;display:flex;gap:8px;align-items:flex-end;">
-            <div style="flex:1;"><label>Destination (optional)</label><input type="text" id="sentiment-dest" placeholder="e.g. Tokyo, Europe, Caribbean"></div>
-            <button class="btn btn-primary" onclick="loadSentiment(document.getElementById('sentiment-dest').value)" style="align-self:flex-end;">Analyze</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">Market Sentiment</div>
-          <div id="sentiment-result" style="font-size:0.87rem;line-height:1.7;color:#94a3b8;min-height:80px;">
-            <div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div> Loading…</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ ALERTS ══ -->
-      <div class="page" id="page-alerts">
-        <div class="section-header">
-          <h2>🔔 Alerts</h2>
-          <button class="btn btn-primary" onclick="openAddAlert()">+ Add Alert</button>
-        </div>
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead><tr><th>Name</th><th>Watch Item</th><th>Conditions</th><th>Status</th><th></th></tr></thead>
-              <tbody id="alerts-table"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══ SETTINGS ══ -->
-      <div class="page" id="page-settings">
-        <div class="section-header"><h2>⚙️ Settings</h2></div>
-        <div class="grid-2">
-          <div class="card">
-            <div class="card-title">API Keys</div>
-            <div id="settings-form"></div>
-            <button class="btn btn-primary" onclick="saveSettings()">Save</button>
-          </div>
-          <div class="card">
-            <div class="card-title">Export Data</div>
-            <p style="font-size:0.85rem;color:var(--muted);margin-bottom:16px;">Export all watch items and price history as CSV.</p>
-            <a href="/api/export/csv" class="btn btn-ghost" download>📥 Download CSV</a>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- end #content -->
-  </div><!-- end #main -->
-</div>
-
-<!-- ── Modals ─────────────────────────────────────────────────── -->
-
-<!-- Add Watch -->
-<div class="overlay" id="add-watch-overlay">
+<!-- ══ MODALS ══ -->
+<!-- הוסף מעקב -->
+<div class="overlay" id="m-add-watch">
   <div class="modal">
-    <div class="modal-title">Add Watch Item <button class="close-btn" onclick="closeModal('add-watch-overlay')">×</button></div>
-    <div class="form-group"><label>Name</label><input type="text" id="w-name" placeholder="e.g. TLV → NYC Business"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Category</label>
-        <select id="w-cat">
-          <option value="flight">Flight</option>
-          <option value="hotel">Hotel</option>
-          <option value="apartment">Apartment</option>
-          <option value="package">Package</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Drop Alert %</label><input type="number" id="w-drop" value="10" min="1" max="90"></div>
+    <div class="modal-hdr"><h3>➕ הוסף מעקב</h3><button class="x-btn" onclick="closeModal('m-add-watch')">×</button></div>
+    <div class="fg"><label>שם המעקב</label><input type="text" id="w-name" placeholder="למשל: TLV → NYC עסקי"></div>
+    <div class="f2">
+      <div class="fg"><label>קטגוריה</label><select id="w-cat"><option value="flight">טיסה ✈️</option><option value="hotel">מלון 🏨</option><option value="apartment">דירה 🏠</option><option value="package">חבילה 📦</option></select></div>
+      <div class="fg"><label>התראת ירידה %</label><input type="number" id="w-drop" value="10" min="1" max="90"></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Origin</label><input type="text" id="w-origin" placeholder="e.g. TLV"></div>
-      <div class="form-group"><label>Destination</label><input type="text" id="w-dest" placeholder="e.g. JFK"></div>
+    <div class="f2">
+      <div class="fg"><label>מוצא</label><input type="text" id="w-orig" placeholder="TLV"></div>
+      <div class="fg"><label>יעד</label><input type="text" id="w-dest" placeholder="JFK"></div>
     </div>
-    <div class="form-row">
-      <div class="form-group"><label>Date From</label><input type="date" id="w-date-from"></div>
-      <div class="form-group"><label>Date To</label><input type="date" id="w-date-to"></div>
+    <div class="f2">
+      <div class="fg"><label>תאריך יציאה</label><input type="date" id="w-dfrom"></div>
+      <div class="fg"><label>תאריך חזרה</label><input type="date" id="w-dto"></div>
     </div>
-    <div class="form-group"><label>Max Price (USD)</label><input type="number" id="w-maxprice" placeholder="Optional"></div>
-    <div class="form-group"><label>Search Query (for AI)</label><input type="text" id="w-query" placeholder="e.g. cheapest flight TLV to JFK in December"></div>
-    <button class="btn btn-primary" onclick="submitAddWatch()" style="width:100%;margin-top:4px;">Add Watch</button>
+    <div class="fg"><label>מחיר מקסימלי (USD)</label><input type="number" id="w-maxp" placeholder="אופציונלי"></div>
+    <div class="fg"><label>שאילתת חיפוש (ל-AI)</label><input type="text" id="w-query" placeholder="למשל: טיסה זולה TLV לניו יורק בדצמבר"></div>
+    <button class="btn btn-p" onclick="submitAddWatch()" style="width:100%;margin-top:4px;">➕ הוסף</button>
   </div>
 </div>
 
-<!-- Add Alert -->
-<div class="overlay" id="add-alert-overlay">
+<!-- הוסף התראה -->
+<div class="overlay" id="m-add-alert">
   <div class="modal">
-    <div class="modal-title">Add Alert <button class="close-btn" onclick="closeModal('add-alert-overlay')">×</button></div>
-    <div class="form-group"><label>Alert Name</label><input type="text" id="al-name" placeholder="e.g. Price drop below $400"></div>
-    <div class="form-group"><label>Watch Item (optional)</label><select id="al-watch"><option value="">Any</option></select></div>
-    <div class="form-group"><label>Max Price Trigger</label><input type="number" id="al-maxprice" placeholder="e.g. 400"></div>
-    <button class="btn btn-primary" onclick="submitAddAlert()" style="width:100%;margin-top:4px;">Create Alert</button>
+    <div class="modal-hdr"><h3>🎯 הוסף התראה</h3><button class="x-btn" onclick="closeModal('m-add-alert')">×</button></div>
+    <div class="fg"><label>שם ההתראה</label><input type="text" id="al-name" placeholder="למשל: ירידת מחיר מתחת ל-400$"></div>
+    <div class="fg"><label>מעקב (אופציונלי)</label><select id="al-watch"><option value="">כל המעקבים</option></select></div>
+    <div class="fg"><label>מחיר מקסימלי להפעלת התראה</label><input type="number" id="al-maxp" placeholder="למשל: 400"></div>
+    <button class="btn btn-p" onclick="submitAlert()" style="width:100%;margin-top:4px;">צור התראה</button>
   </div>
 </div>
 
-<!-- WizeLife Auth Modal -->
-<div class="overlay" id="wizelife-overlay">
-  <div class="modal" style="max-width:380px;">
-    <div class="modal-title">WizeLife Account <button class="close-btn" onclick="closeModal('wizelife-overlay')">×</button></div>
-    <div id="wl-logged-out">
-      <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px;">Sign in to sync your plan across all WizeLife apps.</p>
-      <div class="form-group"><label>Email</label><input type="email" id="wl-email" placeholder="you@example.com"></div>
-      <div class="form-group"><label>Password</label><input type="password" id="wl-password" placeholder="••••••••"></div>
-      <div id="wl-error" style="color:#f87171;font-size:0.8rem;margin-bottom:8px;display:none;"></div>
-      <button class="btn btn-primary" onclick="wlSignIn()" style="width:100%;" id="wl-signin-btn">Sign In</button>
+<!-- WizeLife Auth -->
+<div class="overlay" id="m-wl">
+  <div class="modal" style="max-width:370px;">
+    <div class="modal-hdr"><h3>⭐ חשבון WizeLife</h3><button class="x-btn" onclick="closeModal('m-wl')">×</button></div>
+    <div id="wl-out">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px;">התחבר לסנכרן תוכנית בין כל אפליקציות WizeLife.</p>
+      <div class="fg"><label>אימייל</label><input type="email" id="wl-email" placeholder="you@example.com"></div>
+      <div class="fg"><label>סיסמה</label><input type="password" id="wl-pwd" placeholder="••••••••"></div>
+      <div id="wl-err" style="color:#f87171;font-size:.78rem;margin-bottom:7px;display:none;"></div>
+      <button class="btn btn-p" onclick="wlSignIn()" style="width:100%;" id="wl-signin-btn">התחבר</button>
     </div>
-    <div id="wl-logged-in" style="display:none;text-align:center;">
-      <div style="font-size:2rem;margin-bottom:8px;">👤</div>
-      <div style="font-weight:700;margin-bottom:4px;" id="wl-user-email"></div>
-      <div id="wl-plan-display" style="margin-bottom:16px;"></div>
-      <button class="btn btn-ghost btn-sm" onclick="wlSignOut()" style="width:100%;">Sign Out</button>
+    <div id="wl-in" style="display:none;text-align:center;">
+      <div style="font-size:1.8rem;margin-bottom:8px;">👤</div>
+      <div style="font-weight:700;margin-bottom:4px;" id="wl-email-d"></div>
+      <div id="wl-plan-d" style="margin-bottom:14px;"></div>
+      <button class="btn btn-g btn-sm" onclick="wlSignOut()" style="width:100%;">התנתק</button>
     </div>
   </div>
 </div>
 
-<!-- Toast container -->
-<div id="toast-container"></div>
+<!-- Toasts -->
+<div id="toasts"></div>
 
-<!-- ── JavaScript ─────────────────────────────────────────────── -->
 <script>
-// ── Firebase Auth (REST) ──────────────────────────────────────
-const FB_API_KEY = "AIzaSyBVnMcnhsMTu2c1uiEIlrCnUJGo0jVmNy4"; // finzilla-7f1f9
-let _wzToken = null, _wzPlan = "free", _wzUser = null;
+// ── Firebase REST Auth ────────────────────────────────────────
+const FB_KEY = "AIzaSyBVnMcnhsMTu2c1uiEIlrCnUJGo0jVmNy4";
+let _token=null, _plan="free", _user=null;
 
-// Load from localStorage
-(function() {
-  try {
-    const saved = localStorage.getItem("noded_wl");
-    if (saved) {
-      const d = JSON.parse(saved);
-      _wzToken = d.token; _wzPlan = d.plan || "free"; _wzUser = d.email;
-      updatePlanUI();
-    }
-  } catch(e) {}
+(function(){
+  try{const s=JSON.parse(localStorage.getItem("noded_wl")||"{}");if(s.token){_token=s.token;_plan=s.plan||"free";_user=s.email;updatePlanUI();}}catch(e){}
 })();
 
-async function wlSignIn() {
-  const email = document.getElementById("wl-email").value.trim();
-  const pwd   = document.getElementById("wl-password").value;
-  if (!email || !pwd) { showWlError("Email and password required"); return; }
-  const btn = document.getElementById("wl-signin-btn");
-  btn.disabled = true; btn.textContent = "Signing in…";
-  try {
-    const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FB_API_KEY}`, {
-      method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ email, password: pwd, returnSecureToken: true })
-    });
-    const d = await r.json();
-    if (!r.ok) { showWlError(d.error?.message || "Sign in failed"); return; }
-    _wzToken = d.idToken; _wzUser = email;
-    _wzPlan = await fetchPlan(d.localId, d.idToken);
-    localStorage.setItem("noded_wl", JSON.stringify({ token: _wzToken, plan: _wzPlan, email: _wzUser }));
-    updatePlanUI(); closeModal("wizelife-overlay");
-    showToast("✅ Signed in as " + email, "success");
-  } catch(e) { showWlError("Network error"); }
-  finally { btn.disabled = false; btn.textContent = "Sign In"; }
+async function wlSignIn(){
+  const email=document.getElementById("wl-email").value.trim();
+  const pwd=document.getElementById("wl-pwd").value;
+  if(!email||!pwd){showWlErr("נדרש אימייל וסיסמה");return;}
+  const btn=document.getElementById("wl-signin-btn");
+  btn.disabled=true;btn.textContent="מתחבר…";
+  try{
+    const r=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${FB_KEY}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,password:pwd,returnSecureToken:true})});
+    const d=await r.json();
+    if(!r.ok){showWlErr(d.error?.message==="INVALID_LOGIN_CREDENTIALS"?"אימייל או סיסמה שגויים":d.error?.message||"שגיאת כניסה");return;}
+    _token=d.idToken;_user=email;
+    _plan=await fetchPlan(d.localId,d.idToken);
+    localStorage.setItem("noded_wl",JSON.stringify({token:_token,plan:_plan,email:_user}));
+    updatePlanUI();closeModal("m-wl");toast("✅ מחובר כ-"+email,"ok");
+  }catch(e){showWlErr("שגיאת רשת");}
+  finally{btn.disabled=false;btn.textContent="התחבר";}
 }
-
-async function fetchPlan(uid, idToken) {
-  try {
-    const r = await fetch(
-      `https://firestore.googleapis.com/v1/projects/finzilla-7f1f9/databases/(default)/documents/users/${uid}`,
-      { headers: { "Authorization": `Bearer ${idToken}` } }
-    );
-    if (!r.ok) return "free";
-    const d = await r.json();
-    return d.fields?.plan?.stringValue || "free";
-  } catch(e) { return "free"; }
+async function fetchPlan(uid,tok){
+  try{const r=await fetch(`https://firestore.googleapis.com/v1/projects/finzilla-7f1f9/databases/(default)/documents/users/${uid}`,{headers:{"Authorization":"Bearer "+tok}});if(!r.ok)return"free";const d=await r.json();return d.fields?.plan?.stringValue||"free";}catch{return"free";}
 }
-
-function wlSignOut() {
-  _wzToken = null; _wzPlan = "free"; _wzUser = null;
-  localStorage.removeItem("noded_wl");
-  updatePlanUI(); closeModal("wizelife-overlay");
-  showToast("Signed out", "success");
+function wlSignOut(){_token=null;_plan="free";_user=null;localStorage.removeItem("noded_wl");updatePlanUI();closeModal("m-wl");toast("התנתקת","ok");}
+function updatePlanUI(){
+  const pm={free:"חינמי",pro:"Pro ⚡",yolo:"YOLO 🔥"};
+  document.getElementById("plan-lbl").textContent=pm[_plan]||"חינמי";
+  document.getElementById("quota-display").textContent="תוכנית: "+(pm[_plan]||"חינמי");
+  if(_user){
+    document.getElementById("wl-out").style.display="none";
+    document.getElementById("wl-in").style.display="block";
+    document.getElementById("wl-email-d").textContent=_user;
+    const pl={free:"⭐ חינמי — 5 AI/יום",pro:"⚡ Pro — 20 AI/יום",yolo:"🔥 YOLO — 40 AI/יום"};
+    document.getElementById("wl-plan-d").innerHTML=`<span style="font-size:.85rem;color:var(--accent);">${pl[_plan]||_plan}</span>`;
+  }else{document.getElementById("wl-out").style.display="block";document.getElementById("wl-in").style.display="none";}
 }
-
-function updatePlanUI() {
-  const label = document.getElementById("plan-label");
-  const planMap = { free: "Free Plan", pro: "Pro ⚡", yolo: "YOLO 🔥" };
-  label.textContent = planMap[_wzPlan] || "Free Plan";
-  label.className = "wl-plan-" + _wzPlan;
-  // Auth modal
-  if (_wzUser) {
-    document.getElementById("wl-logged-out").style.display = "none";
-    document.getElementById("wl-logged-in").style.display = "block";
-    document.getElementById("wl-user-email").textContent = _wzUser;
-    const planLabels = { free:"⭐ Free — 5 AI/day", pro:"⚡ Pro — 20 AI/day", yolo:"🔥 YOLO — 40 AI/day" };
-    document.getElementById("wl-plan-display").innerHTML = `<span class="tag wl-plan-${_wzPlan}" style="font-size:0.85rem;">${planLabels[_wzPlan]||_wzPlan}</span>`;
-  } else {
-    document.getElementById("wl-logged-out").style.display = "block";
-    document.getElementById("wl-logged-in").style.display = "none";
-  }
-  document.getElementById("quota-display").textContent = `Plan: ${_wzPlan}`;
-}
-
-function showWlError(msg) {
-  const el = document.getElementById("wl-error");
-  el.textContent = msg; el.style.display = "block";
-}
-
-function openWizeLife() {
-  document.getElementById("wl-error").style.display = "none";
-  openModal("wizelife-overlay");
-}
+function showWlErr(m){const e=document.getElementById("wl-err");e.textContent=m;e.style.display="block";}
+function openWL(){document.getElementById("wl-err").style.display="none";openModal("m-wl");}
 
 // ── Navigation ────────────────────────────────────────────────
-const PAGE_TITLES = {
-  dashboard:"Dashboard", watches:"Watch List", history:"Price History",
-  chat:"AI Chat", "deal-hunter":"Deal Hunter", "hidden-city":"Hidden City Finder",
-  "price-dna":"Price DNA", visa:"Visa Check", exchange:"Exchange Rates",
-  sentiment:"Market Pulse", alerts:"Alerts", settings:"Settings"
+const PAGE_TITLES={
+  dashboard:"🏠 לוח בקרה",watches:"👁 רשימת מעקב",history:"📊 היסטוריית מחירים",
+  chat:"💬 סוכן נסיעות AI","wait-or-buy":"🔮 כדאי לחכות?","ai-opps":"🌟 הזדמנויות AI",
+  "deal-hunter":"🔥 ציד דילים",surprise:"🎲 יעד מפתיע","trip-planner":"🗺️ תכנן טיול",
+  "multi-city":"🌍 מסלול מרובה ערים",stopovers:"🔁 עצירות חינם","flexible-dates":"📅 תאריכים גמישים",
+  predict:"📈 חיזוי מחיר","true-cost":"💰 עלות אמיתית","points-vs-cash":"💳 נקודות vs מזומן",
+  "deal-insights":"📊 תובנות ודפוסים","price-dna":"🧬 Price DNA",competitor:"🔍 השוואת אתרים",
+  sentiment:"📰 סנטימנט & חדשות",rss:"📡 RSS & Reddit",visa:"🛂 בדיקת ויזה",
+  "hidden-city":"🕵️ Hidden City",kiwi:"🔍 Kiwi טיסות",exchange:"💱 שערי חליפין",
+  alerts:"🎯 כללי התראה",settings:"⚙️ הגדרות"
 };
 
-function navigate(page) {
-  document.querySelectorAll(".page").forEach(p => { p.classList.remove("active"); p.style.display=""; });
-  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
-
-  const el = document.getElementById("page-" + page);
-  if (!el) return;
-  if (page === "chat") { el.style.display = "flex"; } else { el.classList.add("active"); }
-  document.querySelector(`[data-page="${page}"]`)?.classList.add("active");
-  document.getElementById("topbar-title").textContent = PAGE_TITLES[page] || page;
-
-  // Lazy-load page data
-  if (page === "dashboard")   loadDashboard();
-  if (page === "watches")     loadWatches();
-  if (page === "history")     populateHistorySelect();
-  if (page === "exchange")    loadExchangeRates();
-  if (page === "sentiment")   loadSentiment("");
-  if (page === "alerts")      loadAlerts();
-  if (page === "settings")    loadSettings();
-  if (page === "price-dna")   {} // manual trigger
+function navigate(p){
+  document.querySelectorAll(".page").forEach(el=>{el.classList.remove("active");el.style.display="";});
+  document.querySelectorAll(".nav-btn").forEach(b=>b.classList.remove("active"));
+  const el=document.getElementById("page-"+p);
+  if(!el)return;
+  if(p==="chat")el.style.display="flex";else el.classList.add("active");
+  document.querySelector(`[data-page="${p}"]`)?.classList.add("active");
+  document.getElementById("topbar-title").textContent=PAGE_TITLES[p]||p;
+  if(p==="dashboard")loadDashboard();
+  if(p==="watches")loadWatches();
+  if(p==="history")populateHistSel();
+  if(p==="exchange")loadExchange();
+  if(p==="sentiment")loadSentiment("");
+  if(p==="alerts")loadAlerts();
+  if(p==="settings")loadSettings();
 }
 
-document.querySelectorAll(".nav-item").forEach(btn => {
-  btn.addEventListener("click", () => { navigate(btn.dataset.page); closeSidebar(); });
-});
+document.querySelectorAll(".nav-btn").forEach(b=>b.addEventListener("click",()=>{navigate(b.dataset.page);closeSidebar();}));
 
-// ── Sidebar mobile ────────────────────────────────────────────
-function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
-function closeSidebar()  { document.getElementById("sidebar").classList.remove("open"); }
+// ── Sidebar ───────────────────────────────────────────────────
+function toggleSidebar(){document.getElementById("sidebar").classList.toggle("open");}
+function closeSidebar(){document.getElementById("sidebar").classList.remove("open");}
 
 // ── Modals ────────────────────────────────────────────────────
-function openModal(id)  { document.getElementById(id).classList.add("open"); }
-function closeModal(id) { document.getElementById(id).classList.remove("open"); }
-document.querySelectorAll(".overlay").forEach(ov => {
-  ov.addEventListener("click", e => { if (e.target === ov) ov.classList.remove("open"); });
-});
+function openModal(id){document.getElementById(id).classList.add("open");}
+function closeModal(id){document.getElementById(id).classList.remove("open");}
+document.querySelectorAll(".overlay").forEach(o=>o.addEventListener("click",e=>{if(e.target===o)o.classList.remove("open");}));
 
-// ── API helper ────────────────────────────────────────────────
-async function api(method, path, body) {
-  const opts = { method, headers: { "Content-Type": "application/json" } };
-  if (_wzToken) opts.headers["Authorization"] = `Bearer ${_wzToken}`;
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(path, opts);
-  if (!r.ok) { const t = await r.text(); throw new Error(t); }
+// ── API ───────────────────────────────────────────────────────
+async function api(method,path,body){
+  const opts={method,headers:{"Content-Type":"application/json"}};
+  if(_token)opts.headers["Authorization"]="Bearer "+_token;
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(path,opts);
+  if(!r.ok){const t=await r.text();throw new Error(t);}
   return r.json();
 }
 
 // ── Toast ─────────────────────────────────────────────────────
-function showToast(msg, type = "") {
-  const c = document.getElementById("toast-container");
-  const t = document.createElement("div");
-  t.className = "toast " + type;
-  t.textContent = msg;
-  c.appendChild(t);
-  setTimeout(() => t.remove(), 3500);
+function toast(msg,type=""){
+  const c=document.getElementById("toasts");
+  const t=document.createElement("div");t.className="toast "+(type||"");t.textContent=msg;c.appendChild(t);
+  setTimeout(()=>t.remove(),3500);
 }
 
-// ── DASHBOARD ─────────────────────────────────────────────────
-async function loadDashboard() {
-  try {
-    const watches = await api("GET", "/api/watches");
-    document.getElementById("stat-watches").textContent = watches.filter(w=>w.enabled).length;
-
-    let lowestAll = Infinity, currency = "USD";
-    const recent = watches.slice(0, 5);
-    const listEl = document.getElementById("dashboard-watches-list");
-
-    if (watches.length === 0) {
-      listEl.innerHTML = `<div class="empty-state"><div class="icon">👁</div><p>No watches yet.<br>Add one to get started.</p></div>`;
-    } else {
-      listEl.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
-        <tbody>${recent.map(w => {
-          const p = w.last_price;
-          if (p && p.price < lowestAll) { lowestAll = p.price; currency = p.currency || "USD"; }
-          return `<tr>
-            <td style="padding:8px 0;border-bottom:1px solid var(--border);">${esc(w.name)}</td>
-            <td style="padding:8px 4px;border-bottom:1px solid var(--border);">${catTag(w.category)}</td>
-            <td style="padding:8px 0;border-bottom:1px solid var(--border);text-align:right;">${p ? `<b>${p.currency} ${p.price}</b>` : '<span style="color:var(--muted)">—</span>'}</td>
-          </tr>`;
-        }).join("")}</tbody></table>`;
+// ── Dashboard ─────────────────────────────────────────────────
+async function loadDashboard(){
+  try{
+    const watches=await api("GET","/api/watches");
+    document.getElementById("s-watches").textContent=watches.filter(w=>w.enabled).length;
+    let low=Infinity,cur="USD";
+    const el=document.getElementById("db-watches");
+    if(!watches.length){el.innerHTML=`<div style="color:var(--muted);font-size:.84rem;padding:12px 0;">אין מעקבים עדיין. לחץ על "הוסף מעקב" להתחלה.</div>`;
+    }else{
+      el.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:.8rem;"><tbody>`+watches.slice(0,6).map(w=>{
+        const p=w.last_price;if(p&&p.price<low){low=p.price;cur=p.currency||"USD";}
+        return`<tr><td style="padding:7px 0;border-bottom:1px solid var(--border);">${esc(w.name)}</td><td style="padding:7px 4px;border-bottom:1px solid var(--border);">${catTag(w.category)}</td><td style="padding:7px 0;border-bottom:1px solid var(--border);text-align:left;">${p?`<b>${p.currency} ${p.price}</b>`:'<span style="color:var(--muted)">—</span>'}</td></tr>`;
+      }).join("")+`</tbody></table>`;
     }
-
-    document.getElementById("stat-low").textContent = lowestAll < Infinity ? `${currency} ${lowestAll}` : "—";
-    document.getElementById("stat-drops").textContent = watches.filter(w => {
-      if (!w.last_price || !w.lowest_price) return false;
-      return w.last_price.price > w.lowest_price.price * 1.01;
-    }).length;
-  } catch(e) { console.error(e); }
+    document.getElementById("s-low").textContent=low<Infinity?`${cur} ${low}`:"—";
+    document.getElementById("s-drops").textContent=watches.filter(w=>w.last_price&&w.lowest_price&&w.last_price.price>w.lowest_price.price*1.01).length;
+  }catch(e){console.error(e);}
 }
 
-async function loadSentiment(dest) {
-  const el = document.getElementById("dashboard-sentiment");
-  const resultEl = document.getElementById("sentiment-result");
-  if (el) el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div> Loading…</div>`;
-  if (resultEl) resultEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div> Loading…</div>`;
-  try {
-    const r = await api("GET", `/api/sentiment?destination=${encodeURIComponent(dest)}`);
-    const html = markdownToHtml(r.result || "No data");
-    if (el) el.innerHTML = html;
-    if (resultEl) resultEl.innerHTML = html;
-  } catch(e) {
-    if (el) el.textContent = "Failed to load";
-    if (resultEl) resultEl.textContent = "Failed to load";
-  }
+async function loadSentiment(dest){
+  const els=[document.getElementById("db-sentiment"),document.getElementById("sent-res")];
+  els.forEach(e=>{if(e)e.innerHTML=`<div class="loading"><div class="spin"></div>טוען…</div>`;});
+  try{
+    const r=await api("GET",`/api/sentiment?destination=${encodeURIComponent(dest)}`);
+    const h=md(r.result||"אין נתונים");
+    els.forEach(e=>{if(e)e.innerHTML=h;});
+  }catch(e){els.forEach(el=>{if(el)el.textContent="נכשל בטעינה";});}
 }
 
-// ── WATCHES ───────────────────────────────────────────────────
-let watchesCache = [];
-
-async function loadWatches() {
-  try {
-    watchesCache = await api("GET", "/api/watches?all=true");
-    renderWatchesTable(watchesCache);
-    populateHistorySelect();
-  } catch(e) { showToast("Failed to load watches", "error"); }
-}
-
-function renderWatchesTable(watches) {
-  const tbody = document.getElementById("watches-table-body");
-  if (!watches.length) {
-    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="padding:30px;"><div class="icon">👁</div><p>No watches yet</p></div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = watches.map(w => {
-    const p = w.last_price;
-    const low = w.lowest_price;
-    return `<tr>
-      <td><b>${esc(w.name)}</b><br><span style="font-size:0.75rem;color:var(--muted);">${esc(w.destination)}</span></td>
-      <td>${catTag(w.category)}</td>
-      <td>${esc(w.destination)}${w.origin ? ` ← ${esc(w.origin)}` : ""}</td>
-      <td>${p ? `${p.currency} ${p.price}` : "—"}</td>
-      <td>${low ? `<span class="down">${low.currency} ${low.price}</span>` : "—"}</td>
-      <td><span class="tag ${w.enabled ? "tag-enabled":"tag-disabled"}">${w.enabled?"On":"Off"}</span></td>
-      <td style="white-space:nowrap;">
-        <button class="btn btn-ghost btn-sm" onclick="checkPrice(${w.id})" title="Check price now">🔄</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleWatch(${w.id},${!w.enabled})" title="${w.enabled?'Disable':'Enable'}">${w.enabled?"⏸":"▶"}</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteWatch(${w.id})" title="Delete">🗑</button>
-      </td>
-    </tr>`;
-  }).join("");
-}
-
-function openAddWatch() {
-  ["w-name","w-origin","w-dest","w-query"].forEach(id => document.getElementById(id).value = "");
-  document.getElementById("w-drop").value = "10";
-  document.getElementById("w-maxprice").value = "";
-  openModal("add-watch-overlay");
-}
-
-async function submitAddWatch() {
-  const name = document.getElementById("w-name").value.trim();
-  const query = document.getElementById("w-query").value.trim();
-  const dest  = document.getElementById("w-dest").value.trim();
-  if (!name || !dest) { showToast("Name and destination required", "error"); return; }
-  try {
-    await api("POST", "/api/watches", {
-      name, category: document.getElementById("w-cat").value,
-      query: query || name, destination: dest,
-      origin: document.getElementById("w-origin").value.trim() || null,
-      date_from: document.getElementById("w-date-from").value || null,
-      date_to:   document.getElementById("w-date-to").value || null,
-      max_price: parseFloat(document.getElementById("w-maxprice").value) || null,
-      drop_pct:  parseFloat(document.getElementById("w-drop").value) || 10,
-    });
-    closeModal("add-watch-overlay");
-    loadWatches(); showToast("Watch added", "success");
-  } catch(e) { showToast("Failed to add: " + e.message, "error"); }
-}
-
-async function deleteWatch(id) {
-  if (!confirm("Delete this watch?")) return;
-  try { await api("DELETE", `/api/watches/${id}`); loadWatches(); showToast("Deleted"); }
-  catch(e) { showToast("Error: " + e.message, "error"); }
-}
-
-async function toggleWatch(id, enabled) {
-  try { await api("PATCH", `/api/watches/${id}/toggle?enabled=${enabled}`); loadWatches(); }
-  catch(e) { showToast("Error", "error"); }
-}
-
-async function checkPrice(id) {
-  showToast("Price check started…");
-  try { await api("POST", `/api/watches/${id}/check`); setTimeout(loadWatches, 3000); }
-  catch(e) { showToast("Error: " + e.message, "error"); }
-}
-
-// ── PRICE HISTORY ─────────────────────────────────────────────
-function populateHistorySelect() {
-  const sel = document.getElementById("history-watch-select");
-  const alertSel = document.getElementById("al-watch");
-  const cur = sel.value;
-  sel.innerHTML = `<option value="">— Select —</option>`;
-  alertSel.innerHTML = `<option value="">Any</option>`;
-  watchesCache.forEach(w => {
-    sel.innerHTML += `<option value="${w.id}">${esc(w.name)}</option>`;
-    alertSel.innerHTML += `<option value="${w.id}">${esc(w.name)}</option>`;
-  });
-  if (cur) sel.value = cur;
-}
-
-async function loadHistory() {
-  const watchId = document.getElementById("history-watch-select").value;
-  const limit   = document.getElementById("history-limit").value;
-  if (!watchId) return;
-
-  try {
-    const [history, stats] = await Promise.all([
-      api("GET", `/api/prices/${watchId}?limit=${limit}`),
-      api("GET", `/api/prices/${watchId}/stats`),
-    ]);
-
-    // Stats
-    if (stats.count) {
-      document.getElementById("h-current").textContent = `${stats.currency} ${stats.current}`;
-      document.getElementById("h-low").textContent     = `${stats.currency} ${stats.lowest}`;
-      document.getElementById("h-high").textContent    = `${stats.currency} ${stats.highest}`;
-      document.getElementById("h-avg").textContent     = `${stats.currency} ${stats.avg}`;
-    }
-
-    // Chart
-    const chartEl = document.getElementById("price-chart-area");
-    if (history.length) {
-      const prices  = history.map(h => h.price);
-      const minP    = Math.min(...prices);
-      const maxP    = Math.max(...prices);
-      const range   = maxP - minP || 1;
-      chartEl.innerHTML = [...history].reverse().map(h => {
-        const pct = Math.max(8, ((h.price - minP) / range) * 100);
-        return `<div class="price-bar" style="height:${pct}%" data-price="${h.currency} ${h.price}"></div>`;
-      }).join("");
-    } else { chartEl.innerHTML = `<div style="color:var(--muted);font-size:0.8rem;">No data</div>`; }
-
-    // Table
-    document.getElementById("history-table").innerHTML = history.map(h =>
-      `<tr>
-        <td style="color:var(--muted);font-size:0.78rem;">${h.checked_at?.substring(0,16).replace("T"," ")||"—"}</td>
-        <td><b>${h.currency} ${h.price}</b></td>
-        <td>${h.currency}</td>
-        <td style="color:var(--muted);">${esc(h.source||"AI")}</td>
-      </tr>`
-    ).join("") || `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">No records yet</td></tr>`;
-  } catch(e) { showToast("Failed to load history", "error"); }
-}
-
-// ── AI CHAT ───────────────────────────────────────────────────
-let chatHistory = [];
-
-function chatKey(e) {
-  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); }
-}
-
-async function sendChat() {
-  const input = document.getElementById("chat-input");
-  const text  = input.value.trim();
-  if (!text) return;
-  input.value = "";
-
-  const messagesEl = document.getElementById("chat-messages");
-  messagesEl.innerHTML += `<div class="chat-bubble user">${esc(text)}</div>`;
-  const aiEl = document.createElement("div");
-  aiEl.className = "chat-bubble ai typing";
-  messagesEl.appendChild(aiEl);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-
-  chatHistory.push({ role: "user", parts: [{ text }] });
-
-  try {
-    const webSearch = document.getElementById("web-search-toggle").checked;
-    const r = await fetch("/api/ai/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...(  _wzToken ? {"Authorization": `Bearer ${_wzToken}`} : {}) },
-      body: JSON.stringify({ messages: chatHistory, system: "You are a travel expert AI.", web_search: webSearch })
-    });
-
-    aiEl.classList.remove("typing");
-    let full = "";
-    const reader = r.body.getReader();
-    const dec = new TextDecoder();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      const chunk = dec.decode(value);
-      chunk.split("\n").forEach(line => {
-        if (!line.startsWith("data: ")) return;
-        const d = line.slice(6);
-        if (d === "[DONE]") return;
-        try { full += JSON.parse(d).text || ""; aiEl.innerHTML = markdownToHtml(full); messagesEl.scrollTop = messagesEl.scrollHeight; } catch(e) {}
-      });
-    }
-    chatHistory.push({ role: "model", parts: [{ text: full }] });
-  } catch(e) {
-    aiEl.classList.remove("typing");
-    aiEl.textContent = "⚠️ Error: " + e.message;
-  }
-}
-
-// ── DEAL HUNTER ───────────────────────────────────────────────
-async function runDealHunter() {
-  const btn = document.getElementById("dh-btn");
-  const origin = document.getElementById("dh-origin").value.trim();
-  if (!origin) { showToast("Enter origin", "error"); return; }
-  btn.disabled = true; btn.textContent = "Hunting…";
-  document.getElementById("dh-result").innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div> Searching for deals…</div>`;
-  try {
-    const r = await api("POST", "/api/deal-hunter", {
-      origin, budget: parseFloat(document.getElementById("dh-budget").value)||null,
-      dates: document.getElementById("dh-dates").value.trim(),
-      preferences: document.getElementById("dh-prefs").value.trim()
-    });
-    document.getElementById("dh-result").innerHTML = markdownToHtml(r.result || r.error || "No deals found");
-  } catch(e) { document.getElementById("dh-result").textContent = "Error: " + e.message; }
-  finally { btn.disabled = false; btn.textContent = "🎯 Hunt Deals"; }
-}
-
-// ── HIDDEN CITY ───────────────────────────────────────────────
-async function runHiddenCity() {
-  const btn = document.getElementById("hc-btn");
-  const origin = document.getElementById("hc-origin").value.trim();
-  const dest   = document.getElementById("hc-dest").value.trim();
-  if (!origin || !dest) { showToast("Enter origin and destination", "error"); return; }
-  btn.disabled = true; btn.textContent = "Searching…";
-  try {
-    const r = await api("POST", "/api/hidden-city", {
-      origin, destination: dest, date: document.getElementById("hc-date").value || null
-    });
-    document.getElementById("hc-result").innerHTML = markdownToHtml(r.result || "No results");
-    document.getElementById("hc-result-card").style.display = "block";
-  } catch(e) { showToast("Error: " + e.message, "error"); }
-  finally { btn.disabled = false; btn.textContent = "🔍 Search"; }
-}
-
-// ── PRICE DNA ────────────────────────────────────────────────
-async function loadPriceDNA() {
-  const el = document.getElementById("price-dna-result");
-  el.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div class="spinner"></div> Analyzing…</div>`;
-  try {
-    const r = await api("GET", "/api/price-dna");
-    el.innerHTML = markdownToHtml(JSON.stringify(r, null, 2).replace(/</g,"&lt;"));
-    if (r.summary) el.innerHTML = markdownToHtml(r.summary);
-  } catch(e) { el.textContent = "Error: " + e.message; }
-}
-
-// ── VISA ─────────────────────────────────────────────────────
-async function runVisaCheck() {
-  const btn = document.getElementById("visa-btn");
-  const passport = document.getElementById("visa-passport").value.trim();
-  const dest     = document.getElementById("visa-dest").value.trim();
-  if (!passport || !dest) { showToast("Fill both fields", "error"); return; }
-  btn.disabled = true; btn.textContent = "Checking…";
-  try {
-    const r = await api("POST", "/api/visa-check", { passport, destination: dest });
-    document.getElementById("visa-result").innerHTML = markdownToHtml(r.result || "No data");
-    document.getElementById("visa-result-card").style.display = "block";
-  } catch(e) { showToast("Error: " + e.message, "error"); }
-  finally { btn.disabled = false; btn.textContent = "Check Visa"; }
-}
-
-// ── EXCHANGE RATES ────────────────────────────────────────────
-async function loadExchangeRates() {
-  const card = document.getElementById("exchange-card");
-  try {
-    const r = await api("GET", "/api/exchange-rates");
-    if (!r.rates || !Object.keys(r.rates).length) {
-      card.innerHTML = `<div class="empty-state"><p>No exchange rate data available.<br>Configure exchange_rates module.</p></div>`;
-      return;
-    }
-    const pairs = Object.entries(r.rates).slice(0, 30);
-    card.innerHTML = `<div class="card-title">Base: ${r.base}</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:12px;">
-        ${pairs.map(([cur, rate]) => `
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;">
-            <div style="font-weight:700;font-size:1rem;">${cur}</div>
-            <div style="color:var(--muted);font-size:0.8rem;">${typeof rate === "number" ? rate.toFixed(4) : rate}</div>
-          </div>`).join("")}
-      </div>`;
-  } catch(e) { card.innerHTML = `<div style="color:var(--muted);">Failed to load rates</div>`; }
-}
-
-// ── ALERTS ───────────────────────────────────────────────────
-async function loadAlerts() {
-  try {
-    const alerts = await api("GET", "/api/alerts");
-    const tbody = document.getElementById("alerts-table");
-    if (!alerts.length) {
-      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state" style="padding:20px;"><p>No alerts configured</p></div></td></tr>`;
-      return;
-    }
-    tbody.innerHTML = alerts.map(a => {
-      const cond = typeof a.conditions === "string" ? JSON.parse(a.conditions||"{}") : (a.conditions||{});
-      return `<tr>
-        <td><b>${esc(a.name)}</b></td>
-        <td>${a.watch_id ? `Watch #${a.watch_id}` : "All"}</td>
-        <td style="font-size:0.78rem;color:var(--muted);">${JSON.stringify(cond)}</td>
-        <td><span class="tag tag-enabled">Active</span></td>
-        <td><button class="btn btn-danger btn-sm" onclick="deleteAlert(${a.id})">🗑</button></td>
+// ── Watches ───────────────────────────────────────────────────
+let _watches=[];
+async function loadWatches(){
+  try{
+    _watches=await api("GET","/api/watches?all=true");
+    const tbody=document.getElementById("watches-tbody");
+    if(!_watches.length){tbody.innerHTML=`<tr><td colspan="7"><div style="text-align:center;padding:24px;color:var(--muted);">אין מעקבים עדיין</div></td></tr>`;return;}
+    tbody.innerHTML=_watches.map(w=>{
+      const p=w.last_price,low=w.lowest_price;
+      return`<tr>
+        <td><b>${esc(w.name)}</b><br><span style="font-size:.73rem;color:var(--muted);">${esc(w.destination)}</span></td>
+        <td>${catTag(w.category)}</td>
+        <td>${esc(w.destination)}${w.origin?` ← ${esc(w.origin)}`:""}</td>
+        <td>${p?`${p.currency} ${p.price}`:"—"}</td>
+        <td>${low?`<span class="down">${low.currency} ${low.price}</span>`:"—"}</td>
+        <td><span class="tag ${w.enabled?"t-on":"t-off"}">${w.enabled?"פעיל":"כבוי"}</span></td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-g btn-sm btn-ico" onclick="checkPrice(${w.id})" title="בדוק מחיר">🔄</button>
+          <button class="btn btn-g btn-sm btn-ico" onclick="toggleWatch(${w.id},${!w.enabled})">${w.enabled?"⏸":"▶"}</button>
+          <button class="btn btn-d btn-sm btn-ico" onclick="deleteWatch(${w.id})">🗑</button>
+        </td>
       </tr>`;
     }).join("");
-  } catch(e) { showToast("Error loading alerts", "error"); }
+    populateHistSel();
+  }catch(e){toast("שגיאה בטעינת מעקבים","err");}
 }
 
-function openAddAlert() { openModal("add-alert-overlay"); }
+function openAddWatch(){["w-name","w-orig","w-dest","w-query"].forEach(id=>document.getElementById(id).value="");document.getElementById("w-drop").value="10";document.getElementById("w-maxp").value="";openModal("m-add-watch");}
 
-async function submitAddAlert() {
-  const name = document.getElementById("al-name").value.trim();
-  if (!name) { showToast("Name required", "error"); return; }
-  const conditions = {};
-  const maxP = parseFloat(document.getElementById("al-maxprice").value);
-  if (maxP) conditions.max_price = maxP;
-  try {
-    await api("POST", "/api/alerts", {
-      name, watch_id: parseInt(document.getElementById("al-watch").value)||null, conditions
-    });
-    closeModal("add-alert-overlay");
-    loadAlerts(); showToast("Alert created", "success");
-  } catch(e) { showToast("Error: " + e.message, "error"); }
+async function submitAddWatch(){
+  const name=document.getElementById("w-name").value.trim();
+  const dest=document.getElementById("w-dest").value.trim();
+  if(!name||!dest){toast("שם ויעד נדרשים","err");return;}
+  try{
+    await api("POST","/api/watches",{name,category:document.getElementById("w-cat").value,query:document.getElementById("w-query").value.trim()||name,destination:dest,origin:document.getElementById("w-orig").value.trim()||null,date_from:document.getElementById("w-dfrom").value||null,date_to:document.getElementById("w-dto").value||null,max_price:parseFloat(document.getElementById("w-maxp").value)||null,drop_pct:parseFloat(document.getElementById("w-drop").value)||10});
+    closeModal("m-add-watch");loadWatches();toast("מעקב נוסף ✅","ok");
+  }catch(e){toast("שגיאה: "+e.message,"err");}
 }
 
-async function deleteAlert(id) {
-  if (!confirm("Delete this alert?")) return;
-  try { await api("DELETE", `/api/alerts/${id}`); loadAlerts(); }
-  catch(e) { showToast("Error", "error"); }
+async function deleteWatch(id){if(!confirm("למחוק מעקב זה?"))return;try{await api("DELETE",`/api/watches/${id}`);loadWatches();toast("נמחק");}catch(e){toast("שגיאה","err");}}
+async function toggleWatch(id,en){try{await api("PATCH",`/api/watches/${id}/toggle?enabled=${en}`);loadWatches();}catch(e){toast("שגיאה","err");}}
+async function checkPrice(id){toast("בודק מחיר…");try{await api("POST",`/api/watches/${id}/check`);setTimeout(loadWatches,3000);}catch(e){toast("שגיאה","err");}}
+
+// ── History ───────────────────────────────────────────────────
+function populateHistSel(){
+  const s=document.getElementById("hist-sel");const as=document.getElementById("al-watch");
+  const cur=s.value;s.innerHTML=`<option value="">— בחר —</option>`;as.innerHTML=`<option value="">כל המעקבים</option>`;
+  _watches.forEach(w=>{s.innerHTML+=`<option value="${w.id}">${esc(w.name)}</option>`;as.innerHTML+=`<option value="${w.id}">${esc(w.name)}</option>`;});
+  if(cur)s.value=cur;
 }
 
-// ── SETTINGS ────────────────────────────────────────────────
-const SETTINGS_LABELS = {
-  GEMINI_API_KEY: "Gemini API Key",
-  AMADEUS_CLIENT_ID: "Amadeus Client ID",
-  AMADEUS_CLIENT_SECRET: "Amadeus Client Secret",
-  KIWI_API_KEY: "Kiwi API Key",
-  TELEGRAM_BOT_TOKEN: "Telegram Bot Token",
-  TELEGRAM_CHAT_ID: "Telegram Chat ID",
-  NTFY_TOPIC: "NTFY Topic",
-  NTFY_SERVER: "NTFY Server",
-};
-
-async function loadSettings() {
-  try {
-    const s = await api("GET", "/api/settings");
-    const form = document.getElementById("settings-form");
-    form.innerHTML = Object.entries(SETTINGS_LABELS).map(([key, label]) =>
-      `<div class="form-group">
-        <label>${label}</label>
-        <input type="text" id="setting-${key}" placeholder="${s[key] === "***" ? "••••• (set)" : "Not configured"}" value="${s[key]==="***"?"":""}">
-      </div>`
-    ).join("");
-  } catch(e) { showToast("Failed to load settings", "error"); }
+async function loadHistory(){
+  const wid=document.getElementById("hist-sel").value;const lim=document.getElementById("hist-lim").value;
+  if(!wid)return;
+  try{
+    const[hist,stats]=await Promise.all([api("GET",`/api/prices/${wid}?limit=${lim}`),api("GET",`/api/prices/${wid}/stats`)]);
+    if(stats.count){document.getElementById("h-cur").textContent=`${stats.currency} ${stats.current}`;document.getElementById("h-low").textContent=`${stats.currency} ${stats.lowest}`;document.getElementById("h-high").textContent=`${stats.currency} ${stats.highest}`;document.getElementById("h-avg").textContent=`${stats.currency} ${stats.avg}`;}
+    const chart=document.getElementById("p-chart");
+    if(hist.length){const prices=hist.map(h=>h.price),min=Math.min(...prices),max=Math.max(...prices),range=max-min||1;
+      chart.innerHTML=[...hist].reverse().map(h=>`<div class="p-bar" style="height:${Math.max(8,((h.price-min)/range)*100)}%" data-p="${h.currency} ${h.price}"></div>`).join("");}
+    else chart.innerHTML=`<div style="color:var(--muted);font-size:.8rem;">אין נתונים</div>`;
+    document.getElementById("hist-tbody").innerHTML=hist.map(h=>`<tr><td style="color:var(--muted);font-size:.76rem;">${(h.checked_at||"").substring(0,16).replace("T"," ")||"—"}</td><td><b>${h.currency} ${h.price}</b></td><td>${h.currency}</td><td style="color:var(--muted);">${esc(h.source||"AI")}</td></tr>`).join("")||`<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:18px;">אין רשומות</td></tr>`;
+  }catch(e){toast("שגיאה בטעינת היסטוריה","err");}
 }
 
-async function saveSettings() {
-  const body = {};
-  Object.keys(SETTINGS_LABELS).forEach(key => {
-    const v = document.getElementById(`setting-${key}`)?.value.trim();
-    if (v) body[key] = v;
-  });
-  try {
-    await api("POST", "/api/settings", body);
-    showToast("Settings saved", "success");
-    loadSettings();
-  } catch(e) { showToast("Error: " + e.message, "error"); }
+// ── Chat ──────────────────────────────────────────────────────
+let chatHist=[];
+function chatKey(e){if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();sendChat();}}
+
+async function sendChat(){
+  const inp=document.getElementById("chat-in");const text=inp.value.trim();if(!text)return;inp.value="";
+  const msgs=document.getElementById("chat-msgs");
+  msgs.innerHTML+=`<div class="bubble user">${esc(text)}</div>`;
+  const ai=document.createElement("div");ai.className="bubble ai typing";msgs.appendChild(ai);msgs.scrollTop=msgs.scrollHeight;
+  chatHist.push({role:"user",parts:[{text}]});
+  try{
+    const web=document.getElementById("web-tog").checked;
+    const r=await fetch("/api/ai/chat",{method:"POST",headers:{"Content-Type":"application/json",...(_token?{"Authorization":"Bearer "+_token}:{})},body:JSON.stringify({messages:chatHist,system:"אתה סוכן נסיעות AI חכם. ענה בעברית.",web_search:web})});
+    ai.classList.remove("typing");let full="";
+    const reader=r.body.getReader();const dec=new TextDecoder();
+    while(true){const{done,value}=await reader.read();if(done)break;
+      dec.decode(value).split("\n").forEach(line=>{if(!line.startsWith("data: "))return;const d=line.slice(6);if(d==="[DONE]")return;try{full+=JSON.parse(d).text||"";ai.innerHTML=md(full);msgs.scrollTop=msgs.scrollHeight;}catch(e){}});}
+    chatHist.push({role:"model",parts:[{text:full}]});
+  }catch(e){ai.classList.remove("typing");ai.textContent="⚠️ שגיאה: "+e.message;}
 }
 
-// ── Helpers ──────────────────────────────────────────────────
-function esc(s) {
-  if (!s) return "";
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+// ── Generic AI query runner ───────────────────────────────────
+async function runAI(endpoint,inputId,resultId){
+  const input=document.getElementById(inputId);const res=document.getElementById(resultId);const btn=document.getElementById(endpoint+"-btn");
+  const text=input?.value?.trim()||"";
+  res.classList.remove("ai-placeholder");
+  res.innerHTML=`<div class="loading"><div class="spin"></div>מנתח…</div>`;
+  if(btn){btn.disabled=true;const orig=btn.textContent;btn.dataset.orig=orig;btn.textContent="מעבד…";}
+  try{
+    const r=await api("POST",`/api/${endpoint}`,{text,extra:""});
+    res.innerHTML=md(r.result||r.error||"אין תוצאה");
+  }catch(e){res.innerHTML=`<span style="color:#f87171;">שגיאה: ${esc(e.message)}</span>`;}
+  if(btn){btn.disabled=false;btn.textContent=btn.dataset.orig||btn.textContent;}
 }
 
-function catTag(cat) {
-  const map = { flight:"tag-flight", hotel:"tag-hotel", apartment:"tag-apt", package:"tag-package" };
-  return `<span class="tag ${map[cat]||''}">${cat||'—'}</span>`;
+// ── Deal Hunter ───────────────────────────────────────────────
+async function runDealHunter(){
+  const btn=document.getElementById("dh-btn");const res=document.getElementById("dh-res");
+  const origin=document.getElementById("dh-orig").value.trim();
+  if(!origin){toast("הכנס נקודת מוצא","err");return;}
+  btn.disabled=true;btn.textContent="מחפש…";res.classList.remove("ai-placeholder");
+  res.innerHTML=`<div class="loading"><div class="spin"></div>מחפש דילים…</div>`;
+  try{
+    const r=await api("POST","/api/deal-hunter",{origin,budget:parseFloat(document.getElementById("dh-budget").value)||null,dates:document.getElementById("dh-dates").value.trim(),preferences:document.getElementById("dh-prefs").value.trim()});
+    res.innerHTML=md(r.result||"לא נמצאו דילים");
+  }catch(e){res.innerHTML=`<span style="color:#f87171;">שגיאה: ${esc(e.message)}</span>`;}
+  btn.disabled=false;btn.textContent="🔥 צוד דילים";
 }
 
-function markdownToHtml(text) {
-  if (!text) return "";
-  return text
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
-    .replace(/\*(.+?)\*/g, "<i>$1</i>")
-    .replace(/`(.+?)`/g, "<code>$1</code>")
-    .replace(/^#{1,3} (.+)$/gm, "<b style='font-size:1rem;display:block;margin:8px 0 4px;'>$1</b>")
-    .replace(/^[-*] (.+)$/gm, "• $1<br>")
-    .replace(/\n\n/g, "<br><br>")
-    .replace(/\n/g, "<br>");
+// ── Surprise ──────────────────────────────────────────────────
+async function runSurprise(){
+  const btn=document.getElementById("surp-btn");const res=document.getElementById("surp-res");
+  btn.disabled=true;btn.textContent="מחשב…";res.classList.remove("ai-placeholder");
+  res.innerHTML=`<div class="loading"><div class="spin"></div>בוחר יעדים מפתיעים…</div>`;
+  try{
+    const r=await api("POST","/api/surprise",{text:document.getElementById("surp-budget").value.trim(),extra:document.getElementById("surp-prefs").value.trim()});
+    res.innerHTML=md(r.result||"אין תוצאה");
+  }catch(e){res.innerHTML=`<span style="color:#f87171;">שגיאה: ${esc(e.message)}</span>`;}
+  btn.disabled=false;btn.textContent="🎲 הפתע אותי!";
 }
+
+// ── Visa ──────────────────────────────────────────────────────
+async function runVisaCheck(){
+  const btn=document.getElementById("visa-btn");
+  const passport=document.getElementById("visa-pass").value.trim();const dest=document.getElementById("visa-dest").value.trim();
+  if(!passport||!dest){toast("מלא את שני השדות","err");return;}
+  btn.disabled=true;btn.textContent="בודק…";
+  try{
+    const r=await api("POST","/api/visa-check",{passport,destination:dest});
+    document.getElementById("visa-res").innerHTML=md(r.result||"אין נתונים");
+    document.getElementById("visa-card").style.display="block";
+  }catch(e){toast("שגיאה: "+e.message,"err");}
+  btn.disabled=false;btn.textContent="בדוק ויזה";
+}
+
+// ── Hidden City ───────────────────────────────────────────────
+async function runHiddenCity(){
+  const btn=document.getElementById("hc-btn");
+  const orig=document.getElementById("hc-from").value.trim();const dest=document.getElementById("hc-to").value.trim();
+  if(!orig||!dest){toast("הכנס מוצא ויעד","err");return;}
+  btn.disabled=true;btn.textContent="מחפש…";
+  try{
+    const r=await api("POST","/api/hidden-city",{origin:orig,destination:dest,date:document.getElementById("hc-date").value||null});
+    document.getElementById("hc-res").innerHTML=md(r.result||"אין תוצאות");
+    document.getElementById("hc-card").style.display="block";
+  }catch(e){toast("שגיאה: "+e.message,"err");}
+  btn.disabled=false;btn.textContent="🔍 חפש";
+}
+
+// ── Price DNA ────────────────────────────────────────────────
+async function loadPriceDNA(){
+  const el=document.getElementById("dna-res");el.innerHTML=`<div class="loading"><div class="spin"></div>מנתח…</div>`;
+  try{const r=await api("GET","/api/price-dna");el.innerHTML=r.summary?md(r.summary):md(JSON.stringify(r,null,2));}
+  catch(e){el.textContent="שגיאה: "+e.message;}
+}
+
+// ── Exchange ──────────────────────────────────────────────────
+async function loadExchange(){
+  const card=document.getElementById("exch-card");
+  try{
+    const r=await api("GET","/api/exchange-rates");
+    if(!r.rates||!Object.keys(r.rates).length){card.innerHTML=`<div style="color:var(--muted);">לא נמצאו שערי חליפין. הגדר את מודול exchange_rates.</div>`;return;}
+    const pairs=Object.entries(r.rates).slice(0,30);
+    card.innerHTML=`<div class="card-title">בסיס: ${r.base}</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px;margin-top:10px;">`+pairs.map(([c,v])=>`<div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:9px 11px;"><div style="font-weight:700;">${c}</div><div style="color:var(--muted);font-size:.78rem;">${typeof v==="number"?v.toFixed(4):v}</div></div>`).join("")+`</div>`;
+  }catch(e){card.innerHTML=`<div style="color:var(--muted);">שגיאה בטעינת שערים</div>`;}
+}
+
+// ── Alerts ────────────────────────────────────────────────────
+async function loadAlerts(){
+  try{
+    const alerts=await api("GET","/api/alerts");const tbody=document.getElementById("alerts-tbody");
+    if(!alerts.length){tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;padding:18px;color:var(--muted);">אין התראות מוגדרות</td></tr>`;return;}
+    tbody.innerHTML=alerts.map(a=>{const c=typeof a.conditions==="string"?JSON.parse(a.conditions||"{}"):a.conditions||{};
+      return`<tr><td><b>${esc(a.name)}</b></td><td>${a.watch_id?`מעקב #${a.watch_id}`:"הכל"}</td><td style="font-size:.76rem;color:var(--muted);">${JSON.stringify(c)}</td><td><span class="tag t-on">פעיל</span></td><td><button class="btn btn-d btn-sm" onclick="deleteAlert(${a.id})">🗑</button></td></tr>`;
+    }).join("");
+  }catch(e){toast("שגיאה בטעינת התראות","err");}
+}
+
+function openAddAlert(){openModal("m-add-alert");}
+async function submitAlert(){
+  const name=document.getElementById("al-name").value.trim();if(!name){toast("שם נדרש","err");return;}
+  const cond={};const mp=parseFloat(document.getElementById("al-maxp").value);if(mp)cond.max_price=mp;
+  try{await api("POST","/api/alerts",{name,watch_id:parseInt(document.getElementById("al-watch").value)||null,conditions:cond});closeModal("m-add-alert");loadAlerts();toast("התראה נוצרה ✅","ok");}
+  catch(e){toast("שגיאה: "+e.message,"err");}
+}
+async function deleteAlert(id){if(!confirm("למחוק התראה זו?"))return;try{await api("DELETE",`/api/alerts/${id}`);loadAlerts();}catch(e){toast("שגיאה","err");}}
+
+// ── Settings ──────────────────────────────────────────────────
+const SETTINGS_LABELS={GEMINI_API_KEY:"מפתח Gemini API",AMADEUS_CLIENT_ID:"Amadeus Client ID",AMADEUS_CLIENT_SECRET:"Amadeus Client Secret",KIWI_API_KEY:"מפתח Kiwi API",TELEGRAM_BOT_TOKEN:"Telegram Bot Token",TELEGRAM_CHAT_ID:"Telegram Chat ID",NTFY_TOPIC:"NTFY Topic",NTFY_SERVER:"NTFY Server"};
+
+async function loadSettings(){
+  try{
+    const s=await api("GET","/api/settings");const form=document.getElementById("settings-form");
+    form.innerHTML=Object.entries(SETTINGS_LABELS).map(([k,lbl])=>`<div class="fg"><label>${lbl}</label><input type="text" id="s-${k}" placeholder="${s[k]==="***"?"••••• (מוגדר)":"לא מוגדר"}" value=""></div>`).join("");
+  }catch(e){toast("שגיאה בטעינת הגדרות","err");}
+}
+async function saveSettings(){
+  const body={};Object.keys(SETTINGS_LABELS).forEach(k=>{const v=document.getElementById(`s-${k}`)?.value.trim();if(v)body[k]=v;});
+  try{await api("POST","/api/settings",body);toast("הגדרות נשמרו ✅","ok");loadSettings();}catch(e){toast("שגיאה: "+e.message,"err");}
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function esc(s){if(!s)return"";return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function catTag(c){const m={flight:"t-flight",hotel:"t-hotel",apartment:"t-apt",package:"t-pkg"};const labels={flight:"טיסה ✈️",hotel:"מלון 🏨",apartment:"דירה 🏠",package:"חבילה 📦"};return`<span class="tag ${m[c]||""}">${labels[c]||c||"—"}</span>`;}
+function md(text){if(!text)return"";return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\*(.+?)\*/g,"<i>$1</i>").replace(/`(.+?)`/g,"<code>$1</code>").replace(/^#{1,3} (.+)$/gm,"<b style='font-size:.97rem;display:block;margin:8px 0 4px;'>$1</b>").replace(/^[-•] (.+)$/gm,"• $1<br>").replace(/\n\n/g,"<br><br>").replace(/\n/g,"<br>");}
 
 // ── Init ──────────────────────────────────────────────────────
 navigate("dashboard");
