@@ -236,7 +236,10 @@ textarea{resize:vertical;min-height:70px;}
       <button class="mob-btn" onclick="toggleSidebar()">☰</button>
       <span class="topbar-title" id="topbar-title">לוח בקרה</span>
     </div>
-    <div id="topbar-btns"></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="btn btn-g btn-sm" id="lang-btn" onclick="toggleLang()">🌐 English</button>
+      <div id="topbar-btns"></div>
+    </div>
   </header>
 
   <div id="content">
@@ -981,7 +984,29 @@ function esc(s){if(!s)return"";return String(s).replace(/&/g,"&amp;").replace(/<
 function catTag(c){const m={flight:"t-flight",hotel:"t-hotel",apartment:"t-apt",package:"t-pkg"};const labels={flight:"טיסה ✈️",hotel:"מלון 🏨",apartment:"דירה 🏠",package:"חבילה 📦"};return`<span class="tag ${m[c]||""}">${labels[c]||c||"—"}</span>`;}
 function md(text){if(!text)return"";return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\*(.+?)\*/g,"<i>$1</i>").replace(/`(.+?)`/g,"<code>$1</code>").replace(/^#{1,3} (.+)$/gm,"<b style='font-size:.97rem;display:block;margin:8px 0 4px;'>$1</b>").replace(/^[-•] (.+)$/gm,"• $1<br>").replace(/\n\n/g,"<br><br>").replace(/\n/g,"<br>");}
 
+// ── Language toggle ───────────────────────────────────────────
+let _lang=localStorage.getItem("noded_lang")||"he";
+const TITLES_EN={dashboard:"🏠 Dashboard",watches:"👁 Watch List",history:"📊 Price History",chat:"💬 AI Travel Agent","wait-or-buy":"🔮 Wait or Buy?","ai-opps":"🌟 AI Opportunities","deal-hunter":"🔥 Deal Hunter",surprise:"🎲 Surprise Destination","trip-planner":"🗺️ Trip Planner","multi-city":"🌍 Multi-City","stopovers":"🔁 Free Stopovers","flexible-dates":"📅 Flexible Dates",predict:"📈 Price Prediction","true-cost":"💰 True Cost","points-vs-cash":"💳 Points vs Cash","deal-insights":"📊 Deal Insights","price-dna":"🧬 Price DNA",competitor:"🔍 Compare Sites",sentiment:"📰 Market Pulse",rss:"📡 RSS & Reddit",visa:"🛂 Visa Check","hidden-city":"🕵️ Hidden City",kiwi:"🔍 Kiwi Flights",exchange:"💱 Exchange Rates",alerts:"🎯 Alert Rules",settings:"⚙️ Settings"};
+const NAV_EN={dashboard:"Dashboard",watches:"Watch List",history:"Price History",chat:"AI Travel Agent","wait-or-buy":"Wait or Buy?","ai-opps":"AI Opportunities","deal-hunter":"Deal Hunter",surprise:"Surprise Destination","trip-planner":"Trip Planner","multi-city":"Multi-City",stopovers:"Free Stopovers","flexible-dates":"Flexible Dates",predict:"Price Prediction","true-cost":"True Cost","points-vs-cash":"Points vs Cash","deal-insights":"Deal Insights","price-dna":"Price DNA",competitor:"Compare Sites",sentiment:"Market Pulse",rss:"RSS & Reddit",visa:"Visa Check","hidden-city":"Hidden City",kiwi:"Kiwi Flights",exchange:"Exchange Rates",alerts:"Alert Rules",settings:"Settings"};
+const NAV_HE={dashboard:"לוח בקרה",watches:"רשימת מעקב",history:"היסטוריית מחירים",chat:"סוכן נסיעות AI","wait-or-buy":"כדאי לחכות?","ai-opps":"הזדמנויות AI","deal-hunter":"ציד דילים",surprise:"יעד מפתיע","trip-planner":"תכנן טיול","multi-city":"מסלול מרובה ערים",stopovers:"עצירות חינם","flexible-dates":"תאריכים גמישים",predict:"חיזוי מחיר","true-cost":"עלות אמיתית","points-vs-cash":"נקודות vs מזומן","deal-insights":"תובנות ודפוסים","price-dna":"Price DNA",competitor:"השוואת אתרים",sentiment:"סנטימנט & חדשות",rss:"RSS & Reddit",visa:"בדיקת ויזה","hidden-city":"Hidden City",kiwi:"Kiwi טיסות",exchange:"שערי חליפין",alerts:"כללי התראה",settings:"הגדרות"};
+
+function toggleLang(){_lang=_lang==="he"?"en":"he";localStorage.setItem("noded_lang",_lang);applyLang();}
+
+function applyLang(){
+  const en=_lang==="en";
+  document.documentElement.lang=_lang;
+  document.documentElement.dir=en?"ltr":"rtl";
+  document.getElementById("lang-btn").textContent=en?"🌐 עברית":"🌐 English";
+  document.querySelectorAll(".nav-btn[data-page]").forEach(btn=>{
+    const p=btn.dataset.page;const ico=btn.querySelector(".ico")?.outerHTML||"";
+    btn.innerHTML=ico+(en?NAV_EN[p]:NAV_HE[p])||p;
+  });
+  const cur=document.querySelector(".nav-btn.active")?.dataset.page;
+  if(cur)document.getElementById("topbar-title").textContent=(en?TITLES_EN:PAGE_TITLES)[cur]||cur;
+}
+
 // ── Init ──────────────────────────────────────────────────────
+applyLang();
 navigate("dashboard");
 loadWatches();
 </script>
