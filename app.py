@@ -61,7 +61,7 @@ import whatsapp_bot
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Noded 🧳",
+    page_title="WizeTravel ✈️",
     page_icon="🧳",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -129,10 +129,10 @@ def _inject_pwa():
   [
     ['mobile-web-app-capable',          'yes'],
     ['apple-mobile-web-app-capable',    'yes'],
-    ['apple-mobile-web-app-title',      'Noded'],
+    ['apple-mobile-web-app-title',      'WizeTravel'],
     ['apple-mobile-web-app-status-bar-style', 'black-translucent'],
     ['theme-color',                     '#667eea'],
-    ['application-name',                'Noded'],
+    ['application-name',                'WizeTravel'],
   ].forEach(function(pair) {
     if (!doc.querySelector('meta[name="' + pair[0] + '"]')) {
       var m = doc.createElement('meta');
