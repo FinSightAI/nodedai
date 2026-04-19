@@ -627,7 +627,7 @@ if "theme" not in st.session_state:
 
 # Convenience shortcut
 _lang = st.session_state.lang
-_rtl = _lang == "he"
+_rtl = (_lang == "he")
 
 # Sync language to all AI modules
 for _mod in [agent, sentiment_analyzer, price_predictor, smart_search,
@@ -842,12 +842,12 @@ with st.sidebar:
     # Language selector (top of sidebar)
     lang_choice = st.radio(
         i18n.t("lang_label", _lang),
-        ["🇮🇱 עברית", "🇺🇸 English"],
-        index=0 if _lang == "he" else 1,
+        ["🇮🇱 עברית", "🇺🇸 English", "🇧🇷 Português"],
+        index=0 if _lang == "he" else (2 if _lang == "pt" else 1),
         horizontal=True,
         label_visibility="collapsed",
     )
-    new_lang = "he" if "עברית" in lang_choice else "en"
+    new_lang = "he" if "עברית" in lang_choice else ("pt" if "Português" in lang_choice else "en")
     if new_lang != st.session_state.lang:
         st.session_state.lang = new_lang
         st.rerun()
@@ -906,6 +906,9 @@ with st.sidebar:
     # Normalize to Hebrew page name for routing (all page== checks use Hebrew)
     if _lang == "en":
         page = i18n.EN_TO_HE_PAGE.get(page_display, page_display)
+    elif _lang == "pt":
+        en_page = i18n.PT_TO_EN_PAGE.get(page_display, page_display)
+        page = i18n.EN_TO_HE_PAGE.get(en_page, en_page)
     else:
         page = page_display
 
