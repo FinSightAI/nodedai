@@ -265,7 +265,7 @@ async def get_price_dna():
     if not mod:
         return {"error": "Module not available"}
     loop   = asyncio.get_event_loop()
-    result = await loop.run_in_executor(None, mod.analyze_price_dna)
+    result = await loop.run_in_executor(None, mod.get_ai_price_dna)
     return result or {"summary": "No data yet"}
 
 

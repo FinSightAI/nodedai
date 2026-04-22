@@ -1505,7 +1505,44 @@ async function runHiddenCity(){
 // ── Price DNA ────────────────────────────────────────────────
 async function loadPriceDNA(){
   const el=document.getElementById("dna-res");el.innerHTML=`<div class="loading"><div class="spin"></div>מנתח…</div>`;
-  try{const r=await api("GET","/api/price-dna");el.innerHTML=r.summary?md(r.summary):md(JSON.stringify(r,null,2));}
+  try{
+    const r=await api("GET","/api/price-dna");
+    if(r.error){el.textContent="שגיאה: "+r.error;return;}
+    const dna=r.dna||{};
+    const fmt=n=>n!=null?Math.round(n).toLocaleString("he-IL"):"—";
+    const cur=dna.currency||"";
+    let html=``;
+    // Verdict badge
+    if(r.verdict_emoji||r.verdict){
+      const col=r.verdict_emoji==="🟢"?"#22c55e":r.verdict_emoji==="🔴"?"#ef4444":"#eab308";
+      html+=`<div style="background:${col}22;border:1px solid ${col};border-radius:10px;padding:14px 18px;margin-bottom:14px;font-size:1.05rem;font-weight:700;">${r.verdict_emoji||""} ${r.verdict||""}</div>`;
+    }
+    // Stats row
+    if(dna.price_range){
+      html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;">
+        <div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.72rem;color:var(--muted);">מינימום</div><div style="font-weight:700;">${cur} ${fmt(dna.price_range.min)}</div></div>
+        <div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.72rem;color:var(--muted);">ממוצע</div><div style="font-weight:700;">${cur} ${fmt(dna.price_range.avg)}</div></div>
+        <div style="background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:.72rem;color:var(--muted);">מקסימום</div><div style="font-weight:700;">${cur} ${fmt(dna.price_range.max)}</div></div>
+      </div>`;
+    }
+    // Insights
+    const fields=[
+      ["📊 דפוס מרכזי",r.main_pattern],
+      ["🗓️ מתי לקנות",r.best_booking_window],
+      ["📈 תחזית 2 חודשים",r.forecast_2months],
+      ["💰 חיסכון אפשרי",dna.potential_savings?`${cur} ${fmt(dna.potential_savings)} (${dna.potential_savings_pct}%)`:""],
+      ["⚡ מחיר עכשיו",r.price_now_assessment],
+      ["🎯 טיפ חיסכון",r.savings_tip],
+    ].filter(([,v])=>v);
+    fields.forEach(([label,val])=>{
+      html+=`<div style="border-bottom:1px solid var(--border);padding:9px 0;"><span style="color:var(--muted);font-size:.78rem;">${label}</span><div style="margin-top:3px;">${val}</div></div>`;
+    });
+    // Actions
+    if(r.actions&&r.actions.length){
+      html+=`<div style="margin-top:12px;"><div style="font-weight:600;margin-bottom:8px;">✅ פעולות מומלצות</div>${r.actions.map(a=>`<div style="background:var(--surf2);border-radius:7px;padding:8px 12px;margin-bottom:6px;font-size:.88rem;">• ${a}</div>`).join("")}</div>`;
+    }
+    el.innerHTML=html||md(JSON.stringify(r,null,2));
+  }
   catch(e){el.textContent="שגיאה: "+e.message;}
 }
 
