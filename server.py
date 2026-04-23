@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent / ".env")
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from pydantic import BaseModel
 
@@ -83,6 +84,14 @@ def _check_ai_quota(request: Request) -> tuple[bool, str, str]:
 db.init_db()
 
 app = FastAPI(title="Noded API", version="3.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://wizelife.ai", "https://finsightai.github.io", "http://localhost:3000", "http://localhost:8080"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
@@ -231,7 +240,7 @@ async def ai_chat(body: ChatMsg, request: Request):
                 web_search=body.web_search,
             )
         )
-        text = reply or "⚠️ לא הצלחתי לקבל תשובה. בדוק שה-GEMINI_API_KEY מוגדר."
+        text = reply or "⚠️ Could not get a response. Please check that the GEMINI_API_KEY is configured."
         # Stream word by word for effect
         for word in text.split(" "):
             yield f"data: {json.dumps({'text': word + ' '})}\n\n"
@@ -278,6 +287,7 @@ class DealHuntQuery(BaseModel):
     budget: Optional[float] = None
     dates: Optional[str] = None
     preferences: str = ""
+    lang: Optional[str] = "he"
 
 
 @app.post("/api/deal-hunter")
@@ -286,7 +296,7 @@ async def hunt_deals(body: DealHuntQuery, request: Request):
     if not allowed:
         raise HTTPException(429, f"Daily AI limit reached on {plan} plan. Upgrade at wizelife.ai")
     loop = asyncio.get_event_loop()
-    prompt = f"Find best flight deals from {body.origin}. Budget: {body.budget or 'any'}. Dates: {body.dates or 'flexible'}. {body.preferences}"
+    prompt = f"Find best flight deals from {body.origin}. Budget: {body.budget or 'any'}. Dates: {body.dates or 'flexible'}. {body.preferences} {_lang_instruction(body.lang or 'he')}"
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=1024))
     return {"result": result or "No deals found"}
 
@@ -474,18 +484,33 @@ def _ai_post(prompt: str, web: bool = False, tokens: int = 800) -> str:
         return fut.result() or ""
 
 
+def _quota_exceeded_msg(plan: str) -> str:
+    limit = _AI_DAILY_LIMITS.get(plan, 5)
+    return f"Daily AI limit reached ({limit}/day on {plan} plan). Upgrade at wizelife.ai"
+
+
+def _lang_instruction(lang: str) -> str:
+    instructions = {
+        "he": "Respond in Hebrew.",
+        "pt": "Respond in Portuguese.",
+        "es": "Respond in Spanish.",
+    }
+    return instructions.get(lang, "")
+
+
 class AIQuery(BaseModel):
     text: str
     extra: Optional[str] = ""
+    lang: Optional[str] = "he"
 
 
 @app.post("/api/wait-or-buy")
 async def wait_or_buy(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
-    prompt = f"Travel price analysis: {body.text}. Should the traveler buy now or wait? Analyze historical patterns, seasonality, current trends. Give a clear recommendation with reasoning. Respond in Hebrew."
+    prompt = f"Travel price analysis: {body.text}. Should the traveler buy now or wait? Analyze historical patterns, seasonality, current trends. Give a clear recommendation with reasoning. {_lang_instruction(body.lang or 'he')}"
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=800))
     return {"result": result or ""}
 
@@ -494,9 +519,9 @@ async def wait_or_buy(body: AIQuery, request: Request):
 async def ai_opportunities(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
-    prompt = f"Find the best travel deals and opportunities right now for: {body.text or 'any destination'}. Focus on flash sales, error fares, last-minute deals. Be specific with prices and airlines. Respond in Hebrew."
+    prompt = f"Find the best travel deals and opportunities right now for: {body.text or 'any destination'}. Focus on flash sales, error fares, last-minute deals. Be specific with prices and airlines. {_lang_instruction(body.lang or 'he')}"
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=1000))
     return {"result": result or ""}
 
@@ -505,11 +530,11 @@ async def ai_opportunities(body: AIQuery, request: Request):
 async def surprise_destination(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
     budget = body.text or "500 USD"
     prefs = body.extra or ""
-    prompt = f"Suggest 3 surprising, underrated travel destinations for budget {budget}. {prefs} Include: why it's special, best time to go, estimated flight cost. Make it exciting and unexpected. Respond in Hebrew."
+    prompt = f"Suggest 3 surprising, underrated travel destinations for budget {budget}. {prefs} Include: why it's special, best time to go, estimated flight cost. Make it exciting and unexpected. {_lang_instruction(body.lang or 'he')}"
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=800))
     return {"result": result or ""}
 
@@ -518,9 +543,9 @@ async def surprise_destination(body: AIQuery, request: Request):
 async def trip_planner(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
-    prompt = f"Create a detailed travel itinerary: {body.text}. Include: day-by-day plan, accommodation tips, must-see attractions, local food, transportation, estimated budget breakdown. Respond in Hebrew."
+    prompt = f"Create a detailed travel itinerary: {body.text}. Include: day-by-day plan, accommodation tips, must-see attractions, local food, transportation, estimated budget breakdown. {_lang_instruction(body.lang or 'he')}"
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=1200))
     return {"result": result or ""}
 
@@ -529,9 +554,9 @@ async def trip_planner(body: AIQuery, request: Request):
 async def multi_city(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
-    prompt = f"Plan a multi-city route: {body.text}. Find the most cost-efficient order to visit these cities, best airlines for each leg, estimated prices. Respond in Hebrew."
+    prompt = f"Plan a multi-city route: {body.text}. Find the most cost-efficient order to visit these cities, best airlines for each leg, estimated prices. {_lang_instruction(body.lang or 'he')}"
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=900))
     return {"result": result or ""}
 
@@ -540,7 +565,7 @@ async def multi_city(body: AIQuery, request: Request):
 async def stopovers(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
     prompt = f"Find free stopover opportunities for route: {body.text}. Which airlines offer free stopovers on this route? How much extra time is allowed? What to do during the stopover? Respond in Hebrew."
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=800))
@@ -551,9 +576,9 @@ async def stopovers(body: AIQuery, request: Request):
 async def flexible_dates(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
-    prompt = f"Find cheapest travel dates for: {body.text}. Compare prices across different weeks/months. Identify the cheapest day of week to fly. Respond in Hebrew with a clear price comparison table."
+    prompt = f"Find cheapest travel dates for: {body.text}. Compare prices across different weeks/months. Identify the cheapest day of week to fly. {_lang_instruction(body.lang or 'he')} Include a clear price comparison table."
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=800))
     return {"result": result or ""}
 
@@ -562,9 +587,9 @@ async def flexible_dates(body: AIQuery, request: Request):
 async def predict_price(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
-    prompt = f"Price prediction for travel: {body.text}. Based on historical patterns, seasonality, current market trends — will prices go up or down in the next 2-4 weeks? Give a confidence score. Respond in Hebrew."
+    prompt = f"Price prediction for travel: {body.text}. Based on historical patterns, seasonality, current market trends — will prices go up or down in the next 2-4 weeks? Give a confidence score. {_lang_instruction(body.lang or 'he')}"
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=700))
     return {"result": result or ""}
 
@@ -573,9 +598,9 @@ async def predict_price(body: AIQuery, request: Request):
 async def true_cost(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
-    prompt = f"Calculate the true total cost of this trip: {body.text}. Break down: flights, accommodation, food, transport, activities, visas, travel insurance, luggage fees, airport transfers. Give realistic daily budget. Respond in Hebrew."
+    prompt = f"Calculate the true total cost of this trip: {body.text}. Break down: flights, accommodation, food, transport, activities, visas, travel insurance, luggage fees, airport transfers. Give realistic daily budget. {_lang_instruction(body.lang or 'he')}"
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=900))
     return {"result": result or ""}
 
@@ -584,7 +609,7 @@ async def true_cost(body: AIQuery, request: Request):
 async def points_vs_cash(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
     prompt = f"Points vs cash analysis for: {body.text}. Compare: cost in cash vs using miles/points, which loyalty programs have the best redemption value for this route, is it worth collecting points? Respond in Hebrew."
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=800))
@@ -595,9 +620,9 @@ async def points_vs_cash(body: AIQuery, request: Request):
 async def deal_insights_endpoint(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
-    prompt = f"Deep deal analysis for: {body.text}. Identify patterns: best booking window, cheapest months, airline price strategies, hidden fees. Respond in Hebrew."
+    prompt = f"Deep deal analysis for: {body.text}. Identify patterns: best booking window, cheapest months, airline price strategies, hidden fees. {_lang_instruction(body.lang or 'he')}"
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=800))
     return {"result": result or ""}
 
@@ -606,7 +631,7 @@ async def deal_insights_endpoint(body: AIQuery, request: Request):
 async def competitor_check(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
     prompt = f"Compare prices across booking sites for: {body.text}. Check Google Flights, Kayak, Skyscanner, Kiwi, direct airline. Which site currently has the best price? Any exclusive deals? Respond in Hebrew."
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=800))
@@ -617,7 +642,7 @@ async def competitor_check(body: AIQuery, request: Request):
 async def kiwi_search(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
     prompt = f"Search Kiwi.com for: {body.text}. Find creative routes using Kiwi's virtual interlining — combinations of low-cost carriers that Kiwi connects. What are the cheapest options? Respond in Hebrew."
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=800))
@@ -628,7 +653,7 @@ async def kiwi_search(body: AIQuery, request: Request):
 async def rss_scan(body: AIQuery, request: Request):
     allowed, plan, _ = _check_ai_quota(request)
     if not allowed:
-        raise HTTPException(429, f"הגעת למגבלת AI יומית ({plan}). שדרג ב-wizelife.ai")
+        raise HTTPException(429, _quota_exceeded_msg(plan))
     loop = asyncio.get_event_loop()
     dest = body.text or "general travel"
     prompt = f"Find the latest travel deal alerts and discussions from Reddit (r/churning, r/solotravel, r/flights), travel blogs, and deal sites for: {dest}. What are people talking about right now? Any hot deals? Respond in Hebrew."
@@ -780,6 +805,7 @@ class PositioningQuery(BaseModel):
     return_date: Optional[str] = None
     budget: float = 0
     travelers: int = 1
+    lang: Optional[str] = "he"
 
 @app.post("/api/positioning")
 async def find_positioning(body: PositioningQuery, request: Request):
@@ -802,7 +828,7 @@ async def find_positioning(body: PositioningQuery, request: Request):
     prompt = (
         f"Find positioning flight opportunities from TLV to {body.destination} on {body.travel_date}. "
         f"Budget: ${body.budget or 'any'}. Is it cheaper to fly TLV→Hub→{body.destination}? "
-        "List top 3 hubs with estimated prices, savings%, and tips. Respond in Hebrew."
+        f"List top 3 hubs with estimated prices, savings%, and tips. {_lang_instruction(body.lang or 'he')}"
     )
     result = await loop.run_in_executor(None, lambda: ai_client.ask(prompt=prompt, web_search=True, max_tokens=900))
     return {"opportunities": [], "ai_result": result or ""}
@@ -818,7 +844,7 @@ async def positioning_routes(request: Request):
         routes = await loop.run_in_executor(None, mod.get_cheapest_tlv_positioning_routes)
         return {"routes": routes or []}
     result = await loop.run_in_executor(None, lambda: ai_client.ask(
-        prompt="What are the 5 cheapest positioning hubs from TLV? List city, airport code, price from TLV, best airline, and why it's good for positioning. Respond in Hebrew.",
+        prompt="What are the 5 cheapest positioning hubs from TLV? List city, airport code, price from TLV, best airline, and why it's good for positioning.",
         web_search=True, max_tokens=600
     ))
     return {"routes": [], "ai_result": result or ""}
@@ -853,7 +879,7 @@ async def positioning_roi(body: ROIQuery):
         "gross_savings_pct": round(savings / body.direct_price * 100, 1) if body.direct_price else 0,
         "time_cost": round(time_cost, 2),
         "net_savings": round(net, 2),
-        "verdict": f"✅ משתלם! חוסך ${net:.0f} נטו" if net > 0 else f"❌ לא משתלם — עלות הזמן (${time_cost:.0f}) גדולה מהחיסכון (${savings:.0f})",
+        "verdict": f"✅ Worth it! Net savings ${net:.0f}" if net > 0 else f"❌ Not worth it — time cost (${time_cost:.0f}) exceeds savings (${savings:.0f})",
     }
 
 

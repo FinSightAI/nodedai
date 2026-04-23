@@ -1442,7 +1442,7 @@ async function runAI(endpoint,inputId,resultId){
   res.innerHTML=`<div class="loading"><div class="spin"></div>מנתח…</div>`;
   if(btn){btn.disabled=true;const orig=btn.textContent;btn.dataset.orig=orig;btn.textContent="מעבד…";}
   try{
-    const r=await api("POST",`/api/${endpoint}`,{text,extra:""});
+    const r=await api("POST",`/api/${endpoint}`,{text,extra:"",lang:_lang});
     res.innerHTML=md(r.result||r.error||"אין תוצאה");
   }catch(e){res.innerHTML=`<span style="color:#f87171;">שגיאה: ${esc(e.message)}</span>`;}
   if(btn){btn.disabled=false;btn.textContent=btn.dataset.orig||btn.textContent;}
@@ -1456,7 +1456,7 @@ async function runDealHunter(){
   btn.disabled=true;btn.textContent="מחפש…";res.classList.remove("ai-placeholder");
   res.innerHTML=`<div class="loading"><div class="spin"></div>מחפש דילים…</div>`;
   try{
-    const r=await api("POST","/api/deal-hunter",{origin,budget:parseFloat(document.getElementById("dh-budget").value)||null,dates:document.getElementById("dh-dates").value.trim(),preferences:document.getElementById("dh-prefs").value.trim()});
+    const r=await api("POST","/api/deal-hunter",{origin,budget:parseFloat(document.getElementById("dh-budget").value)||null,dates:document.getElementById("dh-dates").value.trim(),preferences:document.getElementById("dh-prefs").value.trim(),lang:_lang});
     res.innerHTML=md(r.result||"לא נמצאו דילים");
   }catch(e){res.innerHTML=`<span style="color:#f87171;">שגיאה: ${esc(e.message)}</span>`;}
   btn.disabled=false;btn.textContent="🔥 צוד דילים";
@@ -1468,7 +1468,7 @@ async function runSurprise(){
   btn.disabled=true;btn.textContent="מחשב…";res.classList.remove("ai-placeholder");
   res.innerHTML=`<div class="loading"><div class="spin"></div>בוחר יעדים מפתיעים…</div>`;
   try{
-    const r=await api("POST","/api/surprise",{text:document.getElementById("surp-budget").value.trim(),extra:document.getElementById("surp-prefs").value.trim()});
+    const r=await api("POST","/api/surprise",{text:document.getElementById("surp-budget").value.trim(),extra:document.getElementById("surp-prefs").value.trim(),lang:_lang});
     res.innerHTML=md(r.result||"אין תוצאה");
   }catch(e){res.innerHTML=`<span style="color:#f87171;">שגיאה: ${esc(e.message)}</span>`;}
   btn.disabled=false;btn.textContent="🎲 הפתע אותי!";
@@ -1625,7 +1625,7 @@ async function runSmartTool(inputId, resultId, promptPrefix){
   res.classList.remove("ai-placeholder");
   res.innerHTML=`<div class="loading"><div class="spin"></div>מנתח…</div>`;
   try{
-    const r=await api("POST","/api/ai/quick",{prompt:promptPrefix+text+" — ענה בעברית בפירוט."});
+    const r=await api("POST","/api/ai/quick",{prompt:promptPrefix+text+langSuffix()});
     res.innerHTML=md(r.text||"אין תוצאה");
   }catch(e){res.innerHTML=`<span style="color:#f87171;">שגיאה: ${esc(e.message)}</span>`;}
 }
@@ -1704,7 +1704,7 @@ async function loadCalendarAI(){
   resEl.innerHTML=`<div class="loading"><div class="spin"></div>מנתח…</div>`;
   const watchName=_watches.find(w=>w.id==wid)?.name||"מסלול";
   try{
-    const r=await api("POST","/api/ai/quick",{prompt:`מצא את התאריכים הזולים ביותר לנסיעה: ${watchName}. חודש: ${mon||"הקרוב"}. כולל המלצה על יום הזול ביותר בשבוע. ענה בעברית.`});
+    const r=await api("POST","/api/ai/quick",{prompt:`Find the cheapest travel dates for: ${watchName}. Month: ${mon||"upcoming"}. Include a recommendation for the cheapest day of the week to fly.${langSuffix()}`});
     resEl.innerHTML=md(r.text||"אין תוצאה");
   }catch(e){resEl.innerHTML=`<span style="color:#f87171;">שגיאה: ${esc(e.message)}</span>`;}
 }
@@ -1719,8 +1719,8 @@ async function loadExpiringDeals(){
   market.innerHTML=`<div class="loading"><div class="spin"></div>בודק שוק…</div>`;
   try{
     const [dealsR,mktR]=await Promise.all([
-      api("POST","/api/ai/quick",{prompt:`מצא דילים לטיסות ומלונות שפגים ב-24-72 שעות הקרובות (flash sales, limited time, error fares) ל${dest||"כל יעד"}. כלול: יעד, מחיר, חברת תעופה/מלון, תאריך פקיעה, קישור. ענה בעברית.`}),
-      api("POST","/api/ai/quick",{prompt:`תן סיכום קצר של מצב שוק הטיסות עכשיו: מגמת מחירים, האם זה זמן טוב לקנות? 2-3 משפטים בעברית.`})
+      api("POST","/api/ai/quick",{prompt:`Find flights and hotel deals expiring in the next 24-72 hours (flash sales, limited time, error fares) for ${dest||"any destination"}. Include: destination, price, airline/hotel, expiry date, link.${langSuffix()}`}),
+      api("POST","/api/ai/quick",{prompt:`Give a brief summary of the current flight market: price trends, is now a good time to buy? 2-3 sentences.${langSuffix()}`})
     ]);
     res.innerHTML=md(dealsR.text||"לא נמצאו דילים");
     market.innerHTML=md(mktR.text||"אין נתונים");
@@ -1871,7 +1871,8 @@ async function runPositioning(){
       destination:dest,travel_date:date,
       return_date:document.getElementById("pos-ret")?.value||null,
       budget:parseFloat(document.getElementById("pos-budget")?.value)||0,
-      travelers:parseInt(document.getElementById("pos-travelers")?.value)||1
+      travelers:parseInt(document.getElementById("pos-travelers")?.value)||1,
+      lang:_lang
     });
     const opps=r.opportunities||[];
     if(r.ai_result){res.innerHTML=`<div class="card"><div class="card-title">🤖 ניתוח AI</div><div class="ai-box">${md(r.ai_result)}</div></div>`;return;}
@@ -2007,7 +2008,7 @@ async function saveNtfySettings(){
 }
 
 // ── Language toggle ───────────────────────────────────────────
-let _lang=localStorage.getItem("noded_lang")||"he";
+let _lang=(()=>{const wl=localStorage.getItem("wl_lang");if(wl&&["he","en","pt","es"].includes(wl))return wl;return localStorage.getItem("noded_lang")||"he";})();
 const TITLES_EN={dashboard:"🏠 Dashboard",watches:"👁 Watch List",history:"📊 Price History",chat:"💬 AI Travel Agent","wait-or-buy":"🔮 Wait or Buy?","ai-opps":"🌟 AI Opportunities","deal-hunter":"🔥 Deal Hunter",surprise:"🎲 Surprise Destination","trip-planner":"🗺️ Trip Planner","multi-city":"🌍 Multi-City","stopovers":"🔁 Free Stopovers","flexible-dates":"📅 Flexible Dates",predict:"📈 Price Prediction","true-cost":"💰 True Cost","points-vs-cash":"💳 Points vs Cash","deal-insights":"📊 Deal Insights","price-dna":"🧬 Price DNA",competitor:"🔍 Compare Sites",sentiment:"📰 Market Pulse",rss:"📡 RSS & Reddit",visa:"🛂 Visa Check","hidden-city":"🕵️ Hidden City",kiwi:"🔍 Kiwi Flights",exchange:"💱 Exchange Rates",alerts:"🎯 Alert Rules",settings:"⚙️ Settings","smart-tools":"🛠️ Smart Tools","price-calendar":"📆 Price Calendar","expiring-deals":"⏰ Expiring Deals",
   "telegram-bot":"🤖 Telegram Bot","auto-book":"⚡ Auto-Book Engine","positioning":"🗺️ Positioning","whatsapp-bot":"💬 WhatsApp Bot"};
 const NAV_EN={dashboard:"Dashboard",watches:"Watch List",history:"Price History",chat:"AI Travel Agent","wait-or-buy":"Wait or Buy?","ai-opps":"AI Opportunities","deal-hunter":"Deal Hunter",surprise:"Surprise Destination","trip-planner":"Trip Planner","multi-city":"Multi-City",stopovers:"Free Stopovers","flexible-dates":"Flexible Dates",predict:"Price Prediction","true-cost":"True Cost","points-vs-cash":"Points vs Cash","deal-insights":"Deal Insights","price-dna":"Price DNA",competitor:"Compare Sites",sentiment:"Market Pulse",rss:"RSS & Reddit",visa:"Visa Check","hidden-city":"Hidden City",kiwi:"Kiwi Flights",exchange:"Exchange Rates",alerts:"Alert Rules",settings:"Settings","smart-tools":"Smart Tools","price-calendar":"Price Calendar","expiring-deals":"Expiring Deals",
@@ -2015,13 +2016,15 @@ const NAV_EN={dashboard:"Dashboard",watches:"Watch List",history:"Price History"
 const NAV_HE={dashboard:"לוח בקרה",watches:"רשימת מעקב",history:"היסטוריית מחירים",chat:"סוכן נסיעות AI","wait-or-buy":"כדאי לחכות?","ai-opps":"הזדמנויות AI","deal-hunter":"ציד דילים",surprise:"יעד מפתיע","trip-planner":"תכנן טיול","multi-city":"מסלול מרובה ערים",stopovers:"עצירות חינם","flexible-dates":"תאריכים גמישים",predict:"חיזוי מחיר","true-cost":"עלות אמיתית","points-vs-cash":"נקודות vs מזומן","deal-insights":"תובנות ודפוסים","price-dna":"Price DNA",competitor:"השוואת אתרים",sentiment:"סנטימנט & חדשות",rss:"RSS & Reddit",visa:"בדיקת ויזה","hidden-city":"Hidden City",kiwi:"Kiwi טיסות",exchange:"שערי חליפין",alerts:"כללי התראה",settings:"הגדרות","smart-tools":"כלים חכמים","price-calendar":"לוח מחירים","expiring-deals":"דילים פגי תוקף",
   "telegram-bot":"בוט טלגרם","auto-book":"Auto-Book Engine","positioning":"Positioning","whatsapp-bot":"WhatsApp Bot"};
 
-function toggleLang(){_lang=_lang==="he"?"en":"he";localStorage.setItem("noded_lang",_lang);applyLang();}
+function toggleLang(){const langs=["he","en","pt","es"];_lang=langs[(langs.indexOf(_lang)+1)%langs.length];localStorage.setItem("noded_lang",_lang);localStorage.setItem("wl_lang",_lang);applyLang();}
 
+function langSuffix(){return _lang==="he"?" ענה בעברית.":_lang==="pt"?" Respond in Portuguese.":_lang==="es"?" Respond in Spanish.":"";}
 function applyLang(){
-  const en=_lang==="en";
+  const en=_lang!=="he";
+  const lblNext={he:"🌐 EN",en:"🌐 PT",pt:"🌐 ES",es:"🌐 עב"};
   document.documentElement.lang=_lang;
-  document.documentElement.dir=en?"ltr":"rtl";
-  document.getElementById("lang-btn").textContent=en?"🌐 עברית":"🌐 English";
+  document.documentElement.dir=(_lang==="he")?"rtl":"ltr";
+  document.getElementById("lang-btn").textContent=lblNext[_lang]||"🌐";
   document.querySelectorAll(".nav-btn[data-page]").forEach(btn=>{
     const p=btn.dataset.page;const ico=btn.querySelector(".ico")?.outerHTML||"";
     btn.innerHTML=ico+(en?NAV_EN[p]:NAV_HE[p])||p;
