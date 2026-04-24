@@ -354,46 +354,46 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ היסטוריית מחירים ══ -->
     <div class="page" id="page-history">
-      <div class="sh"><h2>📊 היסטוריית מחירים</h2></div>
+      <div class="sh"><h2 data-ui="h2_history">📊 היסטוריית מחירים</h2></div>
       <div class="card" style="margin-bottom:14px;">
         <div class="f2">
-          <div class="fg" style="margin:0;"><label>בחר מעקב</label><select id="hist-sel" onchange="loadHistory()"><option value="">— בחר —</option></select></div>
-          <div class="fg" style="margin:0;"><label>כמות רשומות</label><select id="hist-lim" onchange="loadHistory()"><option value="30">30 אחרונות</option><option value="60" selected>60 אחרונות</option><option value="100">100 אחרונות</option></select></div>
+          <div class="fg" style="margin:0;"><label data-ui="lbl_select_watch">בחר מעקב</label><select id="hist-sel" onchange="loadHistory()"><option value="">— בחר —</option></select></div>
+          <div class="fg" style="margin:0;"><label data-ui="lbl_record_count">כמות רשומות</label><select id="hist-lim" onchange="loadHistory()"><option value="30">30 אחרונות</option><option value="60" selected>60 אחרונות</option><option value="100">100 אחרונות</option></select></div>
         </div>
       </div>
       <div class="g4" style="margin-bottom:14px;">
-        <div class="stat"><div class="stat-lbl">נוכחי</div><div class="stat-val" id="h-cur">—</div></div>
-        <div class="stat"><div class="stat-lbl">הנמוך</div><div class="stat-val down" id="h-low">—</div></div>
-        <div class="stat"><div class="stat-lbl">הגבוה</div><div class="stat-val up" id="h-high">—</div></div>
-        <div class="stat"><div class="stat-lbl">ממוצע</div><div class="stat-val" id="h-avg">—</div></div>
+        <div class="stat"><div class="stat-lbl" data-ui="stat_current">נוכחי</div><div class="stat-val" id="h-cur">—</div></div>
+        <div class="stat"><div class="stat-lbl" data-ui="stat_low">הנמוך</div><div class="stat-val down" id="h-low">—</div></div>
+        <div class="stat"><div class="stat-lbl" data-ui="stat_high">הגבוה</div><div class="stat-val up" id="h-high">—</div></div>
+        <div class="stat"><div class="stat-lbl" data-ui="stat_avg">ממוצע</div><div class="stat-val" id="h-avg">—</div></div>
       </div>
       <div class="card" style="margin-bottom:14px;">
-        <div class="card-title">מגמת מחיר</div>
+        <div class="card-title" data-ui="ct_price_trend">מגמת מחיר</div>
         <div class="p-chart" id="p-chart"></div>
       </div>
       <div class="card">
-        <div class="card-title">רשומות</div>
-        <div class="tbl-wrap"><table><thead><tr><th>תאריך</th><th>מחיר</th><th>מטבע</th><th>מקור</th></tr></thead><tbody id="hist-tbody"></tbody></table></div>
+        <div class="card-title" data-ui="ct_records">רשומות</div>
+        <div class="tbl-wrap"><table><thead><tr><th data-ui="th_date">תאריך</th><th data-ui="th_price_val">מחיר</th><th data-ui="th_currency">מטבע</th><th data-ui="th_source">מקור</th></tr></thead><tbody id="hist-tbody"></tbody></table></div>
       </div>
     </div>
 
     <!-- ══ צ'אט AI ══ -->
     <div class="page" id="page-chat" style="height:calc(100vh - 52px);flex-direction:column;">
       <div class="chat-msgs" id="chat-msgs">
-        <div class="bubble ai">✈️ שלום! אני סוכן הנסיעות החכם שלך. שאל אותי על טיסות, מלונות, ויזות, דילים ועוד.</div>
+        <div class="bubble ai" id="chat-greeting">✈️ שלום! אני סוכן הנסיעות החכם שלך. שאל אותי על טיסות, מלונות, ויזות, דילים ועוד.</div>
       </div>
       <div class="chat-starters" id="chat-starters">
-        <button class="starter-btn" onclick="startChat('מה הדילים הכי טובים לאירופה עכשיו?')">🔥 דילים לאירופה</button>
-        <button class="starter-btn" onclick="startChat('טיסה TLV → NYC — כדאי לקנות עכשיו או לחכות?')">🔮 כדאי לחכות?</button>
-        <button class="starter-btn" onclick="startChat('הצע לי יעד מפתיע לחופשת קיץ בתקציב 800 דולר')">🎲 הפתע אותי</button>
-        <button class="starter-btn" onclick="startChat('מה דרישות הויזה לדרכון ישראלי בתאילנד?')">🛂 בדיקת ויזה</button>
-        <button class="starter-btn" onclick="startChat('מצא לי עצירת חינם במסלול TLV → ניו יורק')">🔁 עצירה חינם</button>
-        <button class="starter-btn" onclick="clearChat()">🗑 נקה שיחה</button>
+        <button class="starter-btn" data-start="starter1">🔥 דילים לאירופה</button>
+        <button class="starter-btn" data-start="starter2">🔮 כדאי לחכות?</button>
+        <button class="starter-btn" data-start="starter3">🎲 הפתע אותי</button>
+        <button class="starter-btn" data-start="starter4">🛂 בדיקת ויזה</button>
+        <button class="starter-btn" data-start="starter5">🔁 עצירה חינם</button>
+        <button class="starter-btn" id="starter-clear-btn" onclick="clearChat()">🗑 נקה שיחה</button>
       </div>
       <div class="chat-bar">
-        <textarea id="chat-in" placeholder="שאל על טיסות, דילים, ויזות…" onkeydown="chatKey(event)" dir="rtl"></textarea>
+        <textarea id="chat-in" data-ph="ph_chat" placeholder="שאל על טיסות, דילים, ויזות…" onkeydown="chatKey(event)" dir="rtl"></textarea>
         <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-          <label style="display:flex;align-items:center;gap:4px;font-size:.73rem;color:var(--muted);cursor:pointer;margin:0;"><input type="checkbox" id="web-tog" style="width:auto;accent-color:var(--accent);"> אינטרנט</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:.73rem;color:var(--muted);cursor:pointer;margin:0;"><input type="checkbox" id="web-tog" style="width:auto;accent-color:var(--accent);"> <span data-ui="chat_internet">אינטרנט</span></label>
           <button class="btn btn-p btn-ico" onclick="sendChat()">➤</button>
         </div>
       </div>
@@ -401,262 +401,262 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ כדאי לחכות? ══ -->
     <div class="page" id="page-wait-or-buy">
-      <div class="sh"><h2>🔮 כדאי לחכות?</h2></div>
+      <div class="sh"><h2 data-ui="h2_wait_or_buy">🔮 כדאי לחכות?</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="card-title">פרטי הטיסה / מלון</div>
-          <div class="fg"><label>מסלול ויעד</label><input type="text" id="wob-q" placeholder="למשל: טיסה TLV → NYC בינואר 2026, מחיר כיום 800$"></div>
+          <div class="card-title" data-ui="ct_flight_details">פרטי הטיסה / מלון</div>
+          <div class="fg"><label data-ui="lbl_route_dest">מסלול ויעד</label><input type="text" id="wob-q" placeholder="למשל: טיסה TLV → NYC בינואר 2026, מחיר כיום 800$"></div>
           <button class="btn btn-p" onclick="runAI('wait-or-buy','wob-q','wob-res')" id="wob-btn">🔮 נתח</button>
         </div>
-        <div class="card"><div class="card-title">ניתוח AI</div><div class="ai-box ai-placeholder" id="wob-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_ai_result">ניתוח AI</div><div class="ai-box ai-placeholder" id="wob-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ הזדמנויות AI ══ -->
     <div class="page" id="page-ai-opps">
-      <div class="sh"><h2>🌟 הזדמנויות AI</h2></div>
+      <div class="sh"><h2 data-ui="h2_ai_opps">🌟 הזדמנויות AI</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>יעד / מוצא (אופציונלי)</label><input type="text" id="opps-q" placeholder="למשל: טיסות מתל אביב, אירופה, כל מקום"></div>
+          <div class="fg"><label data-ui="lbl_origin_opt">יעד / מוצא (אופציונלי)</label><input type="text" id="opps-q" placeholder="למשל: טיסות מתל אביב, אירופה, כל מקום"></div>
           <button class="btn btn-p" onclick="runAI('ai-opps','opps-q','opps-res')" id="opps-btn">🌟 חפש הזדמנויות</button>
         </div>
-        <div class="card"><div class="card-title">הזדמנויות עכשיו</div><div class="ai-box ai-placeholder" id="opps-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_opps_now">הזדמנויות עכשיו</div><div class="ai-box ai-placeholder" id="opps-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ ציד דילים ══ -->
     <div class="page" id="page-deal-hunter">
-      <div class="sh"><h2>🔥 ציד דילים</h2></div>
+      <div class="sh"><h2 data-ui="h2_deal_hunter">🔥 ציד דילים</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>נקודת מוצא</label><input type="text" id="dh-orig" placeholder="למשל: TLV, ת&quot;א, תל אביב"></div>
-          <div class="fg"><label>תקציב מקסימלי (USD)</label><input type="number" id="dh-budget" placeholder="למשל: 500"></div>
-          <div class="fg"><label>תאריכים</label><input type="text" id="dh-dates" placeholder="למשל: ינואר 2026, גמיש"></div>
-          <div class="fg"><label>העדפות</label><textarea id="dh-prefs" placeholder="למשל: חוף ים, מזג אוויר חם, 7-10 ימים, טיסה ישירה"></textarea></div>
+          <div class="fg"><label data-ui="lbl_origin">נקודת מוצא</label><input type="text" id="dh-orig" placeholder="למשל: TLV, ת&quot;א, תל אביב"></div>
+          <div class="fg"><label data-ui="lbl_budget_max">תקציב מקסימלי (USD)</label><input type="number" id="dh-budget" placeholder="למשל: 500"></div>
+          <div class="fg"><label data-ui="lbl_dates">תאריכים</label><input type="text" id="dh-dates" placeholder="למשל: ינואר 2026, גמיש"></div>
+          <div class="fg"><label data-ui="lbl_prefs">העדפות</label><textarea id="dh-prefs" placeholder="למשל: חוף ים, מזג אוויר חם, 7-10 ימים, טיסה ישירה"></textarea></div>
           <button class="btn btn-p" onclick="runDealHunter()" id="dh-btn">🔥 צוד דילים</button>
         </div>
-        <div class="card"><div class="card-title">תוצאות</div><div class="ai-box ai-placeholder" id="dh-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_results">תוצאות</div><div class="ai-box ai-placeholder" id="dh-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ יעד מפתיע ══ -->
     <div class="page" id="page-surprise">
-      <div class="sh"><h2>🎲 יעד מפתיע</h2></div>
+      <div class="sh"><h2 data-ui="h2_surprise">🎲 יעד מפתיע</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>תקציב</label><input type="text" id="surp-budget" placeholder="למשל: 500 USD, 1500 שקל"></div>
-          <div class="fg"><label>העדפות (אופציונלי)</label><textarea id="surp-prefs" placeholder="למשל: אוהב טבע, מאסיל הומים, חופשה רומנטית"></textarea></div>
+          <div class="fg"><label data-ui="lbl_budget_max">תקציב</label><input type="text" id="surp-budget" placeholder="למשל: 500 USD, 1500 שקל"></div>
+          <div class="fg"><label data-ui="lbl_prefs_opt">העדפות (אופציונלי)</label><textarea id="surp-prefs" placeholder="למשל: אוהב טבע, מאסיל הומים, חופשה רומנטית"></textarea></div>
           <button class="btn btn-p" onclick="runSurprise()" id="surp-btn">🎲 הפתע אותי!</button>
         </div>
-        <div class="card"><div class="card-title">יעדים מפתיעים</div><div class="ai-box ai-placeholder" id="surp-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_surprise_dest">יעדים מפתיעים</div><div class="ai-box ai-placeholder" id="surp-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ תכנן טיול ══ -->
     <div class="page" id="page-trip-planner">
-      <div class="sh"><h2>🗺️ תכנן טיול</h2></div>
+      <div class="sh"><h2 data-ui="h2_trip_planner">🗺️ תכנן טיול</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>פרטי הטיול</label><textarea id="tp-q" placeholder="למשל: 10 ימים בטוקיו ועוד 3 ימים בקיוטו, זוג, תקציב 3000$, ינואר 2026" style="min-height:100px;"></textarea></div>
+          <div class="fg"><label data-ui="lbl_trip_details">פרטי הטיול</label><textarea id="tp-q" placeholder="למשל: 10 ימים בטוקיו ועוד 3 ימים בקיוטו, זוג, תקציב 3000$, ינואר 2026" style="min-height:100px;"></textarea></div>
           <button class="btn btn-p" onclick="runAI('trip-planner','tp-q','tp-res')" id="tp-btn">🗺️ תכנן</button>
         </div>
-        <div class="card"><div class="card-title">תוכנית הטיול</div><div class="ai-box ai-placeholder" id="tp-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_trip_plan">תוכנית הטיול</div><div class="ai-box ai-placeholder" id="tp-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ מסלול מרובה ערים ══ -->
     <div class="page" id="page-multi-city">
-      <div class="sh"><h2>🌍 מסלול מרובה ערים</h2></div>
+      <div class="sh"><h2 data-ui="h2_multi_city">🌍 מסלול מרובה ערים</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>ערים לביקור</label><textarea id="mc-q" placeholder="למשל: TLV → פריז → אמסטרדם → ברלין → TLV, מאי 2026, תקציב 1500$"></textarea></div>
+          <div class="fg"><label data-ui="lbl_cities">ערים לביקור</label><textarea id="mc-q" placeholder="למשל: TLV → פריז → אמסטרדם → ברלין → TLV, מאי 2026, תקציב 1500$"></textarea></div>
           <button class="btn btn-p" onclick="runAI('multi-city','mc-q','mc-res')" id="mc-btn">🌍 תכנן מסלול</button>
         </div>
-        <div class="card"><div class="card-title">מסלול אופטימלי</div><div class="ai-box ai-placeholder" id="mc-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_optimal_route">מסלול אופטימלי</div><div class="ai-box ai-placeholder" id="mc-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ עצירות חינם ══ -->
     <div class="page" id="page-stopovers">
-      <div class="sh"><h2>🔁 עצירות חינם</h2></div>
+      <div class="sh"><h2 data-ui="h2_stopovers">🔁 עצירות חינם</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>מסלול</label><input type="text" id="stp-q" placeholder="למשל: TLV → ניו יורק, מצא עצירת חינם בדובאי או איסטנבול"></div>
+          <div class="fg"><label data-ui="lbl_route">מסלול</label><input type="text" id="stp-q" placeholder="למשל: TLV → ניו יורק, מצא עצירת חינם בדובאי או איסטנבול"></div>
           <button class="btn btn-p" onclick="runAI('stopovers','stp-q','stp-res')" id="stp-btn">🔁 חפש עצירות</button>
         </div>
-        <div class="card"><div class="card-title">הזדמנויות עצירה</div><div class="ai-box ai-placeholder" id="stp-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_stopover_opps">הזדמנויות עצירה</div><div class="ai-box ai-placeholder" id="stp-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ תאריכים גמישים ══ -->
     <div class="page" id="page-flexible-dates">
-      <div class="sh"><h2>📅 תאריכים גמישים</h2></div>
+      <div class="sh"><h2 data-ui="h2_flexible_dates">📅 תאריכים גמישים</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>מסלול וחודש</label><input type="text" id="fd-q" placeholder="למשל: TLV → בנגקוק, מרץ-אפריל 2026, גמיש ב-10 ימים"></div>
+          <div class="fg"><label data-ui="lbl_route_month">מסלול וחודש</label><input type="text" id="fd-q" placeholder="למשל: TLV → בנגקוק, מרץ-אפריל 2026, גמיש ב-10 ימים"></div>
           <button class="btn btn-p" onclick="runAI('flexible-dates','fd-q','fd-res')" id="fd-btn">📅 מצא תאריכים זולים</button>
         </div>
-        <div class="card"><div class="card-title">השוואת תאריכים</div><div class="ai-box ai-placeholder" id="fd-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_date_compare">השוואת תאריכים</div><div class="ai-box ai-placeholder" id="fd-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ חיזוי מחיר ══ -->
     <div class="page" id="page-predict">
-      <div class="sh"><h2>📈 חיזוי מחיר</h2></div>
+      <div class="sh"><h2 data-ui="h2_predict">📈 חיזוי מחיר</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>מסלול ומחיר נוכחי</label><input type="text" id="pred-q" placeholder="למשל: TLV → לונדון, מחיר נוכחי 600$, נסיעה בפברואר 2026"></div>
+          <div class="fg"><label data-ui="lbl_route_current_price">מסלול ומחיר נוכחי</label><input type="text" id="pred-q" placeholder="למשל: TLV → לונדון, מחיר נוכחי 600$, נסיעה בפברואר 2026"></div>
           <button class="btn btn-p" onclick="runAI('predict','pred-q','pred-res')" id="pred-btn">📈 חזה מחיר</button>
         </div>
-        <div class="card"><div class="card-title">תחזית מחיר</div><div class="ai-box ai-placeholder" id="pred-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_price_forecast">תחזית מחיר</div><div class="ai-box ai-placeholder" id="pred-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ עלות אמיתית ══ -->
     <div class="page" id="page-true-cost">
-      <div class="sh"><h2>💰 עלות אמיתית</h2></div>
+      <div class="sh"><h2 data-ui="h2_true_cost">💰 עלות אמיתית</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>פרטי הטיול</label><textarea id="tc-q" placeholder="למשל: 7 ימים בברצלונה לזוג, אפריל 2026, כולל אירוח וטיסה" style="min-height:80px;"></textarea></div>
+          <div class="fg"><label data-ui="lbl_trip_details">פרטי הטיול</label><textarea id="tc-q" placeholder="למשל: 7 ימים בברצלונה לזוג, אפריל 2026, כולל אירוח וטיסה" style="min-height:80px;"></textarea></div>
           <button class="btn btn-p" onclick="runAI('true-cost','tc-q','tc-res')" id="tc-btn">💰 חשב עלות מלאה</button>
         </div>
-        <div class="card"><div class="card-title">פירוט עלויות</div><div class="ai-box ai-placeholder" id="tc-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_cost_breakdown">פירוט עלויות</div><div class="ai-box ai-placeholder" id="tc-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ נקודות vs מזומן ══ -->
     <div class="page" id="page-points-vs-cash">
-      <div class="sh"><h2>💳 נקודות vs מזומן</h2></div>
+      <div class="sh"><h2 data-ui="h2_points_vs_cash">💳 נקודות vs מזומן</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>מסלול ותוכנית נאמנות</label><input type="text" id="pvc-q" placeholder="למשל: TLV → מיאמי, יש לי 80,000 נקודות ארקיע / אל על"></div>
+          <div class="fg"><label data-ui="lbl_loyalty_plan">מסלול ותוכנית נאמנות</label><input type="text" id="pvc-q" placeholder="למשל: TLV → מיאמי, יש לי 80,000 נקודות ארקיע / אל על"></div>
           <button class="btn btn-p" onclick="runAI('points-vs-cash','pvc-q','pvc-res')" id="pvc-btn">💳 השווה</button>
         </div>
-        <div class="card"><div class="card-title">ניתוח ערך נקודות</div><div class="ai-box ai-placeholder" id="pvc-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_points_analysis">ניתוח ערך נקודות</div><div class="ai-box ai-placeholder" id="pvc-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ תובנות ודפוסים ══ -->
     <div class="page" id="page-deal-insights">
-      <div class="sh"><h2>📊 תובנות ודפוסים</h2></div>
+      <div class="sh"><h2 data-ui="h2_deal_insights">📊 תובנות ודפוסים</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>מסלול</label><input type="text" id="di-q" placeholder="למשל: TLV → אתונה, מצא דפוסי מחיר ושבועות זולים"></div>
+          <div class="fg"><label data-ui="lbl_route">מסלול</label><input type="text" id="di-q" placeholder="למשל: TLV → אתונה, מצא דפוסי מחיר ושבועות זולים"></div>
           <button class="btn btn-p" onclick="runAI('deal-insights','di-q','di-res')" id="di-btn">📊 נתח</button>
         </div>
-        <div class="card"><div class="card-title">תובנות</div><div class="ai-box ai-placeholder" id="di-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_insights">תובנות</div><div class="ai-box ai-placeholder" id="di-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ Price DNA ══ -->
     <div class="page" id="page-price-dna">
-      <div class="sh"><h2>🧬 Price DNA</h2><button class="btn btn-p" onclick="loadPriceDNA()">נתח</button></div>
-      <div class="card"><div class="ai-box ai-placeholder" id="dna-res">לחץ "נתח" להפעלת ניתוח Price DNA על נתוני המעקב.</div></div>
+      <div class="sh"><h2 data-ui="h2_price_dna">🧬 Price DNA</h2><button class="btn btn-p" onclick="loadPriceDNA()">נתח</button></div>
+      <div class="card"><div class="ai-box ai-placeholder" id="dna-res" data-ui="dna_placeholder">לחץ "נתח" להפעלת ניתוח Price DNA על נתוני המעקב.</div></div>
     </div>
 
     <!-- ══ השוואת אתרים ══ -->
     <div class="page" id="page-competitor">
-      <div class="sh"><h2>🔍 השוואת אתרים</h2></div>
+      <div class="sh"><h2 data-ui="h2_competitor">🔍 השוואת אתרים</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>מסלול ותאריכים</label><input type="text" id="comp-q" placeholder="למשל: TLV → פריז 15.3.2026 → 22.3.2026"></div>
+          <div class="fg"><label data-ui="lbl_route_dates">מסלול ותאריכים</label><input type="text" id="comp-q" placeholder="למשל: TLV → פריז 15.3.2026 → 22.3.2026"></div>
           <button class="btn btn-p" onclick="runAI('competitor','comp-q','comp-res')" id="comp-btn">🔍 השווה מחירים</button>
         </div>
-        <div class="card"><div class="card-title">השוואת מחירים</div><div class="ai-box ai-placeholder" id="comp-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_price_compare">השוואת מחירים</div><div class="ai-box ai-placeholder" id="comp-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ סנטימנט ══ -->
     <div class="page" id="page-sentiment">
-      <div class="sh"><h2>📰 סנטימנט & חדשות</h2></div>
+      <div class="sh"><h2 data-ui="h2_sentiment">📰 סנטימנט & חדשות</h2></div>
       <div class="card" style="margin-bottom:14px;max-width:420px;">
         <div style="display:flex;gap:8px;">
-          <div style="flex:1;"><label>יעד (אופציונלי)</label><input type="text" id="sent-dest" placeholder="למשל: אירופה, טוקיו, כל מקום"></div>
+          <div style="flex:1;"><label data-ui="lbl_dest_opt">יעד (אופציונלי)</label><input type="text" id="sent-dest" placeholder="למשל: אירופה, טוקיו, כל מקום"></div>
           <button class="btn btn-p" onclick="loadSentiment(document.getElementById('sent-dest').value)" style="align-self:flex-end;">נתח</button>
         </div>
       </div>
-      <div class="card"><div class="card-title">ניתוח שוק</div><div class="ai-box ai-placeholder" id="sent-res">התוצאה תופיע כאן…</div></div>
+      <div class="card"><div class="card-title" data-ui="ct_market_analysis">ניתוח שוק</div><div class="ai-box ai-placeholder" id="sent-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
     </div>
 
     <!-- ══ RSS & Reddit ══ -->
     <div class="page" id="page-rss">
-      <div class="sh"><h2>📡 RSS & Reddit</h2></div>
+      <div class="sh"><h2 data-ui="h2_rss">📡 RSS & Reddit</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>יעד / נושא</label><input type="text" id="rss-q" placeholder="למשל: דילים לאירופה, error fares, TLV"></div>
+          <div class="fg"><label data-ui="lbl_topic">יעד / נושא</label><input type="text" id="rss-q" placeholder="למשל: דילים לאירופה, error fares, TLV"></div>
           <button class="btn btn-p" onclick="runAI('rss','rss-q','rss-res')" id="rss-btn">📡 סרוק</button>
         </div>
-        <div class="card"><div class="card-title">מה אומרים ב-Reddit</div><div class="ai-box ai-placeholder" id="rss-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_reddit">מה אומרים ב-Reddit</div><div class="ai-box ai-placeholder" id="rss-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ בדיקת ויזה ══ -->
     <div class="page" id="page-visa">
-      <div class="sh"><h2>🛂 בדיקת ויזה</h2></div>
+      <div class="sh"><h2 data-ui="h2_visa">🛂 בדיקת ויזה</h2></div>
       <div class="card" style="max-width:460px;margin-bottom:14px;">
         <div class="f2">
-          <div class="fg"><label>דרכון (מדינה)</label><input type="text" id="visa-pass" placeholder="למשל: ישראלי, אמריקאי"></div>
-          <div class="fg"><label>יעד</label><input type="text" id="visa-dest" placeholder="למשל: יפן, ארה&quot;ב, תאילנד"></div>
+          <div class="fg"><label data-ui="lbl_passport">דרכון (מדינה)</label><input type="text" id="visa-pass" placeholder="למשל: ישראלי, אמריקאי"></div>
+          <div class="fg"><label data-ui="lbl_destination">יעד</label><input type="text" id="visa-dest" placeholder="למשל: יפן, ארה&quot;ב, תאילנד"></div>
         </div>
         <button class="btn btn-p" onclick="runVisaCheck()" id="visa-btn">בדוק ויזה</button>
       </div>
-      <div class="card" id="visa-card" style="display:none;"><div class="card-title">דרישות ויזה</div><div class="ai-box" id="visa-res"></div></div>
+      <div class="card" id="visa-card" style="display:none;"><div class="card-title" data-ui="ct_visa_reqs">דרישות ויזה</div><div class="ai-box" id="visa-res"></div></div>
     </div>
 
     <!-- ══ Hidden City ══ -->
     <div class="page" id="page-hidden-city">
-      <div class="sh"><h2>🕵️ Hidden City</h2></div>
+      <div class="sh"><h2 data-ui="h2_hidden_city">🕵️ Hidden City</h2></div>
       <div class="card" style="max-width:460px;margin-bottom:14px;">
         <div class="f2">
-          <div class="fg"><label>מוצא</label><input type="text" id="hc-from" placeholder="TLV"></div>
-          <div class="fg"><label>יעד</label><input type="text" id="hc-to" placeholder="NYC"></div>
+          <div class="fg"><label data-ui="lbl_origin_modal">מוצא</label><input type="text" id="hc-from" placeholder="TLV"></div>
+          <div class="fg"><label data-ui="lbl_destination">יעד</label><input type="text" id="hc-to" placeholder="NYC"></div>
         </div>
-        <div class="fg"><label>תאריך (אופציונלי)</label><input type="date" id="hc-date"></div>
+        <div class="fg"><label data-ui="lbl_date_opt">תאריך (אופציונלי)</label><input type="date" id="hc-date"></div>
         <button class="btn btn-p" onclick="runHiddenCity()" id="hc-btn">🔍 חפש</button>
       </div>
-      <div class="card" id="hc-card" style="display:none;"><div class="card-title">הזדמנויות Hidden City</div><div class="ai-box" id="hc-res"></div></div>
+      <div class="card" id="hc-card" style="display:none;"><div class="card-title" data-ui="ct_hc_opps">הזדמנויות Hidden City</div><div class="ai-box" id="hc-res"></div></div>
       <div class="warn-box" style="max-width:460px;margin-top:10px;"><div class="warn-title">⚠️ שים לב</div>Hidden city ticketing מפר את תנאי השימוש של רוב חברות התעופה. השתמש למחקר בלבד. אל תבדוק מטען!</div>
     </div>
 
     <!-- ══ Kiwi טיסות ══ -->
     <div class="page" id="page-kiwi">
-      <div class="sh"><h2>🔍 Kiwi טיסות</h2></div>
+      <div class="sh"><h2 data-ui="h2_kiwi">🔍 Kiwi טיסות</h2></div>
       <div class="g2">
         <div class="card">
-          <div class="fg"><label>מסלול ותאריכים</label><input type="text" id="kiwi-q" placeholder="למשל: TLV → מדריד, יוני 2026, עד 600$"></div>
+          <div class="fg"><label data-ui="lbl_route_dates">מסלול ותאריכים</label><input type="text" id="kiwi-q" placeholder="למשל: TLV → מדריד, יוני 2026, עד 600$"></div>
           <button class="btn btn-p" onclick="runAI('kiwi','kiwi-q','kiwi-res')" id="kiwi-btn">🔍 חפש ב-Kiwi</button>
         </div>
-        <div class="card"><div class="card-title">מסלולי Kiwi</div><div class="ai-box ai-placeholder" id="kiwi-res">התוצאה תופיע כאן…</div></div>
+        <div class="card"><div class="card-title" data-ui="ct_kiwi_routes">מסלולי Kiwi</div><div class="ai-box ai-placeholder" id="kiwi-res" data-ui="ph_ai_result">התוצאה תופיע כאן…</div></div>
       </div>
     </div>
 
     <!-- ══ שערי חליפין ══ -->
     <div class="page" id="page-exchange">
-      <div class="sh"><h2>💱 שערי חליפין</h2></div>
-      <div class="card" id="exch-card"><div class="loading"><div class="spin"></div>טוען שערים…</div></div>
+      <div class="sh"><h2 data-ui="h2_exchange">💱 שערי חליפין</h2></div>
+      <div class="card" id="exch-card"><div class="loading"><div class="spin"></div><span data-ui="exchange_loading">טוען שערים…</span></div></div>
     </div>
 
     <!-- ══ כללי התראה ══ -->
     <div class="page" id="page-alerts">
-      <div class="sh"><h2>🎯 כללי התראה</h2><button class="btn btn-p" onclick="openAddAlert()">+ הוסף התראה</button></div>
+      <div class="sh"><h2 data-ui="h2_alerts">🎯 כללי התראה</h2><button class="btn btn-p" onclick="openAddAlert()" data-ui="btn_add_alert">+ הוסף התראה</button></div>
       <div class="card">
-        <div class="tbl-wrap"><table><thead><tr><th>שם</th><th>מעקב</th><th>תנאים</th><th>סטטוס</th><th></th></tr></thead><tbody id="alerts-tbody"></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th data-ui="th_al_name">שם</th><th data-ui="th_al_watch">מעקב</th><th data-ui="th_al_conditions">תנאים</th><th data-ui="th_al_status">סטטוס</th><th></th></tr></thead><tbody id="alerts-tbody"></tbody></table></div>
       </div>
     </div>
 
     <!-- ══ הגדרות ══ -->
     <div class="page" id="page-settings">
-      <div class="sh"><h2>⚙️ הגדרות</h2></div>
+      <div class="sh"><h2 data-ui="h2_settings">⚙️ הגדרות</h2></div>
       <div class="g2" style="margin-bottom:14px;">
         <div class="card">
-          <div class="card-title">🔑 מפתחות API</div>
+          <div class="card-title" data-ui="ct_api_keys">🔑 מפתחות API</div>
           <div id="settings-form"></div>
-          <button class="btn btn-p" onclick="saveSettings()">שמור</button>
+          <button class="btn btn-p" onclick="saveSettings()" data-ui="settings_save">שמור</button>
         </div>
         <div class="card">
-          <div class="card-title">📥 ייצוא נתונים</div>
-          <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px;">ייצא את כל המעקבים והיסטוריית המחירים לקובץ CSV.</p>
-          <a href="/api/export/csv" class="btn btn-g" download>📥 הורד CSV</a>
+          <div class="card-title" data-ui="ct_export">📥 ייצוא נתונים</div>
+          <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px;" data-ui="export_desc">ייצא את כל המעקבים והיסטוריית המחירים לקובץ CSV.</p>
+          <a href="/api/export/csv" class="btn btn-g" download data-ui="btn_download_csv">📥 הורד CSV</a>
         </div>
       </div>
       <div class="g2">
@@ -691,7 +691,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ כלים חכמים ══ -->
     <div class="page" id="page-smart-tools">
-      <div class="sh"><h2>🛠️ כלים חכמים</h2></div>
+      <div class="sh"><h2 data-ui="h2_smart_tools">🛠️ כלים חכמים</h2></div>
       <div class="tabs" id="smart-tabs">
         <button class="tab-btn active" onclick="switchSmartTab('split')">✂️ Split Ticket</button>
         <button class="tab-btn" onclick="switchSmartTab('nearby')">🗺️ שדות תעופה קרובים</button>
@@ -776,33 +776,32 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ לוח מחירים ══ -->
     <div class="page" id="page-price-calendar">
-      <div class="sh"><h2>📆 לוח מחירים</h2></div>
+      <div class="sh"><h2 data-ui="h2_price_calendar">📆 לוח מחירים</h2></div>
       <div class="card" style="margin-bottom:14px;max-width:500px;">
         <div class="f2">
-          <div class="fg" style="margin:0;"><label>בחר מעקב</label><select id="cal-watch-sel"><option value="">— בחר —</option></select></div>
-          <div class="fg" style="margin:0;"><label>חודש</label><input type="month" id="cal-month"></div>
+          <div class="fg" style="margin:0;"><label data-ui="lbl_cal_watch">בחר מעקב</label><select id="cal-watch-sel"><option value="">— בחר —</option></select></div>
+          <div class="fg" style="margin:0;"><label data-ui="lbl_cal_month">חודש</label><input type="month" id="cal-month"></div>
         </div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-p" onclick="loadPriceCalendar()">📆 הצג לוח</button>
-          <button class="btn btn-g" onclick="loadCalendarAI()">🤖 AI — מצא תאריכים זולים</button>
+          <button class="btn btn-p" onclick="loadPriceCalendar()" data-ui="btn_show_cal">📆 הצג לוח</button>
+          <button class="btn btn-g" onclick="loadCalendarAI()" data-ui="btn_cal_ai">🤖 AI — מצא תאריכים זולים</button>
         </div>
       </div>
       <div id="cal-container">
         <div class="warn-box" style="max-width:500px;">
-          <div class="warn-title">📆 לוח מחירים</div>
-          בחר מעקב וחודש כדי לראות לוח מחירים. ירוק = זול, צהוב = בינוני, אדום = יקר.<br>
-          <span style="color:var(--muted);">לחץ "AI — מצא תאריכים זולים" לקבלת המלצה מהירה.</span>
+          <div class="warn-title" data-ui="cal_hint_title">📆 לוח מחירים</div>
+          <span data-ui="cal_hint_text">בחר מעקב וחודש כדי לראות לוח מחירים. ירוק = זול, צהוב = בינוני, אדום = יקר.</span>
         </div>
       </div>
       <div class="card" style="margin-top:14px;" id="cal-ai-box" style="display:none;">
-        <div class="card-title">🤖 ניתוח AI — תאריכים זולים</div>
-        <div class="ai-box ai-placeholder" id="cal-ai-res">לחץ "AI — מצא תאריכים זולים" לקבלת ניתוח.</div>
+        <div class="card-title" data-ui="cal_ai_title">🤖 ניתוח AI — תאריכים זולים</div>
+        <div class="ai-box ai-placeholder" id="cal-ai-res" data-ui="cal_ai_placeholder">לחץ "AI — מצא תאריכים זולים" לקבלת ניתוח.</div>
       </div>
     </div>
 
     <!-- ══ דילים פגי תוקף ══ -->
     <div class="page" id="page-expiring-deals">
-      <div class="sh"><h2>⏰ דילים פגי תוקף</h2><button class="btn btn-p" onclick="loadExpiringDeals()">🔄 רענן</button></div>
+      <div class="sh"><h2 data-ui="h2_expiring_deals">⏰ דילים פגי תוקף</h2><button class="btn btn-p" onclick="loadExpiringDeals()" data-ui="refresh">🔄 רענן</button></div>
       <div class="warn-box" style="margin-bottom:14px;">
         <div class="warn-title">⏰ עכשיו או לעולם לא!</div>
         דילים ומבצעים שפגים בקרוב — flash sales, מחירי טעות, מבצעי 24 שעות. AI סורק בזמן אמת.
@@ -1075,34 +1074,34 @@ textarea{resize:vertical;min-height:70px;}
 <!-- הוסף מעקב -->
 <div class="overlay" id="m-add-watch">
   <div class="modal">
-    <div class="modal-hdr"><h3>➕ הוסף מעקב</h3><button class="x-btn" onclick="closeModal('m-add-watch')">×</button></div>
-    <div class="fg"><label>שם המעקב</label><input type="text" id="w-name" placeholder="למשל: TLV → NYC עסקי"></div>
+    <div class="modal-hdr"><h3 data-ui="modal_h_add_watch">➕ הוסף מעקב</h3><button class="x-btn" onclick="closeModal('m-add-watch')">×</button></div>
+    <div class="fg"><label data-ui="lbl_watch_name">שם המעקב</label><input type="text" id="w-name" placeholder="למשל: TLV → NYC עסקי"></div>
     <div class="f2">
-      <div class="fg"><label>קטגוריה</label><select id="w-cat"><option value="flight">טיסה ✈️</option><option value="hotel">מלון 🏨</option><option value="apartment">דירה 🏠</option><option value="package">חבילה 📦</option></select></div>
-      <div class="fg"><label>התראת ירידה %</label><input type="number" id="w-drop" value="10" min="1" max="90"></div>
+      <div class="fg"><label data-ui="lbl_cat">קטגוריה</label><select id="w-cat"><option value="flight">טיסה ✈️</option><option value="hotel">מלון 🏨</option><option value="apartment">דירה 🏠</option><option value="package">חבילה 📦</option></select></div>
+      <div class="fg"><label data-ui="lbl_drop_pct">התראת ירידה %</label><input type="number" id="w-drop" value="10" min="1" max="90"></div>
     </div>
     <div class="f2">
-      <div class="fg"><label>מוצא</label><input type="text" id="w-orig" placeholder="TLV"></div>
-      <div class="fg"><label>יעד</label><input type="text" id="w-dest" placeholder="JFK"></div>
+      <div class="fg"><label data-ui="lbl_origin_modal">מוצא</label><input type="text" id="w-orig" placeholder="TLV"></div>
+      <div class="fg"><label data-ui="lbl_dest_modal">יעד</label><input type="text" id="w-dest" placeholder="JFK"></div>
     </div>
     <div class="f2">
-      <div class="fg"><label>תאריך יציאה</label><input type="date" id="w-dfrom"></div>
-      <div class="fg"><label>תאריך חזרה</label><input type="date" id="w-dto"></div>
+      <div class="fg"><label data-ui="lbl_date_from">תאריך יציאה</label><input type="date" id="w-dfrom"></div>
+      <div class="fg"><label data-ui="lbl_date_to">תאריך חזרה</label><input type="date" id="w-dto"></div>
     </div>
-    <div class="fg"><label>מחיר מקסימלי (USD)</label><input type="number" id="w-maxp" placeholder="אופציונלי"></div>
-    <div class="fg"><label>שאילתת חיפוש (ל-AI)</label><input type="text" id="w-query" placeholder="למשל: טיסה זולה TLV לניו יורק בדצמבר"></div>
-    <button class="btn btn-p" onclick="submitAddWatch()" style="width:100%;margin-top:4px;">➕ הוסף</button>
+    <div class="fg"><label data-ui="lbl_max_price">מחיר מקסימלי (USD)</label><input type="number" id="w-maxp" placeholder="אופציונלי"></div>
+    <div class="fg"><label data-ui="lbl_search_query">שאילתת חיפוש (ל-AI)</label><input type="text" id="w-query" placeholder="למשל: טיסה זולה TLV לניו יורק בדצמבר"></div>
+    <button class="btn btn-p" onclick="submitAddWatch()" style="width:100%;margin-top:4px;" data-ui="btn_add_watch_submit">➕ הוסף</button>
   </div>
 </div>
 
 <!-- הוסף התראה -->
 <div class="overlay" id="m-add-alert">
   <div class="modal">
-    <div class="modal-hdr"><h3>🎯 הוסף התראה</h3><button class="x-btn" onclick="closeModal('m-add-alert')">×</button></div>
-    <div class="fg"><label>שם ההתראה</label><input type="text" id="al-name" placeholder="למשל: ירידת מחיר מתחת ל-400$"></div>
-    <div class="fg"><label>מעקב (אופציונלי)</label><select id="al-watch"><option value="">כל המעקבים</option></select></div>
-    <div class="fg"><label>מחיר מקסימלי להפעלת התראה</label><input type="number" id="al-maxp" placeholder="למשל: 400"></div>
-    <button class="btn btn-p" onclick="submitAlert()" style="width:100%;margin-top:4px;">צור התראה</button>
+    <div class="modal-hdr"><h3 data-ui="modal_h_add_alert">🎯 הוסף התראה</h3><button class="x-btn" onclick="closeModal('m-add-alert')">×</button></div>
+    <div class="fg"><label data-ui="lbl_alert_name">שם ההתראה</label><input type="text" id="al-name" placeholder="למשל: ירידת מחיר מתחת ל-400$"></div>
+    <div class="fg"><label data-ui="lbl_alert_watch">מעקב (אופציונלי)</label><select id="al-watch"><option value="">כל המעקבים</option></select></div>
+    <div class="fg"><label data-ui="lbl_max_trigger">מחיר מקסימלי להפעלת התראה</label><input type="number" id="al-maxp" placeholder="למשל: 400"></div>
+    <button class="btn btn-p" onclick="submitAlert()" style="width:100%;margin-top:4px;" data-ui="btn_create_alert">צור התראה</button>
   </div>
 </div>
 
@@ -1367,7 +1366,7 @@ function renderWatches(){
       <td><span class="tag ${w.enabled?"t-on":"t-off"}">${w.enabled?ui("active"):ui("inactive")}</span></td>
       <td><a href="${bn}" target="_blank" class="book-btn">${ui("btn_book")}</a></td>
       <td style="white-space:nowrap;">
-        <button class="btn btn-g btn-sm btn-ico" onclick="checkPrice(${w.id})" title="בדוק מחיר">🔄</button>
+        <button class="btn btn-g btn-sm btn-ico" onclick="checkPrice(${w.id})" title="${ui('tooltip_check_price')}">🔄</button>
         <button class="btn btn-g btn-sm btn-ico" onclick="toggleWatch(${w.id},${!w.enabled})">${w.enabled?"⏸":"▶"}</button>
         <button class="btn btn-d btn-sm btn-ico" onclick="deleteWatch(${w.id})">🗑</button>
       </td>
@@ -1527,12 +1526,12 @@ async function loadPriceDNA(){
     }
     // Insights
     const fields=[
-      ["📊 דפוס מרכזי",r.main_pattern],
-      ["🗓️ מתי לקנות",r.best_booking_window],
-      ["📈 תחזית 2 חודשים",r.forecast_2months],
-      ["💰 חיסכון אפשרי",dna.potential_savings?`${cur} ${fmt(dna.potential_savings)} (${dna.potential_savings_pct}%)`:""],
-      ["⚡ מחיר עכשיו",r.price_now_assessment],
-      ["🎯 טיפ חיסכון",r.savings_tip],
+      [ui("dna_main_pattern"),r.main_pattern],
+      [ui("dna_best_window"),r.best_booking_window],
+      [ui("dna_forecast"),r.forecast_2months],
+      [ui("dna_potential_savings"),dna.potential_savings?`${cur} ${fmt(dna.potential_savings)} (${dna.potential_savings_pct}%)`:""],
+      [ui("dna_price_now"),r.price_now_assessment],
+      [ui("dna_savings_tip"),r.savings_tip],
     ].filter(([,v])=>v);
     fields.forEach(([label,val])=>{
       html+=`<div style="border-bottom:1px solid var(--border);padding:9px 0;"><span style="color:var(--muted);font-size:.78rem;">${label}</span><div style="margin-top:3px;">${val}</div></div>`;
@@ -1578,22 +1577,22 @@ async function submitAlert(){
 async function deleteAlert(id){if(!confirm(ui("confirm_delete_alert")))return;try{await api("DELETE",`/api/alerts/${id}`);loadAlerts();}catch(e){toast(ui("error"),"err");}}
 
 // ── Settings ──────────────────────────────────────────────────
-const SETTINGS_LABELS={GEMINI_API_KEY:"מפתח Gemini API",AMADEUS_CLIENT_ID:"Amadeus Client ID",AMADEUS_CLIENT_SECRET:"Amadeus Client Secret",KIWI_API_KEY:"מפתח Kiwi API",TELEGRAM_BOT_TOKEN:"Telegram Bot Token",TELEGRAM_CHAT_ID:"Telegram Chat ID",NTFY_TOPIC:"NTFY Topic",NTFY_SERVER:"NTFY Server"};
+function getSettingsLabels(){return{GEMINI_API_KEY:ui("sl_gemini"),AMADEUS_CLIENT_ID:"Amadeus Client ID",AMADEUS_CLIENT_SECRET:"Amadeus Client Secret",KIWI_API_KEY:ui("sl_kiwi"),TELEGRAM_BOT_TOKEN:"Telegram Bot Token",TELEGRAM_CHAT_ID:"Telegram Chat ID",NTFY_TOPIC:"NTFY Topic",NTFY_SERVER:"NTFY Server"};}
 
 async function loadSettings(){
   try{
     const s=await api("GET","/api/settings");const form=document.getElementById("settings-form");
-    form.innerHTML=Object.entries(SETTINGS_LABELS).map(([k,lbl])=>`<div class="fg"><label>${lbl}</label><input type="text" id="s-${k}" placeholder="${s[k]==="***"?ui("settings_configured"):ui("settings_not_set")}" value=""></div>`).join("");
+    const SL=getSettingsLabels();form.innerHTML=Object.entries(SL).map(([k,lbl])=>`<div class="fg"><label>${lbl}</label><input type="text" id="s-${k}" placeholder="${s[k]==="***"?ui("settings_configured"):ui("settings_not_set")}" value=""></div>`).join("");
   }catch(e){toast(ui("error_loading_settings"),"err");}
 }
 async function saveSettings(){
-  const body={};Object.keys(SETTINGS_LABELS).forEach(k=>{const v=document.getElementById(`s-${k}`)?.value.trim();if(v)body[k]=v;});
+  const body={};Object.keys(getSettingsLabels()).forEach(k=>{const v=document.getElementById(`s-${k}`)?.value.trim();if(v)body[k]=v;});
   try{await api("POST","/api/settings",body);toast(ui("settings_saved"),"ok");loadSettings();}catch(e){toast(ui("error_prefix")+e.message,"err");}
 }
 
 // ── Helpers ───────────────────────────────────────────────────
 function esc(s){if(!s)return"";return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-function catTag(c){const m={flight:"t-flight",hotel:"t-hotel",apartment:"t-apt",package:"t-pkg"};const k="cat_"+c;return`<span class="tag ${m[c]||""}">${ui(k)||c||"—"}</span>`;}
+function catTag(c){const m={flight:"t-flight",hotel:"t-hotel",apartment:"t-apt",package:"t-pkg"};const t=UI[_lang]||UI.en;const label=t["cat_"+c]??UI.en["cat_"+c]??c??"—";return`<span class="tag ${m[c]||""}">${label}</span>`;}
 function md(text){if(!text)return"";return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\*(.+?)\*/g,"<i>$1</i>").replace(/`(.+?)`/g,"<code>$1</code>").replace(/^#{1,3} (.+)$/gm,"<b style='font-size:.97rem;display:block;margin:8px 0 4px;'>$1</b>").replace(/^[-•] (.+)$/gm,"• $1<br>").replace(/\n\n/g,"<br><br>").replace(/\n/g,"<br>");}
 
 // ── Chat helpers ─────────────────────────────────────────────
@@ -1676,7 +1675,7 @@ async function loadPriceCalendar(){
       return"cal-high";
     }
 
-    const dayNames=["א","ב","ג","ד","ה","ו","ש"];
+    const dayNames=ui("day_names_short").split(",");
     let html=`<div class="cal-header">${dayNames.map(d=>`<div class="cal-day-name">${d}</div>`).join("")}</div><div class="cal-grid">`;
 
     // Empty cells before 1st
@@ -1903,7 +1902,7 @@ async function loadPositioningRoutes(){
     if(r.ai_result){el.innerHTML=md(r.ai_result);return;}
     const routes=r.routes||[];
     if(!routes.length){el.textContent=ui("no_routes");return;}
-    el.innerHTML=routes.slice(0,10).map(r=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem;">✈️ <b>${esc(r.city||"")} (${esc(r.airport||"")})</b> — מ-$${r.price_from||"?"} | ${esc(r.airline||"")} | <span style="color:var(--muted);">${esc(r.why_good_positioning||"")}</span></div>`).join("");
+    el.innerHTML=routes.slice(0,10).map(r=>`<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem;">✈️ <b>${esc(r.city||"")} (${esc(r.airport||"")})</b> — ${ui("from_price")}${r.price_from||"?"} | ${esc(r.airline||"")} | <span style="color:var(--muted);">${esc(r.why_good_positioning||"")}</span></div>`).join("");
   }catch(e){el.textContent=ui("error_loading");}
 }
 
@@ -2083,6 +2082,85 @@ const UI={
     opt_sort_price_desc:"מיין: מחיר ↓",opt_sort_deal:"מיין: ציון דיל",
     th_name:"שם",th_cat:"קטגוריה",th_price:"מחיר אחרון",
     th_score:"ציון",th_status:"סטטוס",th_actions:"פעולות",
+    // History
+    lbl_select_watch:"בחר מעקב",lbl_record_count:"כמות רשומות",
+    stat_current:"נוכחי",stat_low:"הנמוך",stat_high:"הגבוה",stat_avg:"ממוצע",
+    ct_price_trend:"מגמת מחיר",ct_records:"רשומות",
+    th_date:"תאריך",th_price_val:"מחיר",th_currency:"מטבע",th_source:"מקור",
+    // Chat
+    chat_internet:"אינטרנט",ph_chat:"שאל על טיסות, דילים, ויזות…",
+    starter1_lbl:"🔥 דילים לאירופה",starter1_q:"מה הדילים הכי טובים לאירופה עכשיו?",
+    starter2_lbl:"🔮 כדאי לחכות?",starter2_q:"טיסה TLV → NYC — כדאי לקנות עכשיו או לחכות?",
+    starter3_lbl:"🎲 הפתע אותי",starter3_q:"הצע לי יעד מפתיע לחופשת קיץ בתקציב 800 דולר",
+    starter4_lbl:"🛂 בדיקת ויזה",starter4_q:"מה דרישות הויזה לדרכון ישראלי בתאילנד?",
+    starter5_lbl:"🔁 עצירה חינם",starter5_q:"מצא לי עצירת חינם במסלול TLV → ניו יורק",
+    starter_clear:"🗑 נקה שיחה",
+    // AI tool labels
+    lbl_route_dest:"מסלול ויעד",lbl_origin_opt:"יעד / מוצא (אופציונלי)",
+    lbl_origin:"נקודת מוצא",lbl_destination:"יעד",lbl_dates:"תאריכים",
+    lbl_budget_max:"תקציב מקסימלי (USD)",lbl_prefs:"העדפות",lbl_prefs_opt:"העדפות (אופציונלי)",
+    lbl_trip_details:"פרטי הטיול",lbl_cities:"ערים לביקור",
+    lbl_route_month:"מסלול וחודש",lbl_route_current_price:"מסלול ומחיר נוכחי",
+    lbl_loyalty_plan:"מסלול ותוכנית נאמנות",lbl_route:"מסלול",
+    lbl_dest_opt:"יעד (אופציונלי)",lbl_passport:"דרכון (מדינה)",
+    lbl_date_opt:"תאריך (אופציונלי)",lbl_topic:"יעד / נושא",lbl_route_dates:"מסלול ותאריכים",
+    // AI card titles
+    ct_flight_details:"פרטי הטיסה / מלון",ct_ai_result:"ניתוח AI",
+    ct_opps_now:"הזדמנויות עכשיו",ct_results:"תוצאות",
+    ct_surprise_dest:"יעדים מפתיעים",ct_trip_plan:"תוכנית הטיול",
+    ct_optimal_route:"מסלול אופטימלי",ct_stopover_opps:"הזדמנויות עצירה",
+    ct_date_compare:"השוואת תאריכים",ct_price_forecast:"תחזית מחיר",
+    ct_cost_breakdown:"פירוט עלויות",ct_points_analysis:"ניתוח ערך נקודות",
+    ct_insights:"תובנות",ct_price_compare:"השוואת מחירים",
+    ct_market_analysis:"ניתוח שוק",ct_reddit:"מה אומרים ב-Reddit",
+    ct_visa_reqs:"דרישות ויזה",ct_hc_opps:"הזדמנויות Hidden City",ct_kiwi_routes:"מסלולי Kiwi",
+    // Generic placeholders/loading
+    ph_ai_result:"התוצאה תופיע כאן…",exchange_loading:"טוען שערים…",
+    dna_placeholder:"לחץ 'נתח' להפעלת ניתוח Price DNA על נתוני המעקב.",
+    // Price DNA field labels
+    dna_main_pattern:"📊 דפוס מרכזי",dna_best_window:"🗓️ מתי לקנות",
+    dna_forecast:"📈 תחזית 2 חודשים",dna_potential_savings:"💰 חיסכון אפשרי",
+    dna_price_now:"⚡ מחיר עכשיו",dna_savings_tip:"🎯 טיפ חיסכון",
+    // Misc
+    from_price:"מ-$",tooltip_check_price:"בדוק מחיר",
+    // Settings
+    sl_gemini:"Gemini API Key",sl_kiwi:"Kiwi API Key",
+    ct_api_keys:"🔑 מפתחות API",ct_export:"📥 ייצוא נתונים",
+    export_desc:"ייצא את כל המעקבים והיסטוריית המחירים לקובץ CSV.",
+    btn_download_csv:"📥 הורד CSV",settings_save:"שמור",
+    // Alerts
+    btn_add_alert:"+ הוסף התראה",th_al_name:"שם",th_al_watch:"מעקב",
+    th_al_conditions:"תנאים",th_al_status:"סטטוס",
+    // Modals
+    modal_h_add_watch:"➕ הוסף מעקב",lbl_watch_name:"שם המעקב",lbl_cat:"קטגוריה",
+    lbl_drop_pct:"התראת ירידה %",lbl_origin_modal:"מוצא",lbl_dest_modal:"יעד",
+    lbl_date_from:"תאריך יציאה",lbl_date_to:"תאריך חזרה",
+    lbl_max_price:"מחיר מקסימלי (USD)",lbl_search_query:"שאילתת חיפוש (ל-AI)",
+    btn_add_watch_submit:"➕ הוסף",
+    modal_h_add_alert:"🎯 הוסף התראה",lbl_alert_name:"שם ההתראה",
+    lbl_alert_watch:"מעקב (אופציונלי)",lbl_max_trigger:"מחיר מקסימלי להפעלת התראה",
+    btn_create_alert:"צור התראה",
+    // Calendar
+    lbl_cal_watch:"בחר מעקב",lbl_cal_month:"חודש",
+    btn_show_cal:"📆 הצג לוח",btn_cal_ai:"🤖 AI — מצא תאריכים זולים",
+    cal_hint_title:"📆 לוח מחירים",cal_hint_text:"בחר מעקב וחודש כדי לראות לוח מחירים. ירוק = זול, צהוב = בינוני, אדום = יקר.",
+    cal_ai_title:"🤖 ניתוח AI — תאריכים זולים",
+    cal_ai_placeholder:"לחץ 'AI — מצא תאריכים זולים' לקבלת ניתוח.",
+    day_names_short:"א,ב,ג,ד,ה,ו,ש",
+    // Page h2 headings
+    h2_history:"📊 היסטוריית מחירים",h2_wait_or_buy:"🔮 כדאי לחכות?",
+    h2_ai_opps:"🌟 הזדמנויות AI",h2_deal_hunter:"🔥 ציד דילים",
+    h2_surprise:"🎲 יעד מפתיע",h2_trip_planner:"🗺️ תכנן טיול",
+    h2_multi_city:"🌍 מסלול מרובה ערים",h2_stopovers:"🔁 עצירות חינם",
+    h2_flexible_dates:"📅 תאריכים גמישים",h2_predict:"📈 חיזוי מחיר",
+    h2_true_cost:"💰 עלות אמיתית",h2_points_vs_cash:"💳 נקודות vs מזומן",
+    h2_deal_insights:"📊 תובנות ודפוסים",h2_price_dna:"🧬 Price DNA",
+    h2_competitor:"🔍 השוואת אתרים",h2_sentiment:"📰 סנטימנט & חדשות",
+    h2_rss:"📡 RSS & Reddit",h2_visa:"🛂 בדיקת ויזה",h2_hidden_city:"🕵️ Hidden City",
+    h2_kiwi:"🔍 Kiwi טיסות",h2_exchange:"💱 שערי חליפין",h2_alerts:"🎯 כללי התראה",
+    h2_settings:"⚙️ הגדרות",h2_smart_tools:"🛠️ כלים חכמים",h2_price_calendar:"📆 לוח מחירים",
+    h2_expiring_deals:"⏰ דילים פגי תוקף",h2_telegram_bot:"🤖 בוט Telegram",
+    h2_auto_book:"⚡ Auto-Book Engine",h2_whatsapp_bot:"💬 WhatsApp Bot",h2_positioning:"🗺️ Positioning",
   },
   en:{
     active:"Active",inactive:"Off",loading:"Loading…",analyzing:"Analyzing…",searching:"Searching…",
@@ -2145,6 +2223,73 @@ const UI={
     opt_sort_price_desc:"Sort: Price ↓",opt_sort_deal:"Sort: Deal Score",
     th_name:"Name",th_cat:"Category",th_price:"Last Price",
     th_score:"Score",th_status:"Status",th_actions:"Actions",
+    lbl_select_watch:"Select Watch",lbl_record_count:"Record Count",
+    stat_current:"Current",stat_low:"Lowest",stat_high:"Highest",stat_avg:"Average",
+    ct_price_trend:"Price Trend",ct_records:"Records",
+    th_date:"Date",th_price_val:"Price",th_currency:"Currency",th_source:"Source",
+    chat_internet:"Web",ph_chat:"Ask about flights, deals, visas…",
+    starter1_lbl:"🔥 Europe Deals",starter1_q:"What are the best deals to Europe right now?",
+    starter2_lbl:"🔮 Wait or Buy?",starter2_q:"TLV → NYC flight — should I buy now or wait?",
+    starter3_lbl:"🎲 Surprise Me",starter3_q:"Suggest a surprise summer destination with a $800 budget",
+    starter4_lbl:"🛂 Visa Check",starter4_q:"Visa requirements for Israeli passport in Thailand?",
+    starter5_lbl:"🔁 Free Stopover",starter5_q:"Find me a free stopover on the TLV → New York route",
+    starter_clear:"🗑 Clear Chat",
+    lbl_route_dest:"Route & Destination",lbl_origin_opt:"Destination / Origin (optional)",
+    lbl_origin:"Origin",lbl_destination:"Destination",lbl_dates:"Dates",
+    lbl_budget_max:"Max Budget (USD)",lbl_prefs:"Preferences",lbl_prefs_opt:"Preferences (optional)",
+    lbl_trip_details:"Trip Details",lbl_cities:"Cities to Visit",
+    lbl_route_month:"Route & Month",lbl_route_current_price:"Route & Current Price",
+    lbl_loyalty_plan:"Route & Loyalty Program",lbl_route:"Route",
+    lbl_dest_opt:"Destination (optional)",lbl_passport:"Passport (country)",
+    lbl_date_opt:"Date (optional)",lbl_topic:"Destination / Topic",lbl_route_dates:"Route & Dates",
+    ct_flight_details:"Flight / Hotel Details",ct_ai_result:"AI Analysis",
+    ct_opps_now:"Opportunities Now",ct_results:"Results",
+    ct_surprise_dest:"Surprise Destinations",ct_trip_plan:"Trip Plan",
+    ct_optimal_route:"Optimal Route",ct_stopover_opps:"Stopover Opportunities",
+    ct_date_compare:"Date Comparison",ct_price_forecast:"Price Forecast",
+    ct_cost_breakdown:"Cost Breakdown",ct_points_analysis:"Points Value Analysis",
+    ct_insights:"Insights",ct_price_compare:"Price Comparison",
+    ct_market_analysis:"Market Analysis",ct_reddit:"What Reddit Says",
+    ct_visa_reqs:"Visa Requirements",ct_hc_opps:"Hidden City Opportunities",ct_kiwi_routes:"Kiwi Routes",
+    ph_ai_result:"Result will appear here…",exchange_loading:"Loading rates…",
+    dna_placeholder:"Click 'Analyze' to run Price DNA analysis on your watch data.",
+    dna_main_pattern:"📊 Main Pattern",dna_best_window:"🗓️ Best Time to Buy",
+    dna_forecast:"📈 2-Month Forecast",dna_potential_savings:"💰 Potential Savings",
+    dna_price_now:"⚡ Price Now",dna_savings_tip:"🎯 Savings Tip",
+    from_price:"from $",tooltip_check_price:"Check Price",
+    sl_gemini:"Gemini API Key",sl_kiwi:"Kiwi API Key",
+    ct_api_keys:"🔑 API Keys",ct_export:"📥 Export Data",
+    export_desc:"Export all watches and price history to a CSV file.",
+    btn_download_csv:"📥 Download CSV",settings_save:"Save",
+    btn_add_alert:"+ Add Alert",th_al_name:"Name",th_al_watch:"Watch",
+    th_al_conditions:"Conditions",th_al_status:"Status",
+    modal_h_add_watch:"➕ Add Watch",lbl_watch_name:"Watch Name",lbl_cat:"Category",
+    lbl_drop_pct:"Drop Alert %",lbl_origin_modal:"Origin",lbl_dest_modal:"Destination",
+    lbl_date_from:"Departure",lbl_date_to:"Return",
+    lbl_max_price:"Max Price (USD)",lbl_search_query:"Search Query (for AI)",
+    btn_add_watch_submit:"➕ Add",
+    modal_h_add_alert:"🎯 Add Alert",lbl_alert_name:"Alert Name",
+    lbl_alert_watch:"Watch (optional)",lbl_max_trigger:"Max trigger price",
+    btn_create_alert:"Create Alert",
+    lbl_cal_watch:"Select Watch",lbl_cal_month:"Month",
+    btn_show_cal:"📆 Show Calendar",btn_cal_ai:"🤖 AI — Find Cheap Dates",
+    cal_hint_title:"📆 Price Calendar",cal_hint_text:"Select a watch and month to see a price calendar. Green = cheap, yellow = average, red = expensive.",
+    cal_ai_title:"🤖 AI Analysis — Cheap Dates",
+    cal_ai_placeholder:"Click 'AI — Find Cheap Dates' for analysis.",
+    day_names_short:"Su,Mo,Tu,We,Th,Fr,Sa",
+    h2_history:"📊 Price History",h2_wait_or_buy:"🔮 Wait or Buy?",
+    h2_ai_opps:"🌟 AI Opportunities",h2_deal_hunter:"🔥 Deal Hunter",
+    h2_surprise:"🎲 Surprise Destination",h2_trip_planner:"🗺️ Trip Planner",
+    h2_multi_city:"🌍 Multi-City Route",h2_stopovers:"🔁 Free Stopovers",
+    h2_flexible_dates:"📅 Flexible Dates",h2_predict:"📈 Price Prediction",
+    h2_true_cost:"💰 True Cost",h2_points_vs_cash:"💳 Points vs Cash",
+    h2_deal_insights:"📊 Deal Insights",h2_price_dna:"🧬 Price DNA",
+    h2_competitor:"🔍 Compare Sites",h2_sentiment:"📰 Market Pulse",
+    h2_rss:"📡 RSS & Reddit",h2_visa:"🛂 Visa Check",h2_hidden_city:"🕵️ Hidden City",
+    h2_kiwi:"🔍 Kiwi Flights",h2_exchange:"💱 Exchange Rates",h2_alerts:"🎯 Alert Rules",
+    h2_settings:"⚙️ Settings",h2_smart_tools:"🛠️ Smart Tools",h2_price_calendar:"📆 Price Calendar",
+    h2_expiring_deals:"⏰ Expiring Deals",h2_telegram_bot:"🤖 Telegram Bot",
+    h2_auto_book:"⚡ Auto-Book Engine",h2_whatsapp_bot:"💬 WhatsApp Bot",h2_positioning:"🗺️ Positioning",
   },
   pt:{
     active:"Ativo",inactive:"Off",loading:"Carregando…",analyzing:"Analisando…",searching:"Procurando…",
@@ -2207,6 +2352,73 @@ const UI={
     opt_sort_price_desc:"Ordenar: Preço ↓",opt_sort_deal:"Ordenar: Melhor Oferta",
     th_name:"Nome",th_cat:"Categoria",th_price:"Último Preço",
     th_score:"Pontuação",th_status:"Status",th_actions:"Ações",
+    lbl_select_watch:"Selecionar Monitoramento",lbl_record_count:"Quantidade de Registros",
+    stat_current:"Atual",stat_low:"Mínimo",stat_high:"Máximo",stat_avg:"Média",
+    ct_price_trend:"Tendência de Preço",ct_records:"Registros",
+    th_date:"Data",th_price_val:"Preço",th_currency:"Moeda",th_source:"Fonte",
+    chat_internet:"Web",ph_chat:"Pergunte sobre voos, ofertas, vistos…",
+    starter1_lbl:"🔥 Ofertas na Europa",starter1_q:"Quais são as melhores ofertas para a Europa agora?",
+    starter2_lbl:"🔮 Esperar ou Comprar?",starter2_q:"Voo TLV → NYC — devo comprar agora ou esperar?",
+    starter3_lbl:"🎲 Me Surpreenda",starter3_q:"Sugira um destino surpresa para o verão com orçamento de $800",
+    starter4_lbl:"🛂 Verificar Visto",starter4_q:"Requisitos de visto para passaporte israelense na Tailândia?",
+    starter5_lbl:"🔁 Escala Grátis",starter5_q:"Encontre uma escala grátis na rota TLV → Nova York",
+    starter_clear:"🗑 Limpar Chat",
+    lbl_route_dest:"Rota e Destino",lbl_origin_opt:"Destino / Origem (opcional)",
+    lbl_origin:"Origem",lbl_destination:"Destino",lbl_dates:"Datas",
+    lbl_budget_max:"Orçamento Máximo (USD)",lbl_prefs:"Preferências",lbl_prefs_opt:"Preferências (opcional)",
+    lbl_trip_details:"Detalhes da Viagem",lbl_cities:"Cidades para Visitar",
+    lbl_route_month:"Rota e Mês",lbl_route_current_price:"Rota e Preço Atual",
+    lbl_loyalty_plan:"Rota e Programa de Fidelidade",lbl_route:"Rota",
+    lbl_dest_opt:"Destino (opcional)",lbl_passport:"Passaporte (país)",
+    lbl_date_opt:"Data (opcional)",lbl_topic:"Destino / Tópico",lbl_route_dates:"Rota e Datas",
+    ct_flight_details:"Detalhes do Voo / Hotel",ct_ai_result:"Análise AI",
+    ct_opps_now:"Oportunidades Agora",ct_results:"Resultados",
+    ct_surprise_dest:"Destinos Surpresa",ct_trip_plan:"Plano de Viagem",
+    ct_optimal_route:"Rota Ótima",ct_stopover_opps:"Oportunidades de Escala",
+    ct_date_compare:"Comparação de Datas",ct_price_forecast:"Previsão de Preço",
+    ct_cost_breakdown:"Detalhamento de Custos",ct_points_analysis:"Análise de Milhas",
+    ct_insights:"Insights",ct_price_compare:"Comparação de Preços",
+    ct_market_analysis:"Análise de Mercado",ct_reddit:"O que o Reddit diz",
+    ct_visa_reqs:"Requisitos de Visto",ct_hc_opps:"Oportunidades Hidden City",ct_kiwi_routes:"Rotas Kiwi",
+    ph_ai_result:"O resultado aparecerá aqui…",exchange_loading:"Carregando taxas…",
+    dna_placeholder:"Clique em 'Analisar' para executar a análise Price DNA.",
+    dna_main_pattern:"📊 Padrão Principal",dna_best_window:"🗓️ Melhor Hora de Comprar",
+    dna_forecast:"📈 Previsão 2 Meses",dna_potential_savings:"💰 Economia Potencial",
+    dna_price_now:"⚡ Preço Agora",dna_savings_tip:"🎯 Dica de Economia",
+    from_price:"a partir de $",tooltip_check_price:"Verificar Preço",
+    sl_gemini:"Gemini API Key",sl_kiwi:"Kiwi API Key",
+    ct_api_keys:"🔑 Chaves API",ct_export:"📥 Exportar Dados",
+    export_desc:"Exporte todos os monitoramentos e histórico de preços para CSV.",
+    btn_download_csv:"📥 Baixar CSV",settings_save:"Salvar",
+    btn_add_alert:"+ Adicionar Alerta",th_al_name:"Nome",th_al_watch:"Monitoramento",
+    th_al_conditions:"Condições",th_al_status:"Status",
+    modal_h_add_watch:"➕ Adicionar Monitoramento",lbl_watch_name:"Nome do Monitoramento",lbl_cat:"Categoria",
+    lbl_drop_pct:"Alerta de Queda %",lbl_origin_modal:"Origem",lbl_dest_modal:"Destino",
+    lbl_date_from:"Partida",lbl_date_to:"Retorno",
+    lbl_max_price:"Preço Máximo (USD)",lbl_search_query:"Consulta de Busca (para AI)",
+    btn_add_watch_submit:"➕ Adicionar",
+    modal_h_add_alert:"🎯 Adicionar Alerta",lbl_alert_name:"Nome do Alerta",
+    lbl_alert_watch:"Monitoramento (opcional)",lbl_max_trigger:"Preço máximo de gatilho",
+    btn_create_alert:"Criar Alerta",
+    lbl_cal_watch:"Selecionar Monitoramento",lbl_cal_month:"Mês",
+    btn_show_cal:"📆 Mostrar Calendário",btn_cal_ai:"🤖 AI — Encontrar Datas Baratas",
+    cal_hint_title:"📆 Calendário de Preços",cal_hint_text:"Selecione um monitoramento e mês para ver o calendário. Verde = barato, amarelo = médio, vermelho = caro.",
+    cal_ai_title:"🤖 Análise AI — Datas Baratas",
+    cal_ai_placeholder:"Clique em 'AI — Encontrar Datas Baratas' para análise.",
+    day_names_short:"Do,Se,Te,Qu,Qu,Se,Sá",
+    h2_history:"📊 Histórico de Preços",h2_wait_or_buy:"🔮 Esperar ou Comprar?",
+    h2_ai_opps:"🌟 Oportunidades AI",h2_deal_hunter:"🔥 Caçador de Ofertas",
+    h2_surprise:"🎲 Destino Surpresa",h2_trip_planner:"🗺️ Planejar Viagem",
+    h2_multi_city:"🌍 Rota Multi-Cidade",h2_stopovers:"🔁 Escalas Grátis",
+    h2_flexible_dates:"📅 Datas Flexíveis",h2_predict:"📈 Previsão de Preço",
+    h2_true_cost:"💰 Custo Real",h2_points_vs_cash:"💳 Milhas vs Dinheiro",
+    h2_deal_insights:"📊 Insights e Padrões",h2_price_dna:"🧬 Price DNA",
+    h2_competitor:"🔍 Comparar Sites",h2_sentiment:"📰 Pulso do Mercado",
+    h2_rss:"📡 RSS & Reddit",h2_visa:"🛂 Verificação de Visto",h2_hidden_city:"🕵️ Hidden City",
+    h2_kiwi:"🔍 Kiwi Voos",h2_exchange:"💱 Taxas de Câmbio",h2_alerts:"🎯 Regras de Alerta",
+    h2_settings:"⚙️ Configurações",h2_smart_tools:"🛠️ Ferramentas Inteligentes",h2_price_calendar:"📆 Calendário de Preços",
+    h2_expiring_deals:"⏰ Ofertas Expirando",h2_telegram_bot:"🤖 Bot Telegram",
+    h2_auto_book:"⚡ Motor Auto-Reserva",h2_whatsapp_bot:"💬 Bot WhatsApp",h2_positioning:"🗺️ Posicionamento",
   },
   es:{
     active:"Activo",inactive:"Off",loading:"Cargando…",analyzing:"Analizando…",searching:"Buscando…",
@@ -2269,6 +2481,73 @@ const UI={
     opt_sort_price_desc:"Ordenar: Precio ↓",opt_sort_deal:"Ordenar: Mejor Oferta",
     th_name:"Nombre",th_cat:"Categoría",th_price:"Último Precio",
     th_score:"Puntuación",th_status:"Estado",th_actions:"Acciones",
+    lbl_select_watch:"Seleccionar Monitoreo",lbl_record_count:"Cantidad de Registros",
+    stat_current:"Actual",stat_low:"Mínimo",stat_high:"Máximo",stat_avg:"Promedio",
+    ct_price_trend:"Tendencia de Precio",ct_records:"Registros",
+    th_date:"Fecha",th_price_val:"Precio",th_currency:"Moneda",th_source:"Fuente",
+    chat_internet:"Web",ph_chat:"Pregunta sobre vuelos, ofertas, visas…",
+    starter1_lbl:"🔥 Ofertas Europa",starter1_q:"¿Cuáles son las mejores ofertas a Europa ahora?",
+    starter2_lbl:"🔮 ¿Esperar o Comprar?",starter2_q:"Vuelo TLV → NYC — ¿comprar ahora o esperar?",
+    starter3_lbl:"🎲 Sorpréndeme",starter3_q:"Sugiéreme un destino sorpresa de verano con presupuesto de $800",
+    starter4_lbl:"🛂 Verificar Visa",starter4_q:"¿Requisitos de visa para pasaporte israelí en Tailandia?",
+    starter5_lbl:"🔁 Escala Gratis",starter5_q:"Encuentra una escala gratis en la ruta TLV → Nueva York",
+    starter_clear:"🗑 Limpiar Chat",
+    lbl_route_dest:"Ruta y Destino",lbl_origin_opt:"Destino / Origen (opcional)",
+    lbl_origin:"Origen",lbl_destination:"Destino",lbl_dates:"Fechas",
+    lbl_budget_max:"Presupuesto Máximo (USD)",lbl_prefs:"Preferencias",lbl_prefs_opt:"Preferencias (opcional)",
+    lbl_trip_details:"Detalles del Viaje",lbl_cities:"Ciudades a Visitar",
+    lbl_route_month:"Ruta y Mes",lbl_route_current_price:"Ruta y Precio Actual",
+    lbl_loyalty_plan:"Ruta y Programa de Lealtad",lbl_route:"Ruta",
+    lbl_dest_opt:"Destino (opcional)",lbl_passport:"Pasaporte (país)",
+    lbl_date_opt:"Fecha (opcional)",lbl_topic:"Destino / Tema",lbl_route_dates:"Ruta y Fechas",
+    ct_flight_details:"Detalles del Vuelo / Hotel",ct_ai_result:"Análisis AI",
+    ct_opps_now:"Oportunidades Ahora",ct_results:"Resultados",
+    ct_surprise_dest:"Destinos Sorpresa",ct_trip_plan:"Plan de Viaje",
+    ct_optimal_route:"Ruta Óptima",ct_stopover_opps:"Oportunidades de Escala",
+    ct_date_compare:"Comparación de Fechas",ct_price_forecast:"Pronóstico de Precio",
+    ct_cost_breakdown:"Desglose de Costos",ct_points_analysis:"Análisis de Puntos",
+    ct_insights:"Perspectivas",ct_price_compare:"Comparación de Precios",
+    ct_market_analysis:"Análisis de Mercado",ct_reddit:"Qué dice Reddit",
+    ct_visa_reqs:"Requisitos de Visa",ct_hc_opps:"Oportunidades Hidden City",ct_kiwi_routes:"Rutas Kiwi",
+    ph_ai_result:"El resultado aparecerá aquí…",exchange_loading:"Cargando tipos…",
+    dna_placeholder:"Haz clic en 'Analizar' para ejecutar el análisis Price DNA.",
+    dna_main_pattern:"📊 Patrón Principal",dna_best_window:"🗓️ Mejor Momento para Comprar",
+    dna_forecast:"📈 Pronóstico 2 Meses",dna_potential_savings:"💰 Ahorro Potencial",
+    dna_price_now:"⚡ Precio Ahora",dna_savings_tip:"🎯 Consejo de Ahorro",
+    from_price:"desde $",tooltip_check_price:"Verificar Precio",
+    sl_gemini:"Gemini API Key",sl_kiwi:"Kiwi API Key",
+    ct_api_keys:"🔑 Claves API",ct_export:"📥 Exportar Datos",
+    export_desc:"Exporta todos los monitoreos e historial de precios a CSV.",
+    btn_download_csv:"📥 Descargar CSV",settings_save:"Guardar",
+    btn_add_alert:"+ Agregar Alerta",th_al_name:"Nombre",th_al_watch:"Monitoreo",
+    th_al_conditions:"Condiciones",th_al_status:"Estado",
+    modal_h_add_watch:"➕ Agregar Monitoreo",lbl_watch_name:"Nombre del Monitoreo",lbl_cat:"Categoría",
+    lbl_drop_pct:"Alerta de Bajada %",lbl_origin_modal:"Origen",lbl_dest_modal:"Destino",
+    lbl_date_from:"Salida",lbl_date_to:"Regreso",
+    lbl_max_price:"Precio Máximo (USD)",lbl_search_query:"Consulta de Búsqueda (para AI)",
+    btn_add_watch_submit:"➕ Agregar",
+    modal_h_add_alert:"🎯 Agregar Alerta",lbl_alert_name:"Nombre de Alerta",
+    lbl_alert_watch:"Monitoreo (opcional)",lbl_max_trigger:"Precio máximo de activación",
+    btn_create_alert:"Crear Alerta",
+    lbl_cal_watch:"Seleccionar Monitoreo",lbl_cal_month:"Mes",
+    btn_show_cal:"📆 Mostrar Calendario",btn_cal_ai:"🤖 AI — Encontrar Fechas Baratas",
+    cal_hint_title:"📆 Calendario de Precios",cal_hint_text:"Selecciona un monitoreo y mes para ver el calendario. Verde = barato, amarillo = medio, rojo = caro.",
+    cal_ai_title:"🤖 Análisis AI — Fechas Baratas",
+    cal_ai_placeholder:"Haz clic en 'AI — Encontrar Fechas Baratas' para análisis.",
+    day_names_short:"Do,Lu,Ma,Mi,Ju,Vi,Sá",
+    h2_history:"📊 Historial de Precios",h2_wait_or_buy:"🔮 ¿Esperar o Comprar?",
+    h2_ai_opps:"🌟 Oportunidades AI",h2_deal_hunter:"🔥 Cazador de Ofertas",
+    h2_surprise:"🎲 Destino Sorpresa",h2_trip_planner:"🗺️ Planear Viaje",
+    h2_multi_city:"🌍 Ruta Multi-Ciudad",h2_stopovers:"🔁 Escalas Gratis",
+    h2_flexible_dates:"📅 Fechas Flexibles",h2_predict:"📈 Predicción de Precio",
+    h2_true_cost:"💰 Costo Real",h2_points_vs_cash:"💳 Puntos vs Efectivo",
+    h2_deal_insights:"📊 Perspectivas e Patrones",h2_price_dna:"🧬 Price DNA",
+    h2_competitor:"🔍 Comparar Sitios",h2_sentiment:"📰 Pulso del Mercado",
+    h2_rss:"📡 RSS & Reddit",h2_visa:"🛂 Verificar Visa",h2_hidden_city:"🕵️ Hidden City",
+    h2_kiwi:"🔍 Kiwi Vuelos",h2_exchange:"💱 Tipos de Cambio",h2_alerts:"🎯 Reglas de Alerta",
+    h2_settings:"⚙️ Configuración",h2_smart_tools:"🛠️ Herramientas Inteligentes",h2_price_calendar:"📆 Calendario de Precios",
+    h2_expiring_deals:"⏰ Ofertas Expirando",h2_telegram_bot:"🤖 Bot Telegram",
+    h2_auto_book:"⚡ Motor Auto-Reserva",h2_whatsapp_bot:"💬 Bot WhatsApp",h2_positioning:"🗺️ Posicionamiento",
   }
 };
 function ui(k){const t=UI[_lang]||UI.en;const v=t[k];if(typeof v==="string")return v;const e=UI.en[k];if(typeof e==="string")return e;return k;}
@@ -2287,8 +2566,21 @@ function applyLang(){
   });
   const cur=document.querySelector(".nav-btn.active")?.dataset.page;
   if(cur)document.getElementById("topbar-title").textContent=(en?TITLES_EN:PAGE_TITLES)[cur]||cur;
-  // Translate data-ui elements
-  document.querySelectorAll("[data-ui]").forEach(el=>{el.textContent=ui(el.dataset.ui);});
+  // Translate data-ui elements (skip ai-placeholder elements that already have results)
+  document.querySelectorAll("[data-ui]").forEach(el=>{
+    if(el.classList.contains("ai-placeholder")||!el.classList.contains("ai-box"))el.textContent=ui(el.dataset.ui);
+  });
+  // Translate placeholders
+  document.querySelectorAll("[data-ph]").forEach(el=>{el.placeholder=ui(el.dataset.ph);});
+  // Chat greeting
+  const cg=document.getElementById("chat-greeting");if(cg)cg.textContent=ui("chat_greeting");
+  // Starter buttons
+  document.querySelectorAll(".starter-btn[data-start]").forEach(b=>{b.textContent=ui(b.dataset.start+"_lbl");b.onclick=()=>startChat(ui(b.dataset.start+"_q"));});
+  const scb=document.getElementById("starter-clear-btn");if(scb)scb.textContent=ui("starter_clear");
+  // Price DNA placeholder
+  const dnaRes=document.getElementById("dna-res");if(dnaRes&&dnaRes.classList.contains("ai-placeholder"))dnaRes.textContent=ui("dna_placeholder");
+  // Exchange loading
+  const exchCard=document.getElementById("exch-card");if(exchCard&&exchCard.querySelector("[data-ui='exchange_loading']"))exchCard.querySelector("[data-ui='exchange_loading']").textContent=ui("exchange_loading");
   // Quota / plan display
   const qd=document.getElementById("quota-display");if(qd)qd.textContent=ui("plan_label")+ui("plan_free");
   const pl=document.getElementById("plan-lbl");if(pl)pl.textContent=ui("plan_free");
