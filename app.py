@@ -994,6 +994,63 @@ if not st.session_state.get("_pwa_injected"):
     _inject_pwa()
     st.session_state["_pwa_injected"] = True
 
+# ── WizeTravel Onboarding ──────────────────────────────────────────────────────
+if not st.session_state.get("_ob_injected"):
+    _lang = st.session_state.get("lang", "he")
+    _ob_data = {
+        "he": {"title":"ברוך הבא ל-WizeTravel","sub":"מצא עסקאות טיסה מדהימות עם AI","color":"#3b82f6",
+               "features":["✈️ חיפוש טיסות חכם עם AI ועדכוני מחיר","🔔 התראות מחיר — תדע מתי המחיר יורד","🗺️ תכנון טיול שלם כולל עצירות ואטרקציות"],
+               "btn":"בואו נתחיל ←","nosee":"אל תציג שוב בהפעלה","dir":"rtl"},
+        "en": {"title":"Welcome to WizeTravel","sub":"Find amazing flight deals with AI","color":"#3b82f6",
+               "features":["✈️ AI-powered flight search & price tracking","🔔 Price alerts — know when prices drop","🗺️ Full trip planning with stopovers & attractions"],
+               "btn":"Get started →","nosee":"Don't show on startup","dir":"ltr"},
+        "pt": {"title":"Bem-vindo ao WizeTravel","sub":"Encontre passagens incríveis com IA","color":"#3b82f6",
+               "features":["✈️ Busca de voos inteligente com IA","🔔 Alertas de preço — saiba quando cair","🗺️ Planejamento completo de viagem"],
+               "btn":"Vamos lá →","nosee":"Não mostrar na inicialização","dir":"ltr"},
+    }
+    _ob = _ob_data.get(_lang, _ob_data["en"])
+    components.html(f"""
+<script>
+(function(){{
+  var KEY = 'wl_ob_travel';
+  var OB_KEY_SHOW = 'wl_ob_travel_show';
+  function show(manual){{
+    if(document.getElementById('wl-ob-tr')) return;
+    var d=window.parent.document, t={{"title":"{_ob['title']}","sub":"{_ob['sub']}","color":"{_ob['color']}",
+      "features":{_ob['features']},"btn":"{_ob['btn']}","nosee":"{_ob['nosee']}","dir":"{_ob['dir']}"}};
+    var ov=d.createElement('div'); ov.id='wl-ob-tr';
+    ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Inter,-apple-system,sans-serif;direction:'+t.dir+';';
+    ov.innerHTML='<div style="background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px;max-width:440px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.6);">'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">'
+      +'<svg width="36" height="36" viewBox="0 0 100 100"><defs><linearGradient id="trg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs><rect width="100" height="100" rx="22" fill="url(#trg)"/><text x="50" y="72" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="58" fill="white">W</text></svg>'
+      +'<div><div style="font-size:18px;font-weight:800;color:#eef2ff;letter-spacing:-0.4px;">'+t.title+'</div><div style="font-size:13px;color:#6b7280;margin-top:2px;">'+t.sub+'</div></div></div>'
+      +'<div style="border-top:1px solid rgba(255,255,255,0.07);margin:20px 0;"></div>'
+      +'<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">'
+      +t.features.map(function(f){{return '<div style="font-size:14px;color:#94a3b8;">'+f+'</div>';}}).join('')
+      +'</div>'
+      +'<button id="wl-ob-tr-close" style="width:100%;padding:12px;border-radius:10px;background:'+t.color+';border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">'+t.btn+'</button>'
+      +'<label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:#4b5563;cursor:pointer;"><input type="checkbox" id="wl-ob-tr-ns"> '+t.nosee+'</label>'
+      +'</div>';
+    d.body.appendChild(ov);
+    d.getElementById('wl-ob-tr-close').onclick=function(){{
+      if(d.getElementById('wl-ob-tr-ns').checked||!manual) localStorage.setItem(KEY,'1');
+      ov.remove();
+    }};
+  }}
+  // ? button
+  if(!window.parent.document.getElementById('wl-ob-tr-btn')){{
+    var btn=window.parent.document.createElement('button');
+    btn.id='wl-ob-tr-btn'; btn.textContent='?';
+    btn.style.cssText='position:fixed;bottom:20px;left:20px;z-index:9997;width:32px;height:32px;border-radius:50%;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#3b82f6;font-size:14px;font-weight:700;cursor:pointer;line-height:1;';
+    btn.onclick=function(){{show(true);}};
+    window.parent.document.body.appendChild(btn);
+  }}
+  if(!localStorage.getItem(KEY)) show(false);
+}})();
+</script>
+""", height=0)
+    st.session_state["_ob_injected"] = True
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PAGE: Dashboard
