@@ -996,60 +996,181 @@ if not st.session_state.get("_pwa_injected"):
 
 # ── WizeTravel Onboarding ──────────────────────────────────────────────────────
 if not st.session_state.get("_ob_injected"):
-    _lang = st.session_state.get("lang", "he")
-    _ob_data = {
-        "he": {"title":"ברוך הבא ל-WizeTravel","sub":"מצא עסקאות טיסה מדהימות עם AI","color":"#3b82f6",
-               "features":["✈️ חיפוש טיסות חכם עם AI ועדכוני מחיר","🔔 התראות מחיר — תדע מתי המחיר יורד","🗺️ תכנון טיול שלם כולל עצירות ואטרקציות"],
-               "btn":"בואו נתחיל ←","nosee":"אל תציג שוב בהפעלה","dir":"rtl"},
-        "en": {"title":"Welcome to WizeTravel","sub":"Find amazing flight deals with AI","color":"#3b82f6",
-               "features":["✈️ AI-powered flight search & price tracking","🔔 Price alerts — know when prices drop","🗺️ Full trip planning with stopovers & attractions"],
-               "btn":"Get started →","nosee":"Don't show on startup","dir":"ltr"},
-        "pt": {"title":"Bem-vindo ao WizeTravel","sub":"Encontre passagens incríveis com IA","color":"#3b82f6",
-               "features":["✈️ Busca de voos inteligente com IA","🔔 Alertas de preço — saiba quando cair","🗺️ Planejamento completo de viagem"],
-               "btn":"Vamos lá →","nosee":"Não mostrar na inicialização","dir":"ltr"},
-        "es": {"title":"Bienvenido a WizeTravel","sub":"Encuentra vuelos increíbles con IA","color":"#3b82f6",
-               "features":["✈️ Búsqueda de vuelos inteligente con IA","🔔 Alertas de precio — sabe cuándo bajan","🗺️ Planificación completa del viaje"],
-               "btn":"¡Vamos! →","nosee":"No mostrar al iniciar","dir":"ltr"},
-    }
-    _ob = _ob_data.get(_lang, _ob_data["en"])
-    components.html(f"""
+    components.html("""
 <script>
-(function(){{
+(function(){
   var KEY = 'wl_ob_travel';
-  var OB_KEY_SHOW = 'wl_ob_travel_show';
-  function show(manual){{
-    if(document.getElementById('wl-ob-tr')) return;
-    var d=window.parent.document, t={{"title":"{_ob['title']}","sub":"{_ob['sub']}","color":"{_ob['color']}",
-      "features":{_ob['features']},"btn":"{_ob['btn']}","nosee":"{_ob['nosee']}","dir":"{_ob['dir']}"}};
-    var ov=d.createElement('div'); ov.id='wl-ob-tr';
-    ov.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Inter,-apple-system,sans-serif;direction:'+t.dir+';';
-    ov.innerHTML='<div style="background:#0d1117;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px;max-width:440px;width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.6);">'
-      +'<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">'
-      +'<svg width="36" height="36" viewBox="0 0 100 100"><defs><linearGradient id="trg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs><rect width="100" height="100" rx="22" fill="url(#trg)"/><text x="50" y="72" text-anchor="middle" font-family="Arial Black,sans-serif" font-weight="900" font-size="58" fill="white">W</text></svg>'
-      +'<div><div style="font-size:18px;font-weight:800;color:#eef2ff;letter-spacing:-0.4px;">'+t.title+'</div><div style="font-size:13px;color:#6b7280;margin-top:2px;">'+t.sub+'</div></div></div>'
-      +'<div style="border-top:1px solid rgba(255,255,255,0.07);margin:20px 0;"></div>'
-      +'<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">'
-      +t.features.map(function(f){{return '<div style="font-size:14px;color:#94a3b8;">'+f+'</div>';}}).join('')
-      +'</div>'
-      +'<button id="wl-ob-tr-close" style="width:100%;padding:12px;border-radius:10px;background:'+t.color+';border:none;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">'+t.btn+'</button>'
-      +'<label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:#4b5563;cursor:pointer;"><input type="checkbox" id="wl-ob-tr-ns"> '+t.nosee+'</label>'
-      +'</div>';
+  var d = window.parent.document;
+  var COLOR = '#3b82f6';
+
+  var SLIDES = {
+    he: [
+      {icon:'✈️', bg:'radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.38) 0%,transparent 70%)',
+       title:'ברוכים הבאים ל-WizeTravel', sub:'מצא עסקאות טיסה מדהימות עם AI',
+       features:[{e:'🤖',t:'AI שמנתח מאות מסלולים ומוצא את העסקה הטובה ביותר'},{e:'🔔',t:'התראות מחיר — תדע בדיוק מתי המחיר יורד'},{e:'🗺️',t:'תכנון טיול שלם כולל עצירות, מלונות ואטרקציות'}]},
+      {icon:'💰', bg:'radial-gradient(ellipse at 50% 0%,rgba(16,185,129,0.35) 0%,transparent 70%)',
+       title:'עסקאות טיסה חכמות', sub:'AI שעובד בשבילך 24/7',
+       features:[{e:'📅',t:'גמישות בתאריכים — ראה מתי הכי זול לטוס'},{e:'🔄',t:'השוואת חברות תעופה, עצירות ומחלקות'},{e:'💳',t:'טיפים לניצול נקודות ומיילים לטיסות בחינם'}]},
+      {icon:'🗺️', bg:'radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.33) 0%,transparent 70%)',
+       title:'תכנון טיול מלא', sub:'מהטיסה ועד המלון — הכל במקום אחד',
+       features:[{e:'🏨',t:'המלצות מלון לפי תקציב ומיקום'},{e:'🎯',t:'אטרקציות ופעילויות לפי יעד ועדפות'},{e:'📱',t:'סיכום טיול מסודר לשיתוף ושמירה'}]},
+      {icon:'🚀', bg:'radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.3) 0%,transparent 70%)',
+       title:'מוכן לטוס?', sub:'לאן תרצה לטוס?',
+       actions:[{e:'✈️',l:'חפש טיסה',c:'#3b82f6'},{e:'💰',l:'מצא עסקאות',c:'#10b981'},{e:'🗺️',l:'תכנן טיול',c:'#8b5cf6'},{e:'🔔',l:'הגדר התראה',c:'#f59e0b'},{e:'💳',l:'נקודות ומיילים',c:'#ec4899'},{e:'🤖',l:'שאל AI',c:'#64748b'}]}
+    ],
+    en: [
+      {icon:'✈️', bg:'radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.38) 0%,transparent 70%)',
+       title:'Welcome to WizeTravel', sub:'Find amazing flight deals with AI',
+       features:[{e:'🤖',t:'AI analyzes hundreds of routes to find the best deal'},{e:'🔔',t:'Price alerts — know exactly when prices drop'},{e:'🗺️',t:'Full trip planning including stopovers, hotels & attractions'}]},
+      {icon:'💰', bg:'radial-gradient(ellipse at 50% 0%,rgba(16,185,129,0.35) 0%,transparent 70%)',
+       title:'Smart Flight Deals', sub:'AI working for you 24/7',
+       features:[{e:'📅',t:'Date flexibility — see when it\'s cheapest to fly'},{e:'🔄',t:'Compare airlines, stopovers and cabin classes'},{e:'💳',t:'Tips on using points & miles for free flights'}]},
+      {icon:'🗺️', bg:'radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.33) 0%,transparent 70%)',
+       title:'Full Trip Planning', sub:'From flight to hotel — everything in one place',
+       features:[{e:'🏨',t:'Hotel recommendations by budget and location'},{e:'🎯',t:'Attractions & activities by destination and preferences'},{e:'📱',t:'Organized trip summary to share and save'}]},
+      {icon:'🚀', bg:'radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.3) 0%,transparent 70%)',
+       title:'Ready to Fly?', sub:'Where would you like to go?',
+       actions:[{e:'✈️',l:'Search Flights',c:'#3b82f6'},{e:'💰',l:'Find Deals',c:'#10b981'},{e:'🗺️',l:'Plan a Trip',c:'#8b5cf6'},{e:'🔔',l:'Set Alert',c:'#f59e0b'},{e:'💳',l:'Points & Miles',c:'#ec4899'},{e:'🤖',l:'Ask AI',c:'#64748b'}]}
+    ],
+    pt: [
+      {icon:'✈️', bg:'radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.38) 0%,transparent 70%)',
+       title:'Bem-vindo ao WizeTravel', sub:'Encontre passagens incríveis com IA',
+       features:[{e:'🤖',t:'IA analisa centenas de rotas para encontrar a melhor oferta'},{e:'🔔',t:'Alertas de preço — saiba exatamente quando o preço cair'},{e:'🗺️',t:'Planejamento completo incluindo escalas, hotéis e atrações'}]},
+      {icon:'💰', bg:'radial-gradient(ellipse at 50% 0%,rgba(16,185,129,0.35) 0%,transparent 70%)',
+       title:'Ofertas Inteligentes de Voos', sub:'IA trabalhando para você 24/7',
+       features:[{e:'📅',t:'Flexibilidade de datas — veja quando é mais barato voar'},{e:'🔄',t:'Compare companhias aéreas, escalas e classes'},{e:'💳',t:'Dicas para usar pontos e milhas em voos gratuitos'}]},
+      {icon:'🗺️', bg:'radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.33) 0%,transparent 70%)',
+       title:'Planejamento Completo', sub:'Do voo ao hotel — tudo em um lugar',
+       features:[{e:'🏨',t:'Recomendações de hotéis por orçamento e localização'},{e:'🎯',t:'Atrações e atividades por destino e preferências'},{e:'📱',t:'Resumo organizado da viagem para compartilhar'}]},
+      {icon:'🚀', bg:'radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.3) 0%,transparent 70%)',
+       title:'Pronto para Voar?', sub:'Para onde você quer ir?',
+       actions:[{e:'✈️',l:'Buscar Voos',c:'#3b82f6'},{e:'💰',l:'Encontrar Ofertas',c:'#10b981'},{e:'🗺️',l:'Planejar Viagem',c:'#8b5cf6'},{e:'🔔',l:'Criar Alerta',c:'#f59e0b'},{e:'💳',l:'Pontos e Milhas',c:'#ec4899'},{e:'🤖',l:'Perguntar IA',c:'#64748b'}]}
+    ],
+    es: [
+      {icon:'✈️', bg:'radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.38) 0%,transparent 70%)',
+       title:'Bienvenido a WizeTravel', sub:'Encuentra vuelos increíbles con IA',
+       features:[{e:'🤖',t:'IA analiza cientos de rutas para encontrar la mejor oferta'},{e:'🔔',t:'Alertas de precio — sabe exactamente cuándo bajan'},{e:'🗺️',t:'Planificación completa con escalas, hoteles y atracciones'}]},
+      {icon:'💰', bg:'radial-gradient(ellipse at 50% 0%,rgba(16,185,129,0.35) 0%,transparent 70%)',
+       title:'Ofertas Inteligentes de Vuelos', sub:'IA trabajando para ti 24/7',
+       features:[{e:'📅',t:'Flexibilidad de fechas — ve cuándo es más barato volar'},{e:'🔄',t:'Compara aerolíneas, escalas y clases de cabina'},{e:'💳',t:'Consejos para usar puntos y millas en vuelos gratis'}]},
+      {icon:'🗺️', bg:'radial-gradient(ellipse at 50% 0%,rgba(139,92,246,0.33) 0%,transparent 70%)',
+       title:'Planificación Completa', sub:'Del vuelo al hotel — todo en un lugar',
+       features:[{e:'🏨',t:'Recomendaciones de hotel por presupuesto y ubicación'},{e:'🎯',t:'Atracciones y actividades por destino y preferencias'},{e:'📱',t:'Resumen organizado del viaje para compartir'}]},
+      {icon:'🚀', bg:'radial-gradient(ellipse at 50% 0%,rgba(59,130,246,0.3) 0%,transparent 70%)',
+       title:'¿Listo para Volar?', sub:'¿A dónde quieres ir?',
+       actions:[{e:'✈️',l:'Buscar Vuelos',c:'#3b82f6'},{e:'💰',l:'Encontrar Ofertas',c:'#10b981'},{e:'🗺️',l:'Planear Viaje',c:'#8b5cf6'},{e:'🔔',l:'Crear Alerta',c:'#f59e0b'},{e:'💳',l:'Puntos y Millas',c:'#ec4899'},{e:'🤖',l:'Preguntar IA',c:'#64748b'}]}
+    ]
+  };
+  var LABELS = {
+    he:{skip:'דלג',next:'הבא →',start:'✓ בואו נתחיל'},
+    en:{skip:'Skip',next:'Next →',start:"✓ Let's Start"},
+    pt:{skip:'Pular',next:'Próximo →',start:'✓ Vamos Começar'},
+    es:{skip:'Saltar',next:'Siguiente →',start:'✓ ¡Empecemos'}
+  };
+
+  function buildOb() {
+    if (d.getElementById('wl-ob-tr')) return;
+    var lang = localStorage.getItem('wl_lang') || 'he';
+    var slides = SLIDES[lang] || SLIDES.en;
+    var lb = LABELS[lang] || LABELS.en;
+    var isRtl = lang === 'he';
+    var step = 0;
+    var total = slides.length;
+
+    // Style injection
+    var style = d.createElement('style');
+    style.id = 'wl-ob-tr-style';
+    style.textContent = '#wl-ob-tr{position:fixed;inset:0;z-index:99999;background:#060a14;overflow:hidden;font-family:Inter,-apple-system,sans-serif;}'
+      +'.wl-ob-feat{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;font-size:14px;color:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.08);}'
+      +'.wl-ob-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:16px;padding:18px 12px;cursor:pointer;color:white;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);}';
+    d.head.appendChild(style);
+
+    var ov = d.createElement('div');
+    ov.id = 'wl-ob-tr';
     d.body.appendChild(ov);
-    d.getElementById('wl-ob-tr-close').onclick=function(){{
-      if(d.getElementById('wl-ob-tr-ns').checked||!manual) localStorage.setItem(KEY,'1');
-      ov.remove();
-    }};
-  }}
+
+    function render() {
+      var s = slides[step];
+      var isLast = step === total - 1;
+      ov.style.direction = isRtl ? 'rtl' : 'ltr';
+
+      var featsHtml = '';
+      if (s.features) {
+        featsHtml = '<div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;z-index:1;">'
+          + s.features.map(function(f){return '<div class="wl-ob-feat"><span style="font-size:1.2rem;flex-shrink:0;">'+f.e+'</span><span>'+f.t+'</span></div>';}).join('')
+          + '</div>';
+      } else if (s.actions) {
+        featsHtml = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;width:100%;max-width:360px;z-index:1;" id="wl-ob-grid"></div>';
+      }
+
+      ov.innerHTML =
+        '<div style="position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.08);">'
+          +'<div style="height:100%;background:linear-gradient(90deg,'+COLOR+',#2563eb);width:'+((step+1)/total*100)+'%;transition:width .4s;"></div></div>'
+        +'<div style="position:absolute;top:3px;left:0;right:0;z-index:3;display:flex;justify-content:space-between;align-items:center;padding:12px 20px;">'
+          +'<button id="wl-ob-skip" style="background:rgba(255,255,255,.08);border:none;border-radius:20px;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer;padding:6px 14px;font-family:inherit;">'+lb.skip+'</button>'
+          +'<span style="color:rgba(255,255,255,.3);font-size:13px;">'+(step+1)+' / '+total+'</span></div>'
+        +'<div style="position:absolute;inset:0;background:'+s.bg+';pointer-events:none;"></div>'
+        +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 28px 120px;box-sizing:border-box;">'
+          +'<div style="width:96px;height:96px;border-radius:28px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:3rem;margin-bottom:28px;flex-shrink:0;z-index:1;">'+s.icon+'</div>'
+          +'<h2 style="color:#fff;font-size:1.5rem;font-weight:700;text-align:center;margin:0 0 12px;line-height:1.3;z-index:1;">'+s.title+'</h2>'
+          +'<p style="color:rgba(255,255,255,.55);font-size:1rem;text-align:center;line-height:1.7;margin:0 0 32px;max-width:340px;z-index:1;">'+s.sub+'</p>'
+          + featsHtml
+        +'</div>'
+        +'<div style="position:absolute;bottom:0;left:0;right:0;padding:0 24px 36px;display:flex;gap:12px;align-items:center;z-index:3;">'
+          +(step>0?'<button id="wl-ob-prev" style="width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:white;font-size:22px;cursor:pointer;flex-shrink:0;font-family:inherit;">'+(isRtl?'←':'→')+'</button>':'')
+          +(!isLast?'<button id="wl-ob-next" style="flex:1;height:52px;border-radius:14px;background:linear-gradient(135deg,'+COLOR+',#2563eb);border:none;color:white;font-weight:700;font-size:16px;cursor:pointer;font-family:inherit;">'+lb.next+'</button>':'')
+        +'</div>';
+
+      // Action grid
+      if (s.actions) {
+        var grid = d.getElementById('wl-ob-grid');
+        if (grid) s.actions.forEach(function(a){
+          var c = d.createElement('div');
+          c.className = 'wl-ob-card';
+          c.style.borderColor = a.c+'44'; c.style.background = a.c+'18';
+          c.innerHTML = '<span style="font-size:1.6rem;line-height:1;">'+a.e+'</span><span style="font-size:12px;font-weight:600;text-align:center;line-height:1.3;">'+a.l+'</span>';
+          c.onclick = finish;
+          grid.appendChild(c);
+        });
+      }
+
+      var skipBtn = d.getElementById('wl-ob-skip');
+      var nextBtn = d.getElementById('wl-ob-next');
+      var prevBtn = d.getElementById('wl-ob-prev');
+      if (skipBtn) skipBtn.onclick = finish;
+      if (nextBtn) nextBtn.onclick = function(){ step < total-1 ? (step++, render()) : finish(); };
+      if (prevBtn) prevBtn.onclick = function(){ if(step>0){step--;render();} };
+    }
+
+    function finish() {
+      localStorage.setItem(KEY,'1');
+      var el = d.getElementById('wl-ob-tr');
+      if (el) { el.style.transition='opacity .3s'; el.style.opacity='0'; setTimeout(function(){el.remove();},300); }
+      var st2 = d.getElementById('wl-ob-tr-style');
+      if (st2) setTimeout(function(){st2.remove();},400);
+    }
+
+    // Touch swipe
+    var sx = 0;
+    ov.addEventListener('touchstart', function(e){sx=e.touches[0].clientX;},{passive:true});
+    ov.addEventListener('touchend', function(e){
+      var dx = e.changedTouches[0].clientX - sx;
+      if (Math.abs(dx)>50){ isRtl?(dx>0?function(){if(step>0){step--;render();}}():function(){step<total-1?(step++,render()):finish();}()):( dx<0?function(){step<total-1?(step++,render()):finish();}():function(){if(step>0){step--;render();}}() ); }
+    },{passive:true});
+
+    render();
+  }
+
   // ? button
-  if(!window.parent.document.getElementById('wl-ob-tr-btn')){{
-    var btn=window.parent.document.createElement('button');
-    btn.id='wl-ob-tr-btn'; btn.textContent='?';
-    btn.style.cssText='position:fixed;bottom:20px;left:20px;z-index:9997;width:32px;height:32px;border-radius:50%;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#3b82f6;font-size:14px;font-weight:700;cursor:pointer;line-height:1;';
-    btn.onclick=function(){{show(true);}};
-    window.parent.document.body.appendChild(btn);
-  }}
-  if(!localStorage.getItem(KEY)) show(false);
-}})();
+  if (!d.getElementById('wl-ob-tr-btn')) {
+    var btn = d.createElement('button');
+    btn.id = 'wl-ob-tr-btn'; btn.textContent = '?';
+    btn.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:9997;width:32px;height:32px;border-radius:50%;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.4);color:#3b82f6;font-size:14px;font-weight:700;cursor:pointer;line-height:1;font-family:inherit;';
+    btn.onclick = buildOb;
+    d.body.appendChild(btn);
+  }
+  if (!localStorage.getItem(KEY)) buildOb();
+})();
 </script>
 """, height=0)
     st.session_state["_ob_injected"] = True
