@@ -3,210 +3,496 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Noded ✈️ — סוכן מחירי נסיעות חכם</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<title>WizeTravel ✈️ — AI Flight Intelligence</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --bg:      #050810;
-  --surf:    #0d1117;
-  --surf2:   #161b27;
-  --border:  rgba(255,255,255,0.07);
-  --text:    #e2e8f0;
-  --muted:   #6b7280;
-  --accent:  #6366f1;
-  --green:   #22c55e;
-  --red:     #ef4444;
-  --amber:   #f59e0b;
-  --sw: 230px;
+/* ═══════════════════════════════════════════════
+   WIZETRAVEL — Design System (1:1 canvas)
+═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060810;
+  --bg2:#0d1020;
+  --bg3:#141828;
+  --surf:#0d1020;
+  --surf2:#141828;
+  --border:rgba(255,255,255,.07);
+  --border2:rgba(255,255,255,.13);
+  --text:#eef2ff;
+  --muted:#7280a0;
+  --muted2:#a0adcc;
+  --accent:#3b82f6;
+  --c:#3b82f6;
+  --green:#10b981;
+  --red:#ef4444;
+  --amber:#f59e0b;
+  --ff-head:'Plus Jakarta Sans',sans-serif;
+  --ff-body:'Inter',sans-serif;
+  --ff-mono:'JetBrains Mono',monospace;
+  --sw:220px;
 }
-html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;}
+
+html,body{height:100%;font-family:var(--ff-body);background:var(--bg);color:var(--text);font-size:15px;line-height:1.5;}
 a{color:inherit;text-decoration:none;}
 button{cursor:pointer;font-family:inherit;}
 input,textarea,select{font-family:inherit;}
-::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:#2a3040;border-radius:99px;}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:99px}
 
-/* Layout */
-#app{display:flex;height:calc(100vh - 36px);margin-top:36px;overflow:hidden;}
+/* ── Layout ── */
+#app{display:flex;height:100vh;overflow:hidden;}
 
-/* Sidebar */
-#sidebar{width:var(--sw);flex-shrink:0;background:var(--surf);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;transition:transform .25s;}
-.s-logo{padding:18px 14px 14px;font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:8px;}
-.s-logo span{font-size:1.3rem;}
-.nav-sec{padding:6px 0;}
-.nav-lbl{padding:4px 14px 2px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);}
-.nav-btn{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:.82rem;color:#94a3b8;cursor:pointer;border:none;background:none;width:100%;text-align:right;transition:background .15s,color .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.nav-btn:hover{background:rgba(255,255,255,.04);color:var(--text);}
-.nav-btn.active{background:rgba(99,102,241,.15);color:#a5b4fc;}
-.nav-btn .ico{font-size:.95rem;width:18px;text-align:center;flex-shrink:0;}
-.s-footer{margin-top:auto;padding:10px 14px;border-top:1px solid var(--border);}
-.plan-btn{display:flex;align-items:center;justify-content:center;gap:5px;width:100%;padding:6px 10px;border-radius:99px;font-size:.74rem;font-weight:600;background:rgba(99,102,241,.15);color:#a5b4fc;border:1px solid rgba(99,102,241,.3);cursor:pointer;transition:background .15s;}
-.plan-btn:hover{background:rgba(99,102,241,.25);}
-.quota-info{font-size:.68rem;color:var(--muted);text-align:center;padding:3px 0 7px;}
+#sidebar{
+  width:var(--sw);flex-shrink:0;
+  background:linear-gradient(180deg,#0a0e1e 0%,#060810 100%);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow:hidden;
+  transition:transform .25s;
+}
 
-/* Main */
-#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;border-bottom:1px solid var(--border);background:var(--surf);flex-shrink:0;}
-.topbar-title{font-size:.95rem;font-weight:700;}
-#content{flex:1;overflow-y:auto;padding:20px;}
+.sidebar-logo{
+  padding:20px 16px 16px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.sidebar-logo .wl-label{
+  font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.22);margin-bottom:8px;font-family:var(--ff-body);
+}
+.sidebar-logo .brand-row{display:flex;align-items:center;gap:9px;}
+.brand-icon-box{
+  width:32px;height:32px;border-radius:10px;
+  background:color-mix(in srgb,var(--c) 18%,transparent);
+  border:1px solid color-mix(in srgb,var(--c) 35%,transparent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;flex-shrink:0;
+}
+.brand-wordmark{font-family:var(--ff-head);font-size:1.15rem;font-weight:900;letter-spacing:-.5px;color:var(--text);}
+.brand-wordmark em{font-style:normal;color:var(--c);}
 
-/* Pages */
+.sidebar-nav{flex:1;padding:10px 8px;display:flex;flex-direction:column;gap:1px;overflow-y:auto;scrollbar-width:none;}
+.sidebar-nav::-webkit-scrollbar{display:none}
+
+.nav-section-label{
+  font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.22);padding:10px 8px 3px;font-family:var(--ff-body);
+}
+.nav-item{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:9px;
+  font-size:.82rem;font-weight:600;color:var(--muted);
+  cursor:pointer;border:none;background:none;
+  width:100%;text-align:right;
+  transition:all .15s;
+  border:1px solid transparent;
+  font-family:var(--ff-body);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.nav-item:hover{background:rgba(255,255,255,.05);color:var(--muted2);}
+.nav-item.active{
+  background:color-mix(in srgb,var(--c) 12%,transparent);
+  border-color:color-mix(in srgb,var(--c) 22%,transparent);
+  color:var(--text);
+}
+.nav-item .nav-ico{
+  width:26px;height:26px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.82rem;flex-shrink:0;
+  background:rgba(255,255,255,.04);
+  transition:background .15s;
+}
+.nav-item.active .nav-ico{background:color-mix(in srgb,var(--c) 20%,transparent);}
+
+/* Compat: old nav-btn class */
+.nav-btn{
+  display:flex;align-items:center;gap:9px;
+  padding:8px 10px;border-radius:9px;
+  font-size:.82rem;font-weight:600;color:var(--muted);
+  cursor:pointer;border:1px solid transparent;background:none;
+  width:calc(100% - 0px);text-align:right;
+  transition:all .15s;font-family:var(--ff-body);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.nav-btn:hover{background:rgba(255,255,255,.05);color:var(--muted2);}
+.nav-btn.active{
+  background:color-mix(in srgb,var(--c) 12%,transparent);
+  border-color:color-mix(in srgb,var(--c) 22%,transparent);
+  color:var(--text);
+}
+.nav-btn .ico{width:20px;text-align:center;flex-shrink:0;font-size:.85rem;}
+.nav-lbl{
+  font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.22);padding:10px 8px 3px;font-family:var(--ff-body);
+}
+.nav-sec{padding:2px 0;}
+
+.s-footer{
+  padding:12px 10px;border-top:1px solid var(--border);flex-shrink:0;
+}
+.user-pill{
+  display:flex;align-items:center;gap:9px;padding:8px 10px;
+  border-radius:10px;background:rgba(255,255,255,.04);
+  border:1px solid var(--border);cursor:pointer;
+  transition:border-color .2s;
+}
+.user-pill:hover{border-color:color-mix(in srgb,var(--c) 30%,transparent);}
+.user-avatar{
+  width:28px;height:28px;border-radius:9px;
+  background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 60%,#6366f1));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.72rem;font-weight:900;color:#fff;flex-shrink:0;
+}
+.user-info{flex:1;min-width:0;}
+.user-name{font-size:.76rem;font-weight:600;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.user-plan{font-size:.6rem;font-weight:700;color:var(--c);letter-spacing:.5px;}
+.quota-info{font-size:.7rem;color:var(--muted);margin-bottom:7px;padding:0 2px;}
+.sso-badge{
+  display:none;align-items:center;gap:5px;
+  padding:3px 10px 3px 8px;border-radius:99px;
+  background:color-mix(in srgb,#22c55e 12%,transparent);
+  border:1px solid color-mix(in srgb,#22c55e 30%,transparent);
+  font-size:.72rem;font-weight:700;color:#86efac;
+  white-space:nowrap;cursor:default;
+}
+.sso-badge.active{display:flex;}
+.sso-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;box-shadow:0 0 6px #22c55e;}
+.plan-btn{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  width:100%;padding:7px 10px;border-radius:99px;
+  font-size:.76rem;font-weight:700;
+  background:color-mix(in srgb,var(--c) 15%,transparent);
+  color:var(--c);border:1px solid color-mix(in srgb,var(--c) 30%,transparent);
+  cursor:pointer;transition:all .2s;font-family:var(--ff-body);
+}
+.plan-btn:hover{background:var(--c);color:#fff;}
+
+/* ── Main ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);}
+
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;height:54px;
+  border-bottom:1px solid var(--border);
+  background:rgba(6,8,16,.92);
+  backdrop-filter:blur(16px);
+  flex-shrink:0;position:sticky;top:0;z-index:10;
+}
+.topbar-title{
+  font-family:var(--ff-head);font-size:1rem;font-weight:800;
+  letter-spacing:-.3px;color:var(--text);
+}
+.mob-btn{background:none;border:none;color:var(--muted);font-size:1.2rem;padding:4px 6px;border-radius:6px;display:none;}
+
+#content{flex:1;overflow-y:auto;padding:0;}
+
+/* ── Pages ── */
 .page{display:none;}
 .page.active{display:block;}
 #page-chat.active{display:flex;}
 
-/* Cards */
-.card{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:18px;}
-.card-title{font-size:.88rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.page-content{padding:24px 28px;}
 
-/* Grid */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
-@media(max-width:900px){.g4{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:1fr 1fr;}.g2{grid-template-columns:1fr;}}
+/* ── Page header ── */
+.sh{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 28px 18px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:0;
+  background:rgba(6,8,16,.8);
+  backdrop-filter:blur(12px);
+  position:sticky;top:0;z-index:5;
+}
+.sh h2{
+  font-family:var(--ff-head);font-size:1.35rem;font-weight:900;
+  letter-spacing:-.5px;color:var(--text);
+}
+.sh-sub{font-size:.76rem;color:var(--muted);margin-top:2px;font-family:var(--ff-body);}
 
-/* Stat */
-.stat{background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px 18px;}
-.stat-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px;}
-.stat-val{font-size:1.55rem;font-weight:800;letter-spacing:-.5px;}
-.up{color:var(--green);}.down{color:var(--red);}
+/* ── Stat cards ── */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
 
-/* Table */
+.stat,.stat-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;padding:18px;
+  transition:border-color .2s,box-shadow .2s;
+}
+.stat:hover,.stat-card:hover{
+  border-color:color-mix(in srgb,var(--c) 25%,transparent);
+  box-shadow:0 4px 24px color-mix(in srgb,var(--c) 8%,transparent);
+}
+.stat.accent,.stat-card.accent{
+  background:color-mix(in srgb,var(--c) 6%,var(--bg2));
+  border-color:color-mix(in srgb,var(--c) 22%,transparent);
+}
+.stat-lbl,.sc-eyebrow{
+  font-size:.62rem;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:6px;font-family:var(--ff-body);
+}
+.stat-val,.sc-val{
+  font-family:var(--ff-head);font-size:1.7rem;font-weight:900;
+  letter-spacing:-1.5px;color:var(--text);line-height:1;
+}
+.sc-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 9px;border-radius:99px;
+  font-size:.66rem;font-weight:800;
+  font-family:var(--ff-mono);margin-top:7px;
+}
+.sc-badge.pos{background:rgba(16,185,129,.12);color:#34d399;}
+.sc-badge.neg{background:rgba(239,68,68,.12);color:#f87171;}
+.sc-badge.neu{background:rgba(245,158,11,.12);color:#fcd34d;}
+.sc-badge.info{background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c);}
+.up{color:#34d399;}.down{color:#f87171;}
+
+/* ── Panels / Cards ── */
+.card,.panel{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;
+  transition:border-color .2s;
+}
+.card{padding:18px;}
+.card:hover,.panel:hover{border-color:rgba(255,255,255,.12);}
+
+.card-title,.panel-title{
+  font-family:var(--ff-head);font-size:.9rem;font-weight:800;
+  letter-spacing:-.3px;color:var(--text);
+  margin-bottom:14px;display:flex;align-items:center;gap:7px;
+}
+.panel-head{
+  padding:13px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.panel-head .panel-title{margin-bottom:0;}
+.panel-body{padding:16px 18px;}
+
+/* ── Table ── */
 .tbl-wrap{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;font-size:.81rem;}
-th{text-align:right;padding:7px 11px;color:var(--muted);font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid var(--border);}
-td{padding:10px 11px;border-bottom:1px solid rgba(255,255,255,.04);}
-tr:hover td{background:rgba(255,255,255,.02);}
+table,.wl-table{width:100%;border-collapse:collapse;font-family:var(--ff-body);}
+th{
+  font-size:.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--muted);padding:10px 14px;
+  border-bottom:1px solid var(--border);text-align:right;
+}
+td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.83rem;color:var(--muted2);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+td:first-child{color:var(--text);font-weight:600;}
+.wl-table th{text-align:left;}
 
-/* Tags */
-.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:600;}
-.t-flight{background:rgba(99,102,241,.15);color:#a5b4fc;}
-.t-hotel{background:rgba(34,197,94,.12);color:#4ade80;}
+/* ── Tags ── */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:700;font-family:var(--ff-mono);}
+.tag.up,.t-on{background:rgba(16,185,129,.12);color:#34d399;}
+.tag.dn{background:rgba(239,68,68,.12);color:#f87171;}
+.tag.neu{background:rgba(245,158,11,.12);color:#fcd34d;}
+.tag.info,.t-flight{background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c);}
+.t-hotel{background:rgba(16,185,129,.12);color:#34d399;}
 .t-apt{background:rgba(245,158,11,.12);color:#fcd34d;}
 .t-pkg{background:rgba(239,68,68,.12);color:#f87171;}
-.t-on{background:rgba(34,197,94,.1);color:#4ade80;}
 .t-off{background:rgba(107,114,128,.1);color:#9ca3af;}
+.badge-best{background:#34d399;color:#000;font-size:.58rem;font-weight:900;padding:2px 7px;border-radius:4px;letter-spacing:.3px;margin-left:6px;vertical-align:middle;}
 
-/* Buttons */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:.8rem;font-weight:600;border:none;cursor:pointer;transition:all .15s;}
-.btn-p{background:var(--accent);color:#fff;}.btn-p:hover{background:#5254cc;}
-.btn-g{background:var(--surf2);color:var(--text);border:1px solid var(--border);}.btn-g:hover{background:#1e2435;}
-.btn-d{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3);}.btn-d:hover{background:rgba(239,68,68,.25);}
-.btn-sm{padding:4px 9px;font-size:.74rem;}
-.btn-ico{padding:5px 7px;}
+/* ── Buttons ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:8px 16px;border-radius:9px;
+  font-size:.8rem;font-weight:700;cursor:pointer;
+  border:none;font-family:var(--ff-body);
+  transition:all .2s;
+}
+.btn-p,.btn-primary{
+  background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 65%,#a78bfa));
+  color:#fff;border:none;
+  box-shadow:0 4px 16px color-mix(in srgb,var(--c) 25%,transparent);
+}
+.btn-p:hover,.btn-primary:hover{filter:brightness(1.1);}
+.btn-g,.btn-ghost{
+  background:rgba(255,255,255,.04);
+  color:var(--muted2);
+  border:1px solid var(--border2);
+}
+.btn-g:hover,.btn-ghost:hover{background:rgba(255,255,255,.08);color:var(--text);}
+.btn-d{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25);}
+.btn-d:hover{background:rgba(239,68,68,.22);}
+.btn-accent{
+  background:color-mix(in srgb,var(--c) 14%,transparent);
+  color:var(--c);
+  border:1px solid color-mix(in srgb,var(--c) 30%,transparent);
+}
+.btn-accent:hover{background:var(--c);color:#fff;}
+.btn-sm{padding:5px 10px;font-size:.75rem;}
+.btn-ico{padding:6px 8px;}
 
-/* Form */
+/* ── Forms ── */
 .fg{margin-bottom:12px;}
-label{display:block;font-size:.76rem;color:var(--muted);margin-bottom:4px;font-weight:500;}
-input[type=text],input[type=number],input[type=date],input[type=email],input[type=password],select,textarea{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text);font-size:.84rem;outline:none;transition:border-color .15s;direction:inherit;}
-input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+label{display:block;font-size:.74rem;color:var(--muted);margin-bottom:4px;font-weight:600;font-family:var(--ff-body);}
+input[type=text],input[type=number],input[type=date],input[type=email],input[type=password],select,textarea{
+  width:100%;background:var(--bg3);
+  border:1px solid var(--border2);border-radius:9px;
+  padding:9px 13px;color:var(--text);font-size:.84rem;
+  outline:none;transition:border-color .2s;direction:inherit;
+  font-family:var(--ff-body);
+}
+input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--c) 55%,transparent);}
 textarea{resize:vertical;min-height:70px;}
 .f2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 @media(max-width:600px){.f2{grid-template-columns:1fr;}}
 
-/* Overlay */
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;align-items:center;justify-content:center;}
-.overlay.open{display:flex;}
-.modal{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:26px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
-.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
-.modal-hdr h3{font-size:.95rem;font-weight:700;}
-.x-btn{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:1px 6px;border-radius:4px;}.x-btn:hover{color:var(--text);background:var(--surf2);}
+/* ── Search fields (canvas style) ── */
+.search-field-lbl{
+  font-size:.6rem;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:var(--muted);
+  margin-bottom:5px;font-family:var(--ff-body);
+}
+.search-field-val{
+  font-weight:700;font-size:.92rem;color:var(--text);
+  font-family:var(--ff-body);
+}
 
-/* Chat */
-#page-chat{height:calc(100vh - 52px);flex-direction:column;}
-.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
-.bubble{max-width:72%;padding:9px 13px;border-radius:12px;font-size:.86rem;line-height:1.55;}
-.bubble.user{background:var(--accent);color:#fff;align-self:flex-start;border-bottom-left-radius:4px;}
-.bubble.ai{background:var(--surf2);color:var(--text);align-self:flex-end;border-bottom-right-radius:4px;}
-.bubble.ai.typing::after{content:"▋";animation:blink .7s infinite;}
-@keyframes blink{50%{opacity:0;}}
-.chat-bar{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:7px;flex-shrink:0;}
-.chat-bar textarea{flex:1;background:var(--surf2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:10px;font-size:.86rem;resize:none;height:40px;outline:none;direction:rtl;}
-.chat-bar textarea:focus{border-color:var(--accent);}
+/* ── Price display ── */
+.price-main{font-family:var(--ff-mono);font-weight:700;font-size:.95rem;color:var(--text);}
+.price-was{font-size:.72rem;color:var(--muted);text-decoration:line-through;margin-right:5px;}
 
-/* AI result box */
-.ai-box{background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:.85rem;line-height:1.65;min-height:80px;direction:rtl;white-space:pre-wrap;}
+/* ── AI box ── */
+.ai-box{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:12px;padding:16px 18px;
+  font-size:.84rem;line-height:1.75;
+  min-height:80px;direction:rtl;white-space:pre-wrap;
+  color:var(--muted2);font-family:var(--ff-body);
+}
 .ai-placeholder{color:var(--muted);}
 
-/* Price chart */
+/* ── Chat ── */
+#page-chat{height:calc(100vh - 54px);flex-direction:column;}
+.chat-msgs{flex:1;overflow-y:auto;padding:20px 28px;display:flex;flex-direction:column;gap:12px;}
+.bubble{max-width:70%;padding:10px 14px;border-radius:4px 14px 14px 14px;font-size:.84rem;line-height:1.6;font-family:var(--ff-body);}
+.bubble.ai{background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted2);align-self:flex-end;border-radius:14px 4px 14px 14px;}
+.bubble.user{background:color-mix(in srgb,var(--c) 18%,transparent);border:1px solid color-mix(in srgb,var(--c) 30%,transparent);color:var(--text);align-self:flex-start;border-radius:4px 14px 14px 14px;}
+.bubble.ai.typing::after{content:"▋";animation:blink .7s infinite;}
+@keyframes blink{50%{opacity:0;}}
+.chat-starters{display:flex;gap:8px;padding:0 28px 12px;flex-wrap:wrap;flex-shrink:0;}
+.starter-btn{
+  padding:7px 14px;border-radius:99px;font-size:.76rem;font-weight:700;
+  background:rgba(255,255,255,.04);border:1px solid var(--border2);
+  color:var(--muted2);cursor:pointer;transition:all .2s;
+  font-family:var(--ff-body);
+}
+.starter-btn:hover{border-color:color-mix(in srgb,var(--c) 35%,transparent);color:var(--text);}
+.chat-bar{
+  padding:12px 28px 16px;border-top:1px solid var(--border);
+  display:flex;gap:9px;flex-shrink:0;
+  background:rgba(6,8,16,.8);backdrop-filter:blur(12px);
+}
+.chat-bar textarea{
+  flex:1;background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text);padding:10px 14px;border-radius:11px;
+  font-size:.85rem;resize:none;height:42px;outline:none;
+  direction:rtl;font-family:var(--ff-body);
+  transition:border-color .2s;
+}
+.chat-bar textarea:focus{border-color:color-mix(in srgb,var(--c) 50%,transparent);}
+
+/* ── Price chart ── */
 .p-chart{height:110px;display:flex;align-items:flex-end;gap:3px;padding:6px 0;}
-.p-bar{flex:1;background:rgba(99,102,241,.4);border-radius:3px 3px 0 0;min-height:4px;transition:background .15s;position:relative;}
-.p-bar:hover{background:var(--accent);}
-.p-bar::after{content:attr(data-p);position:absolute;top:-20px;right:50%;transform:translateX(50%);background:var(--surf);border:1px solid var(--border);padding:1px 5px;border-radius:4px;font-size:.64rem;white-space:nowrap;opacity:0;pointer-events:none;}
+.p-bar{
+  flex:1;background:color-mix(in srgb,var(--c) 25%,transparent);
+  border-radius:3px 3px 0 0;min-height:4px;
+  transition:background .15s;position:relative;cursor:pointer;
+}
+.p-bar:hover{background:var(--c);}
+.p-bar::after{
+  content:attr(data-p);position:absolute;top:-22px;right:50%;
+  transform:translateX(50%);background:var(--bg2);
+  border:1px solid var(--border);padding:2px 6px;
+  border-radius:5px;font-size:.64rem;white-space:nowrap;
+  opacity:0;pointer-events:none;font-family:var(--ff-mono);
+}
 .p-bar:hover::after{opacity:1;}
 
-/* Toast */
+/* ── Overlay / Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:18px;padding:28px;
+  width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.modal-hdr h3{font-size:1rem;font-weight:800;font-family:var(--ff-head);letter-spacing:-.3px;}
+.x-btn{background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:pointer;padding:2px 7px;border-radius:6px;}
+.x-btn:hover{color:var(--text);background:rgba(255,255,255,.06);}
+
+/* ── Toast ── */
 #toasts{position:fixed;bottom:20px;left:20px;z-index:200;display:flex;flex-direction:column;gap:7px;}
-.toast{background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:9px 15px;font-size:.8rem;box-shadow:0 4px 20px rgba(0,0,0,.4);animation:slin .2s ease;min-width:200px;}
-.toast.ok{border-color:rgba(34,197,94,.4);}.toast.err{border-color:rgba(239,68,68,.4);}
+.toast{
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:11px;padding:10px 16px;font-size:.8rem;
+  box-shadow:0 4px 24px rgba(0,0,0,.5);animation:slin .2s ease;min-width:200px;
+}
+.toast.ok{border-color:rgba(16,185,129,.4);color:#34d399;}
+.toast.err{border-color:rgba(239,68,68,.4);color:#f87171;}
 @keyframes slin{from{transform:translateX(-20px);opacity:0;}to{transform:translateX(0);opacity:1;}}
 
-/* Spinner */
-.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:rot .6s linear infinite;vertical-align:middle;}
-@keyframes rot{to{transform:rotate(360deg);}}
-.loading{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.84rem;padding:12px 0;}
-
-/* Section header */
-.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.sh h2{font-size:.97rem;font-weight:700;}
-
-/* Mobile */
-@media(max-width:700px){
-  #sidebar{position:fixed;right:-230px;top:0;bottom:0;z-index:50;transition:right .25s;}
-  #sidebar.open{right:0;}
-  .mob-btn{display:flex!important;}
-}
-.mob-btn{display:none;background:none;border:none;color:var(--text);font-size:1.25rem;padding:4px 7px;cursor:pointer;}
-
-/* WizeLife plan colors */
-.p-free{color:#94a3b8;}.p-pro{color:#a5b4fc;}.p-yolo{color:#fcd34d;}
-
-/* Warn box */
-.warn-box{background:rgba(245,158,11,.05);border:1px solid rgba(245,158,11,.2);border-radius:10px;padding:12px 14px;font-size:.8rem;color:#d1d5db;line-height:1.5;}
+/* ── Misc ── */
+.spin{display:inline-block;width:15px;height:15px;border:2px solid var(--border2);border-top-color:var(--c);border-radius:50%;animation:rot .6s linear infinite;vertical-align:middle;}
+@keyframes rot{to{transform:rotate(360deg)}}
+.loading{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.83rem;padding:8px 0;}
+.hot-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:.68rem;font-weight:700;background:rgba(239,68,68,.14);color:#f87171;border:1px solid rgba(239,68,68,.3);}
+.cold-badge{background:color-mix(in srgb,var(--c) 12%,transparent);color:var(--c);border-color:color-mix(in srgb,var(--c) 30%,transparent);}
 .warn-title{color:#fcd34d;font-weight:700;margin-bottom:5px;}
+.ds-b{background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);}
+.p-free{color:var(--muted2);}.p-pro{color:var(--c);}.p-yolo{color:#fcd34d;}
+code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-family:var(--ff-mono);font-size:.85em;}
 
-/* Hot deal badge */
-.hot-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:.69rem;font-weight:700;background:rgba(239,68,68,.18);color:#f87171;border:1px solid rgba(239,68,68,.35);}
-.cold-badge{background:rgba(99,102,241,.12);color:#a5b4fc;border-color:rgba(99,102,241,.3);}
+/* ── Lang switcher ── */
+.lang-switcher{display:flex;gap:4px;background:rgba(255,255,255,.04);border-radius:9px;padding:3px;}
+.lang-btn{padding:3px 9px;border-radius:7px;font-size:.72rem;font-weight:700;cursor:pointer;color:var(--muted);border:none;background:none;font-family:var(--ff-body);}
+.lang-btn.active{background:rgba(255,255,255,.08);color:var(--text);}
 
-/* Price progress bar */
-.price-prog{height:5px;background:var(--surf2);border-radius:99px;margin-top:5px;overflow:hidden;}
-.price-prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--amber),var(--red));transition:width .3s;}
+/* ── Step indicator ── */
+.step-dots{display:flex;gap:5px;}
+.sdot{width:6px;height:6px;border-radius:99px;background:var(--border2);}
+.sdot.on{width:18px;background:var(--c);}
 
-/* Chat starters */
-.chat-starters{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 0;flex-shrink:0;}
-.starter-btn{background:var(--surf2);border:1px solid var(--border);color:#94a3b8;padding:5px 11px;border-radius:99px;font-size:.78rem;cursor:pointer;transition:all .15s;white-space:nowrap;}
-.starter-btn:hover{border-color:var(--accent);color:var(--text);}
-
-/* Tabs */
-.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0;}
-.tab-btn{padding:7px 14px;border:none;background:none;color:var(--muted);font-size:.82rem;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;white-space:nowrap;}
-.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
-.tab-pane{display:none;}.tab-pane.active{display:block;}
-
-/* Price calendar */
+/* ── Calendar ── */
 .cal-header{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px;}
-.cal-day-name{text-align:center;font-size:.68rem;color:var(--muted);font-weight:600;padding:3px;}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-.cal-cell{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.72rem;cursor:pointer;border:1px solid transparent;transition:all .15s;padding:3px;}
-.cal-cell:hover{border-color:var(--accent);}
-.cal-cell .cal-num{font-weight:700;}
-.cal-cell .cal-p{font-size:.63rem;color:var(--muted);}
-.cal-low{background:rgba(34,197,94,.15);color:#4ade80;}
-.cal-mid{background:rgba(245,158,11,.1);color:#fcd34d;}
-.cal-high{background:rgba(239,68,68,.12);color:#f87171;}
-.cal-empty{background:transparent;cursor:default;}
+.cal-cell{
+  aspect-ratio:1;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;font-size:.72rem;cursor:pointer;
+  background:rgba(255,255,255,.03);border:1px solid transparent;
+  transition:all .15s;
+}
+.cal-cell:hover{border-color:color-mix(in srgb,var(--c) 35%,transparent);}
+.cal-cell.has-price{background:color-mix(in srgb,var(--c) 10%,transparent);}
+.cal-cell.best{background:color-mix(in srgb,var(--c) 22%,transparent);font-weight:700;color:var(--text);}
 
-/* Deal score */
-.deal-score{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;font-size:.8rem;font-weight:800;}
-.ds-a{background:rgba(34,197,94,.2);color:#4ade80;}
-.ds-b{background:rgba(99,102,241,.2);color:#a5b4fc;}
-.ds-c{background:rgba(245,158,11,.15);color:#fcd34d;}
-.ds-d{background:rgba(239,68,68,.15);color:#f87171;}
+/* ── Section header (inside page content) ── */
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.section-hd h3{font-family:var(--ff-head);font-size:.88rem;font-weight:800;letter-spacing:-.2px;}
 
-/* Book now btn */
-.book-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:.74rem;font-weight:600;background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3);cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap;}
-.book-btn:hover{background:rgba(34,197,94,.25);}
+/* ── Mobile ── */
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;}
+.sidebar-overlay.active{display:block;}
+@media(max-width:768px){
+  #sidebar{position:fixed;right:-240px;top:0;bottom:0;z-index:50;width:240px;transition:right .25s;}
+  #sidebar.open{right:0;}
+  .mob-btn{display:block;}
+  #main{margin-right:0;}
+  .topbar{padding:0 16px;}
+  .chat-bar{padding:10px 16px 14px;}
+  .chat-msgs{padding:16px;}
+  .sh{padding:16px 16px 14px;}
+  .g4{grid-template-columns:1fr 1fr;}
+  .g3{grid-template-columns:1fr 1fr;}
+  .f2{grid-template-columns:1fr;}
+}
+body.ltr #sidebar{right:auto;left:0;border-right:1px solid var(--border);border-left:none;}
+body.ltr .nav-btn,.body.ltr .nav-item{text-align:left;}
 </style>
 </head>
 <body>
@@ -219,7 +505,13 @@ textarea{resize:vertical;min-height:70px;}
 
 <!-- ══ SIDEBAR ══ -->
 <nav id="sidebar">
-  <div class="s-logo"><span>✈️</span> Noded</div>
+  <div class="sidebar-logo">
+    <div class="wl-label">WIZELIFE</div>
+    <div class="brand-row">
+      <div class="brand-icon-box">✈️</div>
+      <div class="brand-wordmark">Wize<em>Travel</em></div>
+    </div>
+  </div>
 
   <div class="nav-sec">
     <div class="nav-lbl" data-ui="nav_main">ראשי</div>
@@ -288,7 +580,14 @@ textarea{resize:vertical;min-height:70px;}
 
   <div class="s-footer">
     <div class="quota-info" id="quota-display">תוכנית: חינמי</div>
-    <button class="plan-btn" onclick="openWL()"><span>⭐</span><span id="plan-lbl">חינמי</span></button>
+    <div class="user-pill" onclick="openWL()">
+      <div class="user-avatar">W</div>
+      <div class="user-info">
+        <div class="user-name" id="plan-lbl">חינמי</div>
+        <div class="user-plan">WizeTravel</div>
+      </div>
+      <span style="font-size:.8rem;color:var(--muted);">⭐</span>
+    </div>
   </div>
 </nav>
 
@@ -297,7 +596,8 @@ textarea{resize:vertical;min-height:70px;}
   <header class="topbar">
     <div style="display:flex;align-items:center;gap:9px;">
       <button class="mob-btn" onclick="toggleSidebar()">☰</button>
-      <span class="topbar-title" id="topbar-title">לוח בקרה</span>
+      <span class="topbar-title" id="topbar-title" style="display:none;"></span>
+      <a href="https://finsightai.github.io/wizelife/dashboard.html" style="display:flex;align-items:center;gap:6px;text-decoration:none;opacity:.7;transition:opacity .2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.7"><svg width="18" height="18" viewBox="0 0 100 100"><defs><linearGradient id="wlg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs><rect width="100" height="100" rx="22" fill="url(#wlg)"/><text x="50" y="72" text-anchor="middle" font-family="Arial Black" font-weight="900" font-size="58" fill="white">W</text></svg><span style="font-size:.78rem;font-weight:700;color:var(--muted2);">WizeLife</span></a>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
       <select id="lang-btn" onchange="setLang(this.value)" class="btn btn-g btn-sm" style="cursor:pointer;font-family:inherit;background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px 8px;">
@@ -307,15 +607,28 @@ textarea{resize:vertical;min-height:70px;}
         <option value="es">🌐 ES</option>
       </select>
       <div id="topbar-btns"></div>
+      <div class="sso-badge" id="sso-badge"><div class="sso-dot"></div><span id="sso-label">מחובר</span></div>
     </div>
   </header>
 
   <div id="content">
 
     <!-- ══ לוח בקרה ══ -->
-    <div class="page active" id="page-dashboard">
+    <div class="page active" id="page-dashboard"><div class="sh"><div><h2 data-ui="dashboard_title">לוח בקרה</h2><div class="sh-sub">AI-powered · hidden city · positioning · virtual interline</div></div><div style="display:flex;gap:8px;" id="topbar-btns-dash"></div></div><div class="page-content">
+      <div class="panel" style="margin-bottom:16px;">
+        <div class="panel-head"><div class="panel-title">✈️ חיפוש טיסות — AI</div><div style="font-size:.75rem;color:var(--muted);">Hidden city · Positioning · Virtual interline</div></div>
+        <div class="panel-body" style="padding:14px 18px;">
+          <div style="display:grid;grid-template-columns:1fr 36px 1fr 1fr auto;gap:10px;align-items:flex-end;">
+            <div><div class="search-field-lbl">מוצא</div><input type="text" id="q-from" placeholder="TLV — נתב&quot;ג" style="width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--text);font-size:.9rem;font-weight:700;outline:none;"></div>
+            <div style="width:36px;height:36px;border-radius:9px;background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.3);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:800;cursor:pointer;align-self:flex-end;">⇌</div>
+            <div><div class="search-field-lbl">יעד</div><input type="text" id="q-to" placeholder="JFK — ניו יורק" style="width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--text);font-size:.9rem;font-weight:700;outline:none;"></div>
+            <div><div class="search-field-lbl">תאריך</div><input type="date" id="q-date" style="width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--text);font-size:.88rem;font-weight:600;outline:none;"></div>
+            <button class="btn btn-primary" style="height:38px;padding:0 22px;border-radius:10px;font-family:Plus Jakarta Sans,sans-serif;font-weight:700;align-self:flex-end;" onclick="const from=document.getElementById('q-from').value||'TLV';const to=document.getElementById('q-to').value||'';const date=document.getElementById('q-date').value;const q='מצא לי טיסות: '+from+' אל '+to+(date?' בתאריך '+date:'');document.querySelector('[data-page=chat]').click();setTimeout(()=>{const ta=document.getElementById('chat-in');ta.value=q;ta.dispatchEvent(new Event('input'));},150);">חפש AI ✦</button>
+          </div>
+        </div>
+      </div>
       <div class="g4" style="margin-bottom:16px;">
-        <div class="stat"><div class="stat-lbl" data-ui="active_watches">מעקבים פעילים</div><div class="stat-val" id="s-watches">—</div></div>
+        <div class="stat" style="background:color-mix(in srgb,var(--accent) 8%,var(--surf));border-color:color-mix(in srgb,var(--accent) 25%,transparent);"><div class="stat-lbl" data-ui="active_watches">מעקבים פעילים</div><div class="stat-val" id="s-watches">—</div></div>
         <div class="stat"><div class="stat-lbl" data-ui="lowest_price">המחיר הנמוך ביותר</div><div class="stat-val down" id="s-low">—</div></div>
         <div class="stat"><div class="stat-lbl" data-ui="price_drops">ירידות מחיר</div><div class="stat-val up" id="s-drops">—</div></div>
         <div class="stat"><div class="stat-lbl" data-ui="ai_queries">AI שאילתות היום</div><div class="stat-val" id="s-ai">—</div></div>
@@ -331,11 +644,11 @@ textarea{resize:vertical;min-height:70px;}
           <button class="btn btn-g btn-sm" style="margin-top:10px;" onclick="loadSentiment('')" data-ui="refresh">🔄 רענן</button>
         </div>
       </div>
-    </div>
+    </div></div>
 
     <!-- ══ רשימת מעקב ══ -->
     <div class="page" id="page-watches">
-      <div class="sh"><h2 data-ui="nav_watches_h">👁 רשימת מעקב</h2><button class="btn btn-p" onclick="openAddWatch()" data-ui="btn_add_watch">+ הוסף מעקב</button></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="nav_watches_h" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">👁 רשימת מעקב</h2></div><button class="btn btn-p" onclick="openAddWatch()" data-ui="btn_add_watch">+ הוסף מעקב</button></div>
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
         <input type="text" id="watch-search" placeholder="🔍 חיפוש לפי שם, יעד…" style="max-width:260px;flex:1;" oninput="filterWatches()">
         <select id="watch-cat-filter" onchange="filterWatches()" style="width:auto;">
@@ -364,7 +677,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ היסטוריית מחירים ══ -->
     <div class="page" id="page-history">
-      <div class="sh"><h2 data-ui="h2_history">📊 היסטוריית מחירים</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_history" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">📊 היסטוריית מחירים</h2></div></div>
       <div class="card" style="margin-bottom:14px;">
         <div class="f2">
           <div class="fg" style="margin:0;"><label data-ui="lbl_select_watch">בחר מעקב</label><select id="hist-sel" onchange="loadHistory()"><option value="">— בחר —</option></select></div>
@@ -411,7 +724,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ כדאי לחכות? ══ -->
     <div class="page" id="page-wait-or-buy">
-      <div class="sh"><h2 data-ui="h2_wait_or_buy">🔮 כדאי לחכות?</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_wait_or_buy" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🔮 כדאי לחכות?</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="card-title" data-ui="ct_flight_details">פרטי הטיסה / מלון</div>
@@ -424,7 +737,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ הזדמנויות AI ══ -->
     <div class="page" id="page-ai-opps">
-      <div class="sh"><h2 data-ui="h2_ai_opps">🌟 הזדמנויות AI</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_ai_opps" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🌟 הזדמנויות AI</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_origin_opt">יעד / מוצא (אופציונלי)</label><input type="text" id="opps-q" placeholder="למשל: טיסות מתל אביב, אירופה, כל מקום"></div>
@@ -436,7 +749,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ ציד דילים ══ -->
     <div class="page" id="page-deal-hunter">
-      <div class="sh"><h2 data-ui="h2_deal_hunter">🔥 ציד דילים</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_deal_hunter" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🔥 ציד דילים</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_origin">נקודת מוצא</label><input type="text" id="dh-orig" placeholder="למשל: TLV, ת&quot;א, תל אביב"></div>
@@ -451,7 +764,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ יעד מפתיע ══ -->
     <div class="page" id="page-surprise">
-      <div class="sh"><h2 data-ui="h2_surprise">🎲 יעד מפתיע</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_surprise" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🎲 יעד מפתיע</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_budget_max">תקציב</label><input type="text" id="surp-budget" placeholder="למשל: 500 USD, 1500 שקל"></div>
@@ -464,7 +777,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ תכנן טיול ══ -->
     <div class="page" id="page-trip-planner">
-      <div class="sh"><h2 data-ui="h2_trip_planner">🗺️ תכנן טיול</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_trip_planner" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🗺️ תכנן טיול</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_trip_details">פרטי הטיול</label><textarea id="tp-q" placeholder="למשל: 10 ימים בטוקיו ועוד 3 ימים בקיוטו, זוג, תקציב 3000$, ינואר 2026" style="min-height:100px;"></textarea></div>
@@ -476,7 +789,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ מסלול מרובה ערים ══ -->
     <div class="page" id="page-multi-city">
-      <div class="sh"><h2 data-ui="h2_multi_city">🌍 מסלול מרובה ערים</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_multi_city" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🌍 מסלול מרובה ערים</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_cities">ערים לביקור</label><textarea id="mc-q" placeholder="למשל: TLV → פריז → אמסטרדם → ברלין → TLV, מאי 2026, תקציב 1500$"></textarea></div>
@@ -488,7 +801,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ עצירות חינם ══ -->
     <div class="page" id="page-stopovers">
-      <div class="sh"><h2 data-ui="h2_stopovers">🔁 עצירות חינם</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_stopovers" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🔁 עצירות חינם</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_route">מסלול</label><input type="text" id="stp-q" placeholder="למשל: TLV → ניו יורק, מצא עצירת חינם בדובאי או איסטנבול"></div>
@@ -500,7 +813,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ תאריכים גמישים ══ -->
     <div class="page" id="page-flexible-dates">
-      <div class="sh"><h2 data-ui="h2_flexible_dates">📅 תאריכים גמישים</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_flexible_dates" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">📅 תאריכים גמישים</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_route_month">מסלול וחודש</label><input type="text" id="fd-q" placeholder="למשל: TLV → בנגקוק, מרץ-אפריל 2026, גמיש ב-10 ימים"></div>
@@ -512,7 +825,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ חיזוי מחיר ══ -->
     <div class="page" id="page-predict">
-      <div class="sh"><h2 data-ui="h2_predict">📈 חיזוי מחיר</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_predict" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">📈 חיזוי מחיר</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_route_current_price">מסלול ומחיר נוכחי</label><input type="text" id="pred-q" placeholder="למשל: TLV → לונדון, מחיר נוכחי 600$, נסיעה בפברואר 2026"></div>
@@ -524,7 +837,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ עלות אמיתית ══ -->
     <div class="page" id="page-true-cost">
-      <div class="sh"><h2 data-ui="h2_true_cost">💰 עלות אמיתית</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_true_cost" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">💰 עלות אמיתית</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_trip_details">פרטי הטיול</label><textarea id="tc-q" placeholder="למשל: 7 ימים בברצלונה לזוג, אפריל 2026, כולל אירוח וטיסה" style="min-height:80px;"></textarea></div>
@@ -536,7 +849,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ נקודות vs מזומן ══ -->
     <div class="page" id="page-points-vs-cash">
-      <div class="sh"><h2 data-ui="h2_points_vs_cash">💳 נקודות vs מזומן</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_points_vs_cash" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">💳 נקודות vs מזומן</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_loyalty_plan">מסלול ותוכנית נאמנות</label><input type="text" id="pvc-q" placeholder="למשל: TLV → מיאמי, יש לי 80,000 נקודות ארקיע / אל על"></div>
@@ -548,7 +861,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ תובנות ודפוסים ══ -->
     <div class="page" id="page-deal-insights">
-      <div class="sh"><h2 data-ui="h2_deal_insights">📊 תובנות ודפוסים</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_deal_insights" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">📊 תובנות ודפוסים</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_route">מסלול</label><input type="text" id="di-q" placeholder="למשל: TLV → אתונה, מצא דפוסי מחיר ושבועות זולים"></div>
@@ -560,13 +873,13 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ Price DNA ══ -->
     <div class="page" id="page-price-dna">
-      <div class="sh"><h2 data-ui="h2_price_dna">🧬 Price DNA</h2><button class="btn btn-p" onclick="loadPriceDNA()">נתח</button></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_price_dna" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🧬 Price DNA</h2></div><button class="btn btn-p" onclick="loadPriceDNA()">נתח</button></div>
       <div class="card"><div class="ai-box ai-placeholder" id="dna-res" data-ui="dna_placeholder">לחץ "נתח" להפעלת ניתוח Price DNA על נתוני המעקב.</div></div>
     </div>
 
     <!-- ══ השוואת אתרים ══ -->
     <div class="page" id="page-competitor">
-      <div class="sh"><h2 data-ui="h2_competitor">🔍 השוואת אתרים</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_competitor" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🔍 השוואת אתרים</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_route_dates">מסלול ותאריכים</label><input type="text" id="comp-q" placeholder="למשל: TLV → פריז 15.3.2026 → 22.3.2026"></div>
@@ -578,7 +891,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ סנטימנט ══ -->
     <div class="page" id="page-sentiment">
-      <div class="sh"><h2 data-ui="h2_sentiment">📰 סנטימנט & חדשות</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_sentiment" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">📰 סנטימנט & חדשות</h2></div></div>
       <div class="card" style="margin-bottom:14px;max-width:420px;">
         <div style="display:flex;gap:8px;">
           <div style="flex:1;"><label data-ui="lbl_dest_opt">יעד (אופציונלי)</label><input type="text" id="sent-dest" placeholder="למשל: אירופה, טוקיו, כל מקום"></div>
@@ -590,7 +903,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ RSS & Reddit ══ -->
     <div class="page" id="page-rss">
-      <div class="sh"><h2 data-ui="h2_rss">📡 RSS & Reddit</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_rss" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">📡 RSS & Reddit</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_topic">יעד / נושא</label><input type="text" id="rss-q" placeholder="למשל: דילים לאירופה, error fares, TLV"></div>
@@ -602,7 +915,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ בדיקת ויזה ══ -->
     <div class="page" id="page-visa">
-      <div class="sh"><h2 data-ui="h2_visa">🛂 בדיקת ויזה</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_visa" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🛂 בדיקת ויזה</h2></div></div>
       <div class="card" style="max-width:460px;margin-bottom:14px;">
         <div class="f2">
           <div class="fg"><label data-ui="lbl_passport">דרכון (מדינה)</label><input type="text" id="visa-pass" placeholder="למשל: ישראלי, אמריקאי"></div>
@@ -615,7 +928,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ Hidden City ══ -->
     <div class="page" id="page-hidden-city">
-      <div class="sh"><h2 data-ui="h2_hidden_city">🕵️ Hidden City</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_hidden_city" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🕵️ Hidden City</h2></div></div>
       <div class="card" style="max-width:460px;margin-bottom:14px;">
         <div class="f2">
           <div class="fg"><label data-ui="lbl_origin_modal">מוצא</label><input type="text" id="hc-from" placeholder="TLV"></div>
@@ -630,7 +943,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ Kiwi טיסות ══ -->
     <div class="page" id="page-kiwi">
-      <div class="sh"><h2 data-ui="h2_kiwi">🔍 Kiwi טיסות</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_kiwi" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🔍 Kiwi טיסות</h2></div></div>
       <div class="g2">
         <div class="card">
           <div class="fg"><label data-ui="lbl_route_dates">מסלול ותאריכים</label><input type="text" id="kiwi-q" placeholder="למשל: TLV → מדריד, יוני 2026, עד 600$"></div>
@@ -642,13 +955,13 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ שערי חליפין ══ -->
     <div class="page" id="page-exchange">
-      <div class="sh"><h2 data-ui="h2_exchange">💱 שערי חליפין</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_exchange" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">💱 שערי חליפין</h2></div></div>
       <div class="card" id="exch-card"><div class="loading"><div class="spin"></div><span data-ui="exchange_loading">טוען שערים…</span></div></div>
     </div>
 
     <!-- ══ כללי התראה ══ -->
     <div class="page" id="page-alerts">
-      <div class="sh"><h2 data-ui="h2_alerts">🎯 כללי התראה</h2><button class="btn btn-p" onclick="openAddAlert()" data-ui="btn_add_alert">+ הוסף התראה</button></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_alerts" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🎯 כללי התראה</h2></div><button class="btn btn-p" onclick="openAddAlert()" data-ui="btn_add_alert">+ הוסף התראה</button></div>
       <div class="card">
         <div class="tbl-wrap"><table><thead><tr><th data-ui="th_al_name">שם</th><th data-ui="th_al_watch">מעקב</th><th data-ui="th_al_conditions">תנאים</th><th data-ui="th_al_status">סטטוס</th><th></th></tr></thead><tbody id="alerts-tbody"></tbody></table></div>
       </div>
@@ -656,7 +969,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ הגדרות ══ -->
     <div class="page" id="page-settings">
-      <div class="sh"><h2 data-ui="h2_settings">⚙️ הגדרות</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_settings" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">⚙️ הגדרות</h2></div></div>
       <div class="g2" style="margin-bottom:14px;">
         <div class="card">
           <div class="card-title" data-ui="ct_api_keys">🔑 מפתחות API</div>
@@ -692,7 +1005,7 @@ textarea{resize:vertical;min-height:70px;}
             <li>בחר שם topic ייחודי (כמו סיסמה)</li>
             <li>הכנס את שם ה-topic למטה</li>
           </ol>
-          <div class="fg"><label>NTFY Topic</label><input type="text" id="ntfy-topic-input" placeholder="noded-alerts-myname123"></div>
+          <div class="fg"><label>NTFY Topic</label><input type="text" id="ntfy-topic-input" placeholder="wizetravel-alerts-myname123"></div>
           <div class="fg"><label data-ui="lbl_ntfy_server">NTFY Server (ברירת מחדל: ntfy.sh)</label><input type="text" id="ntfy-server-input" placeholder="https://ntfy.sh"></div>
           <button class="btn btn-p" onclick="saveNtfySettings()" data-ui="btn_save_ntfy_settings">💾 שמור</button>
         </div>
@@ -701,7 +1014,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ כלים חכמים ══ -->
     <div class="page" id="page-smart-tools">
-      <div class="sh"><h2 data-ui="h2_smart_tools">🛠️ כלים חכמים</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_smart_tools" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🛠️ כלים חכמים</h2></div></div>
       <div class="tabs" id="smart-tabs">
         <button class="tab-btn active" onclick="switchSmartTab('split')">✂️ Split Ticket</button>
         <button class="tab-btn" onclick="switchSmartTab('nearby')">🗺️ שדות תעופה קרובים</button>
@@ -786,7 +1099,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ לוח מחירים ══ -->
     <div class="page" id="page-price-calendar">
-      <div class="sh"><h2 data-ui="h2_price_calendar">📆 לוח מחירים</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_price_calendar" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">📆 לוח מחירים</h2></div></div>
       <div class="card" style="margin-bottom:14px;max-width:500px;">
         <div class="f2">
           <div class="fg" style="margin:0;"><label data-ui="lbl_cal_watch">בחר מעקב</label><select id="cal-watch-sel"><option value="">— בחר —</option></select></div>
@@ -811,7 +1124,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ דילים פגי תוקף ══ -->
     <div class="page" id="page-expiring-deals">
-      <div class="sh"><h2 data-ui="h2_expiring_deals">⏰ דילים פגי תוקף</h2><button class="btn btn-p" onclick="loadExpiringDeals()" data-ui="refresh">🔄 רענן</button></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_expiring_deals" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">⏰ דילים פגי תוקף</h2></div><button class="btn btn-p" onclick="loadExpiringDeals()" data-ui="refresh">🔄 רענן</button></div>
       <div class="warn-box" style="margin-bottom:14px;">
         <div class="warn-title">⏰ עכשיו או לעולם לא!</div>
         דילים ומבצעים שפגים בקרוב — flash sales, מחירי טעות, מבצעי 24 שעות. AI סורק בזמן אמת.
@@ -834,7 +1147,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ בוט טלגרם ══ -->
     <div class="page" id="page-telegram-bot">
-      <div class="sh"><h2 data-ui="h2_telegram_bot">🤖 בוט Telegram</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_telegram_bot" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🤖 בוט Telegram</h2></div></div>
       <div id="tg-status-box" class="warn-box" style="margin-bottom:14px;max-width:600px;">
         <div class="warn-title" id="tg-status-title">⚠️ בוט לא מוגדר</div>
         <span id="tg-status-msg">הגדר Bot Token ו-Chat ID למטה.</span>
@@ -884,7 +1197,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ Auto-Book ══ -->
     <div class="page" id="page-auto-book">
-      <div class="sh"><h2 data-ui="h2_auto_book">⚡ Auto-Book Engine</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_auto_book" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">⚡ Auto-Book Engine</h2></div></div>
       <div class="warn-box" style="margin-bottom:14px;">
         <div class="warn-title" data-ui="ab_warn_title">⚡ הזמנה אוטומטית</div>
         הגדר כלל: "אם TLV → BKK &lt; $350 — שלח התראה ופתח browser". האפליקציה בודקת כל מחזור מעקב.
@@ -962,7 +1275,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ Positioning ══ -->
     <div class="page" id="page-positioning">
-      <div class="sh"><h2 data-ui="h2_positioning">🗺️ Positioning Flight Optimizer</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_positioning" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">🗺️ Positioning Flight Optimizer</h2></div></div>
       <div class="warn-box" style="margin-bottom:14px;">
         <div class="warn-title" data-ui="pos_warn_title">🗺️ מה זה Positioning?</div>
         לפעמים זול יותר לטוס TLV → אמסטרדם (100$) ואז AMS → NYC (280$) מאשר TLV → NYC ישיר (600$). <b>חיסכון של עד 40%!</b>
@@ -1011,7 +1324,7 @@ textarea{resize:vertical;min-height:70px;}
 
     <!-- ══ WhatsApp Bot ══ -->
     <div class="page" id="page-whatsapp-bot">
-      <div class="sh"><h2 data-ui="h2_whatsapp_bot">💬 WhatsApp Bot</h2></div>
+      <div class="sh"><div style="display:flex;flex-direction:column;gap:3px;"><h2 data-ui="h2_whatsapp_bot" style="font-family:Plus Jakarta Sans,sans-serif;font-size:1.35rem;font-weight:900;letter-spacing:-.5px;">💬 WhatsApp Bot</h2></div></div>
       <div class="warn-box" style="margin-bottom:14px;">
         <div class="warn-title" data-ui="wa_warn_title">💬 חיפוש טיסות בוואטסאפ</div>
         שלח "TLV NYC 15/06" בוואטסאפ וקבל מחירים תוך שניות. פקודות: <code style="background:var(--surf2);padding:1px 5px;border-radius:4px;">TLV NYC 15/06</code> · <code style="background:var(--surf2);padding:1px 5px;border-radius:4px;">דיל</code> · <code style="background:var(--surf2);padding:1px 5px;border-radius:4px;">מחירים</code> · <code style="background:var(--surf2);padding:1px 5px;border-radius:4px;">עזרה</code>
@@ -1058,7 +1371,7 @@ textarea{resize:vertical;min-height:70px;}
           <div class="card">
             <div class="card-title" data-ui="wa_send_real_title">📤 שלח הודעה אמיתית</div>
             <div class="fg"><label data-ui="lbl_wa_send_to">לאן לשלוח (מספר)</label><input type="text" id="wa-send-to" placeholder="+972501234567"></div>
-            <div class="fg"><label data-ui="lbl_message">הודעה</label><textarea id="wa-send-msg" placeholder="Hello! This is Noded..." style="min-height:70px;"></textarea></div>
+            <div class="fg"><label data-ui="lbl_message">הודעה</label><textarea id="wa-send-msg" placeholder="Hello! This is WizeTravel..." style="min-height:70px;"></textarea></div>
             <button class="btn btn-p" onclick="sendWaMessage()" data-ui="btn_send_wa">📤 שלח WhatsApp</button>
           </div>
         </div>
@@ -1141,10 +1454,28 @@ textarea{resize:vertical;min-height:70px;}
 <script>
 // ── Firebase REST Auth ────────────────────────────────────────
 const FB_KEY = "AIzaSyDuzJHOMe89YmEFpKlaTgxT40BCNhK6PU0";
-let _token=null, _plan="free", _user=null;
+let _token=null, _plan="free", _user=null, _nick="";
 
 (function(){
-  try{const s=JSON.parse(localStorage.getItem("noded_wl")||"{}");if(s.token){_token=s.token;_plan=s.plan||"free";_user=s.email;updatePlanUI();}}catch(e){}
+  // Read wl_token + wl_nick from URL if coming from WizeLife dashboard
+(function(){
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const t = p.get('wl_token');
+    const n = p.get('wl_nick');
+    if (t || n) {
+      const existing = JSON.parse(localStorage.getItem('noded_wl')||'{}');
+      if (t) existing.token = t;
+      if (n) existing.nick = decodeURIComponent(n);
+      localStorage.setItem('noded_wl', JSON.stringify(existing));
+      const url = new URL(window.location.href);
+      url.searchParams.delete('wl_token');
+      url.searchParams.delete('wl_nick');
+      window.history.replaceState({}, '', url.toString());
+    }
+  } catch(e) {}
+})();
+try{const s=JSON.parse(localStorage.getItem("noded_wl")||"{}");if(s.token){_token=s.token;_plan=s.plan||"free";_user=s.email;_nick=s.nick||"";updatePlanUI();}}catch(e){}
 })();
 
 async function wlSignIn(){
@@ -1159,7 +1490,7 @@ async function wlSignIn(){
     if(!r.ok){showWlErr(d.error?.message==="INVALID_LOGIN_CREDENTIALS"?ui("wl_err_invalid"):d.error?.message||ui("wl_err_invalid"));return;}
     _token=d.idToken;_user=email;
     _plan=await fetchPlan(d.localId,d.idToken);
-    localStorage.setItem("noded_wl",JSON.stringify({token:_token,plan:_plan,email:_user}));
+    localStorage.setItem("noded_wl",JSON.stringify({token:_token,plan:_plan,email:_user,nick:_nick}));
     updatePlanUI();closeModal("m-wl");toast(ui("wl_signed_in_as")+email,"ok");
   }catch(e){showWlErr(ui("wl_err_network"));}
   finally{btn.disabled=false;btn.textContent=ui("btn_signin_wl");}
@@ -1167,7 +1498,7 @@ async function wlSignIn(){
 async function fetchPlan(uid,tok){
   try{const r=await fetch(`https://firestore.googleapis.com/v1/projects/finzilla-7f1f9/databases/(default)/documents/users/${uid}`,{headers:{"Authorization":"Bearer "+tok}});if(!r.ok)return"free";const d=await r.json();return d.fields?.plan?.stringValue||"free";}catch{return"free";}
 }
-function wlSignOut(){_token=null;_plan="free";_user=null;localStorage.removeItem("noded_wl");updatePlanUI();closeModal("m-wl");toast(ui("wl_signed_out"),"ok");}
+function wlSignOut(){_token=null;_plan="free";_user=null;_nick="";localStorage.removeItem("noded_wl");updatePlanUI();closeModal("m-wl");toast(ui("wl_signed_out"),"ok");}
 function updatePlanUI(){
   let free,pro,yolo,planLabel,freeDesc,proDesc,yoloDesc;
   try{free=ui("plan_free");pro=ui("plan_pro");yolo=ui("plan_yolo");planLabel=ui("plan_label");freeDesc=ui("plan_free_desc");proDesc=ui("plan_pro_desc");yoloDesc=ui("plan_yolo_desc");}
@@ -1175,13 +1506,27 @@ function updatePlanUI(){
   const pm={free,pro,yolo};
   document.getElementById("plan-lbl").textContent=pm[_plan]||free;
   document.getElementById("quota-display").textContent=planLabel+(pm[_plan]||free);
+  // SSO badge + user-pill nickname
+  const displayName = _nick || _user || "";
+  const avatarLetter = displayName ? displayName[0].toUpperCase() : "W";
+  const ssoBadge = document.getElementById("sso-badge");
+  const ssoLabel = document.getElementById("sso-label");
+  const pillAvatar = document.querySelector(".user-avatar");
+  const pillName = document.getElementById("plan-lbl");
   if(_user){
+    if(ssoBadge){ssoBadge.classList.add("active");if(ssoLabel)ssoLabel.textContent=displayName?`מחובר כ-${displayName}`:"מחובר ✓";}
+    if(pillAvatar) pillAvatar.textContent=avatarLetter;
     document.getElementById("wl-out").style.display="none";
     document.getElementById("wl-in").style.display="block";
     document.getElementById("wl-email-d").textContent=_user;
     const pl={free:freeDesc,pro:proDesc,yolo:yoloDesc};
     document.getElementById("wl-plan-d").innerHTML=`<span style="font-size:.85rem;color:var(--accent);">${pl[_plan]||_plan}</span>`;
-  }else{document.getElementById("wl-out").style.display="block";document.getElementById("wl-in").style.display="none";}
+  }else{
+    if(ssoBadge) ssoBadge.classList.remove("active");
+    if(pillAvatar) pillAvatar.textContent="W";
+    document.getElementById("wl-out").style.display="block";
+    document.getElementById("wl-in").style.display="none";
+  }
 }
 function showWlErr(m){const e=document.getElementById("wl-err");e.textContent=m;e.style.display="block";}
 function openWL(){document.getElementById("wl-err").style.display="none";openModal("m-wl");}
