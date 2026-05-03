@@ -539,6 +539,27 @@ code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-family:var(--f
   .g4{grid-template-columns:1fr;}
   .g3{grid-template-columns:1fr;}
 }
+/* ── Search grid mobile ── */
+.search-grid{
+  display:grid;
+  grid-template-columns:1fr 36px 1fr 1fr auto;
+  gap:10px;align-items:flex-end;
+}
+@media(max-width:768px){
+  .search-grid{
+    grid-template-columns:1fr 32px 1fr;
+    grid-template-rows:auto auto;
+    gap:8px;
+  }
+  .search-grid > :nth-child(4){ grid-column:1/3; }
+  .search-grid > :nth-child(5){ grid-column:3/4; grid-row:2; align-self:flex-end; height:38px; }
+}
+/* ── Chat mobile ── */
+@media(max-width:768px){
+  .chat-bar{ padding:8px 12px calc(8px + env(safe-area-inset-bottom)) !important; }
+  #chat-in{ font-size:16px !important; } /* prevent iOS zoom */
+  .msg-bubble{ max-width:88%; }
+}
 body.ltr #sidebar{right:auto;left:0;border-right:1px solid var(--border);border-left:none;}
 body.ltr .nav-btn,.body.ltr .nav-item{text-align:left;}
 </style>
@@ -683,7 +704,7 @@ body.ltr .nav-btn,.body.ltr .nav-item{text-align:left;}
       <div class="panel" style="margin-bottom:16px;">
         <div class="panel-head"><div class="panel-title">✈️ חיפוש טיסות — AI</div><div style="font-size:.75rem;color:var(--muted);">Hidden city · Positioning · Virtual interline</div></div>
         <div class="panel-body" style="padding:14px 18px;">
-          <div style="display:grid;grid-template-columns:1fr 36px 1fr 1fr auto;gap:10px;align-items:flex-end;">
+          <div class="search-grid">
             <div><div class="search-field-lbl">מוצא</div><input type="text" id="q-from" placeholder="TLV — נתב&quot;ג" style="width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--text);font-size:.9rem;font-weight:700;outline:none;"></div>
             <div style="width:36px;height:36px;border-radius:9px;background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.3);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:800;cursor:pointer;align-self:flex-end;">⇌</div>
             <div><div class="search-field-lbl">יעד</div><input type="text" id="q-to" placeholder="JFK — ניו יורק" style="width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:9px;padding:9px 13px;color:var(--text);font-size:.9rem;font-weight:700;outline:none;"></div>
