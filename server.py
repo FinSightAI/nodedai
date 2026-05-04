@@ -426,7 +426,7 @@ async def get_exchange_rates():
         return {"rates": {}}
     try:
         loop  = asyncio.get_event_loop()
-        rates = await loop.run_in_executor(None, lambda: mod.get_rates("USD"))
+        rates = await loop.run_in_executor(None, lambda: mod.fetch_rates("USD"))
         return {"base": "USD", "rates": rates or {}}
     except Exception as e:
         return {"base": "USD", "rates": {}, "error": str(e)}
