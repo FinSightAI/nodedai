@@ -106,7 +106,7 @@ app = FastAPI(title="Noded API", version="3.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://wizelife.ai", "https://finsightai.github.io", "http://localhost:3000", "http://localhost:8080"],
+    allow_origins=["https://wizelife.ai", "https://finsightai.github.io", "https://travel.wizelife.ai", "http://localhost:3000", "http://localhost:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
