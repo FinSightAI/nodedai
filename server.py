@@ -16,6 +16,7 @@ load_dotenv(Path(__file__).parent / ".env")
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
 import re
@@ -110,6 +111,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/manifest.json")
+async def manifest():
+    return FileResponse("static/manifest.json", media_type="application/manifest+json")
+
+@app.get("/sw.js")
+async def service_worker():
+    return FileResponse("static/sw.js", media_type="application/javascript",
+                        headers={"Cache-Control": "no-cache"})
 
 @app.get("/")
 async def root():

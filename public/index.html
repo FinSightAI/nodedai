@@ -563,6 +563,10 @@ code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-family:var(--f
 body.ltr #sidebar{right:auto;left:0;border-right:1px solid var(--border);border-left:none;}
 body.ltr .nav-btn,.body.ltr .nav-item{text-align:left;}
 </style>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#3b82f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
 <div id="wl-bar" style="position:fixed;top:0;left:0;right:0;height:36px;z-index:99999;background:rgba(5,6,15,0.96);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-family:Inter,-apple-system,sans-serif;box-sizing:border-box;direction:ltr;">
@@ -3380,6 +3384,11 @@ function applyLang(){
 applyLang();
 navigate("dashboard");
 loadWatches();
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+}
 </script>
 </body>
 </html>

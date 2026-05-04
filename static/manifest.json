@@ -1,24 +1,20 @@
 {
-  "name": "Noded — מעקב מחירי טיול",
-  "short_name": "Noded",
-  "description": "מעקב חכם אחר מחירי טיסות ומלונות",
+  "name": "WizeTravel",
+  "short_name": "WizeTravel",
+  "description": "AI Flight & Travel Intelligence — find deals, plan trips, track prices",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#1a1a2e",
-  "theme_color": "#10b981",
+  "background_color": "#060810",
+  "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
+  "lang": "he",
   "icons": [
     {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%231a1a2e'/><text x='96' y='130' font-size='110' text-anchor='middle'>🧳</text></svg>",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='32' fill='%23060810'/><text x='96' y='130' font-size='110' text-anchor='middle'>✈️</text></svg>",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
-    },
-    {
-      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%231a1a2e'/><text x='256' y='360' font-size='300' text-anchor='middle'>🧳</text></svg>",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
     }
   ]
 }
