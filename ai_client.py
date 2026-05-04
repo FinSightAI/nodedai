@@ -43,9 +43,12 @@ def _get_plan_from_session() -> str:
 
 def _check_rate_limit() -> tuple[bool, str]:
     """Returns (allowed, reason). reason is non-empty when denied."""
+    sid = _get_session_id()
+    if sid == "global":
+        # No Streamlit session — running under FastAPI (server.py handles quota)
+        return True, ""
     plan  = _get_plan_from_session()
     limit = _AI_DAILY_LIMITS.get(plan, _AI_DAILY_LIMITS["free"])
-    sid   = _get_session_id()
     today = _time.strftime("%Y-%m-%d")
     entry = _rate_store.get(sid, {"date": "", "count": 0})
     if entry["date"] != today:
