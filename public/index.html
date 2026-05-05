@@ -1805,6 +1805,7 @@ async function loadWatches(){
     _watchesFiltered=[..._watches];
     renderWatches();
     populateHistSel();
+    syncTravelContext(_watches);
   }catch(e){toast(ui("error_loading_watches"),"err");}
 }
 
